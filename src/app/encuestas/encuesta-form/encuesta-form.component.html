@@ -1,0 +1,832 @@
+<div class="encuesta-form-container">
+  @if (cargando()) {
+    <div class="loading">
+      <p>Cargando encuesta...</p>
+    </div>
+  } @else if (encuesta()) {
+    <div class="form-header">
+      <div class="header-content">
+        <button class="btn-volver" (click)="volver()">
+          ← Volver
+        </button>
+        <h1>Encuesta: {{ encuesta()?.tipoEncuestaValor || encuesta()?.tipoEncuesta }}</h1>
+        <span class="encuesta-id">ID: {{ encuesta()?.encuestaId }}</span>
+      </div>
+    </div>
+
+    <div class="form-sections">
+      <!-- Sección 1: Datos Generales -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('datosGenerales')"
+          [class.expandida]="esSeccionExpandida('datosGenerales')">
+          <h2>Datos Generales
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('datosGenerales') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('datosGenerales') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('datosGenerales') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('datosGenerales')) {
+          <div class="seccion-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Tipo de Encuesta</label>
+                <input type="text" [value]="encuesta()?.tipoEncuestaValor || encuesta()?.tipoEncuesta" readonly>
+              </div>
+              <div class="form-group">
+                <label>Fecha de Encuesta</label>
+                <input 
+                  type="date" 
+                  [value]="encuesta()?.fechaEncuesta" 
+                  (change)="actualizarFechaEncuesta($event)"
+                  [max]="fechaMaxima">
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sección 2: Empresa -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('empresa')"
+          [class.expandida]="esSeccionExpandida('empresa')">
+          <h2>Empresa
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('empresa') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('empresa') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('empresa') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('empresa')) {
+          <div class="seccion-body">
+            @if (empresaSeleccionada()) {
+              <!-- Empresa ya seleccionada - Solo lectura -->
+              <div class="empresa-seleccionada">
+                <div class="empresa-datos">
+                  <div class="dato-empresa">
+                    <label>RUC</label>
+                    <span>{{ empresaSeleccionada()?.ruc }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Razón Social</label>
+                    <span>{{ empresaSeleccionada()?.razonSocial }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Condición Contribuyente</label>
+                    <span>{{ empresaSeleccionada()?.condicionContribuyente || 'N/A' }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Tamaño Empresa</label>
+                    <span>{{ empresaSeleccionada()?.tamanoEmpresa || 'N/A' }}</span>
+                  </div>
+                </div>
+                <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()">
+                  Cambiar Empresa
+                </button>
+              </div>
+            } @else {
+              <!-- Búsqueda de empresa -->
+              <div class="empresa-search-row">
+                <div class="search-field">
+                  <label>
+                    {{ tipoBusquedaEmpresa() === 'ruc' ? 'Buscar por RUC' : 'Buscar por Razón Social' }}
+                  </label>
+                  <div class="search-container">
+                    <input 
+                      type="text"
+                      [(ngModel)]="terminoBusqueda" 
+                      (input)="validarBusquedaRuc()"
+                      (keyup.enter)="buscarEmpresa()"
+                      [maxlength]="tipoBusquedaEmpresa() === 'ruc' ? 11 : null"
+                      [placeholder]="tipoBusquedaEmpresa() === 'ruc' ? 'Ingrese RUC y presione Enter' : 'Ingrese Razón Social y presione Enter'"
+                      class="search-input">
+                    @if (errorBusquedaRuc()) {
+                      <div class="error-message">
+                        @if (tieneLetrasEnRuc()) {
+                          ⚠️ El RUC debe contener solo números
+                        } @else if (rucLongitudIncorrecta()) {
+                          ⚠️ El RUC debe tener exactamente 11 dígitos (actual: {{ terminoBusqueda().trim().length }})
+                        }
+                      </div>
+                    }
+                    @if (mostrarResultadosEmpresa()) {
+                      <div class="search-results">
+                        @if (buscandoEmpresa()) {
+                          <div class="search-loading">Buscando...</div>
+                        } @else if (empresasEncontradas().length > 0) {
+                          @for (empresa of empresasEncontradas(); track empresa.empresaId) {
+                            <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
+                              <div class="empresa-info">
+                                <strong>{{ empresa.razonSocial }}</strong>
+                                <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
+                              </div>
+                            </div>
+                          }
+                        } @else {
+                          <div class="search-no-results">No se encontraron empresas</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="search-type">
+                  <label>Tipo de Búsqueda</label>
+                  <select [(ngModel)]="tipoBusquedaEmpresa">
+                    <option value="ruc">RUC</option>
+                    <option value="razonSocial">Razón Social</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Formulario de registro de nueva empresa -->
+              @if (mostrarFormularioRegistro()) {
+                <div class="registro-empresa-container">
+                  <div class="registro-empresa-header">
+                    <h3>Registrar Nueva Empresa</h3>
+                    <button class="btn-cancelar-registro" (click)="cancelarRegistroEmpresa()">Cancelar</button>
+                  </div>
+                  <div class="registro-empresa-form">
+                  <div class="registro-form-group">
+                    <label>RUC *</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="nuevaEmpresa().ruc"
+                      (input)="validarRucRegistro()"
+                      maxlength="11"
+                      placeholder="Ingrese RUC (11 dígitos)">
+                    @if (errorRucRegistro()) {
+                      <div class="error-message">
+                        ⚠️ {{ errorRucRegistro() }}
+                      </div>
+                    }
+                  </div>
+                    <div class="registro-form-group">
+                      <label>Razón Social *</label>
+                      <input 
+                        type="text" 
+                        [(ngModel)]="nuevaEmpresa().razonSocial"
+                        placeholder="Ingrese Razón Social"
+                        required>
+                    </div>
+                    <div class="registro-form-group">
+                      <label>Tipo de Empresa *</label>
+                      <select [(ngModel)]="nuevaEmpresa().tipoEmpresaId" required>
+                        <option [value]="0" disabled>Seleccione un tipo</option>
+                        @for (tipo of tiposEmpresa(); track tipo.tipoEmpresaId) {
+                          <option [value]="tipo.tipoEmpresaId">{{ tipo.descripcionTipoEmpresa }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="registro-form-group">
+                      <label>Condición Contribuyente *</label>
+                      <input 
+                        type="text" 
+                        [(ngModel)]="nuevaEmpresa().condicionContribuyente"
+                        placeholder="Condición"
+                        required>
+                    </div>
+                    <div class="registro-form-group">
+                      <label>Tamaño Empresa *</label>
+                      <input 
+                        type="text" 
+                        [(ngModel)]="nuevaEmpresa().tamanoEmpresa"
+                        placeholder="Tamaño"
+                        required>
+                    </div>
+                    <div class="registro-form-group">
+                      <label>Actividad Económica *</label>
+                      <input 
+                        type="text" 
+                        [(ngModel)]="nuevaEmpresa().actividadEconomica"
+                        placeholder="Actividad"
+                        required>
+                    </div>
+                    <div class="registro-form-actions">
+                      <button 
+                        class="btn-guardar-empresa" 
+                        (click)="guardarNuevaEmpresa()"
+                        [disabled]="guardandoEmpresa()">
+                        {{ guardandoEmpresa() ? 'Guardando...' : 'Guardar Empresa' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Sección 3: Encuestado -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('encuestado')"
+          [class.expandida]="esSeccionExpandida('encuestado')">
+          <h2>Datos del Encuestado
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('encuestado') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('encuestado') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('encuestado') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('encuestado')) {
+          <div class="seccion-body">
+            @if (encuestadoSeleccionado()) {
+              <!-- Encuestado ya seleccionado - Solo lectura -->
+              <div class="empresa-seleccionada">
+                <div class="empresa-datos">
+                  <div class="dato-empresa">
+                    <label>Nombres Completos</label>
+                    <span>{{ encuestadoSeleccionado()?.nombres }} {{ encuestadoSeleccionado()?.apepat }} {{ encuestadoSeleccionado()?.apemat }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Tipo de Documento</label>
+                    <span>{{ encuestadoSeleccionado()?.tipodoc || 'N/A' }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Número de Documento</label>
+                    <span>{{ encuestadoSeleccionado()?.numdoc || 'N/A' }}</span>
+                  </div>
+                  <div class="dato-empresa">
+                    <label>Cargo</label>
+                    <span>{{ encuestadoSeleccionado()?.cargo || 'N/A' }}</span>
+                  </div>
+                </div>
+                <button class="btn-cambiar-empresa" (click)="cambiarEncuestado()">
+                  Cambiar Encuestado
+                </button>
+              </div>
+            } @else {
+              <!-- Búsqueda de encuestado -->
+              <div class="empresa-search-row">
+                <div class="search-field">
+                  <label>
+                    {{ tipoBusquedaEncuestado() === 'numdoc' ? 'Buscar por Número de Documento' : 'Buscar por Nombres' }}
+                  </label>
+                  <div class="search-container">
+                    <input 
+                      type="text"
+                      [(ngModel)]="terminoBusquedaEncuestado" 
+                      (input)="validarBusquedaEncuestado()"
+                      (keyup.enter)="buscarEncuestado()"
+                      [maxlength]="tipoBusquedaEncuestado() === 'numdoc' ? 8 : null"
+                      [placeholder]="tipoBusquedaEncuestado() === 'numdoc' ? 'Ingrese DNI (8 dígitos) y presione Enter' : 'Ingrese nombres y presione Enter'"
+                      class="search-input">
+                    @if (errorBusquedaEncuestado()) {
+                      <div class="error-message">
+                        ⚠️ {{ errorBusquedaEncuestado() }}
+                      </div>
+                    }
+                    @if (mostrarResultadosEncuestado()) {
+                      <div class="search-results">
+                        @if (buscandoEncuestado()) {
+                          <div class="search-loading">Buscando...</div>
+                        } @else if (encuestadosEncontrados().length > 0) {
+                          @for (enc of encuestadosEncontrados(); track enc.encuestadoId) {
+                            <div class="search-result-item" (click)="seleccionarEncuestado(enc)">
+                              <div class="empresa-info">
+                                <strong>{{ enc.nombres }} {{ enc.apepat }} {{ enc.apemat }}</strong>
+                                <span class="empresa-ruc">{{ enc.tipodoc }}: {{ enc.numdoc }}</span>
+                              </div>
+                            </div>
+                          }
+                        } @else {
+                          <div class="search-no-results">No se encontraron encuestados</div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="search-type">
+                  <label>Tipo de Búsqueda</label>
+                  <select [(ngModel)]="tipoBusquedaEncuestado">
+                    <option value="numdoc">Número de Documento</option>
+                    <option value="nombres">Nombres</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Formulario de registro de nuevo encuestado -->
+              @if (mostrarFormularioRegistroEncuestado()) {
+                <div class="registro-empresa-container">
+                  <div class="registro-empresa-header">
+                    <h3>Nuevo Encuestado</h3>
+                    <button class="btn-cancelar-registro" (click)="cancelarRegistroEncuestado()">Cancelar</button>
+                  </div>
+
+                  <!-- Subsección: Datos del encuestado -->
+                  <div class="subseccion-encuestado">
+                    <h4 class="subseccion-titulo">Datos del encuestado</h4>
+                    <div class="registro-empresa-form">
+                      <div class="registro-form-group">
+                        <label>Nombres *</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.nombres"
+                          placeholder="Ingrese nombres"
+                          required>
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Apellido Paterno *</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.apepat"
+                          placeholder="Ingrese apellido paterno"
+                          required>
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Apellido Materno</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.apemat"
+                          placeholder="Ingrese apellido materno">
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Tipo de Documento</label>
+                        <select [(ngModel)]="nuevoEncuestado.tipodoc">
+                          <option value="" disabled>Seleccione un tipo</option>
+                          <option value="DNI">DNI</option>
+                          <option value="CE">Carnet de Extranjería</option>
+                          <option value="PASAPORTE">Pasaporte</option>
+                        </select>
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Número de Documento</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.numdoc"
+                          placeholder="Ingrese número de documento">
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Cargo *</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.cargo"
+                          placeholder="Ingrese cargo"
+                          required>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Subsección: Medio de contacto -->
+                  <div class="subseccion-encuestado">
+                    <h4 class="subseccion-titulo">Medio de contacto (opcional)</h4>
+                    <div class="registro-empresa-form">
+                      <div class="registro-form-group">
+                        <label>Tipo de Contacto</label>
+                        <select [(ngModel)]="nuevoEncuestado.tipoContacto">
+                          <option value="" disabled>Seleccione un tipo</option>
+                          @for (medio of mediosContacto(); track medio.llave) {
+                            <option [value]="medio.llave">{{ medio.valor }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="registro-form-group">
+                        <label>Contacto</label>
+                        <input 
+                          type="text" 
+                          [(ngModel)]="nuevoEncuestado.contacto"
+                          (input)="validarContactoEncuestado()"
+                          [placeholder]="obtenerPlaceholderContacto()"
+                          [maxlength]="nuevoEncuestado.tipoContacto === 'EMAIL' ? 100 : (nuevoEncuestado.tipoContacto ? 9 : null)">
+                        @if (errorContactoEncuestado()) {
+                          <div class="error-message">
+                            ⚠️ {{ errorContactoEncuestado() }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="registro-form-actions">
+                    <button 
+                      class="btn-guardar-empresa" 
+                      (click)="guardarNuevoEncuestado()"
+                      [disabled]="guardandoEncuestado()">
+                      {{ guardandoEncuestado() ? 'Guardando...' : 'Guardar Encuestado' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Sección 4: Productos -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('productos')"
+          [class.expandida]="esSeccionExpandida('productos')">
+          <h2>Productos
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('productos') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('productos') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('productos') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('productos')) {
+          <div class="seccion-body">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>¿Fabrica concreto premezclado o artículos de concreto?</label>
+                <div class="radio-group">
+                  <label class="radio-option">
+                    <input 
+                      type="radio" 
+                      name="tipoProducto" 
+                      value="premezclado"
+                      [checked]="encuesta()?.concretoPremezclado === 1"
+                      (change)="seleccionarTipoProducto('premezclado')">
+                    <span>Concreto Premezclado</span>
+                  </label>
+                  <label class="radio-option">
+                    <input 
+                      type="radio" 
+                      name="tipoProducto" 
+                      value="articulos"
+                      [checked]="encuesta()?.articulosConcreto === 1"
+                      (change)="seleccionarTipoProducto('articulos')">
+                    <span>Artículos de Concreto</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>¿Cuál es el lugar de compra?</label>
+                <select 
+                  [value]="encuesta()?.tipoLugarCompra || ''"
+                  (change)="seleccionarLugarCompra($any($event.target).value)">
+                  <option value="" disabled>Seleccione un lugar</option>
+                  @for (lugar of lugaresCompra(); track lugar.llave) {
+                    <option [value]="lugar.llave">{{ lugar.valor }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sección 5: Fabricante -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('fabricante')"
+          [class.expandida]="esSeccionExpandida('fabricante')">
+          <h2>Fabricante
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('fabricante') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('fabricante') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('fabricante') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('fabricante')) {
+          <div class="seccion-body">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Fabricante</label>
+                @if (fabricantes().length > 0) {
+                  <select 
+                    [(ngModel)]="encuesta()!.fabricanteId"
+                    (click)="onFabricanteDropdownClick()"
+                    (ngModelChange)="seleccionarFabricante($event)">
+                    <option [value]="undefined" disabled>Seleccione un fabricante</option>
+                    @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
+                      <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
+                    }
+                  </select>
+                } @else {
+                  <!-- Mostrar valor guardado mientras no se carguen los fabricantes -->
+                  <input 
+                    type="text" 
+                    [value]="encuesta()?.fabricante?.razonSocial || 'Click para seleccionar fabricante'"
+                    (click)="onFabricanteDropdownClick()"
+                    readonly
+                    style="cursor: pointer;">
+                }
+              </div>
+
+              @if (encuesta()?.fabricanteId) {
+                <!-- Mostrar Marca: si ya hay valor guardado O si se cargaron las marcas -->
+                @if (encuesta()?.nombreMarca || marcasUnicas().length > 0) {
+                  <div class="form-group full-width">
+                    <label>Marca</label>
+                    @if (marcasUnicas().length > 0) {
+                      <select 
+                        [(ngModel)]="encuesta()!.nombreMarca"
+                        (click)="onMarcaDropdownClick()"
+                        (ngModelChange)="seleccionarNombreMarca($event)">
+                        <option [value]="undefined" disabled>Seleccione una marca</option>
+                        @for (nombreMarca of marcasUnicas(); track nombreMarca) {
+                          <option [value]="nombreMarca">{{ nombreMarca }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <!-- Mostrar valor guardado mientras no se carguen las marcas -->
+                      <input 
+                        type="text" 
+                        [value]="encuesta()?.nombreMarca || ''"
+                        (click)="onMarcaDropdownClick()"
+                        placeholder="Click para cargar marcas"
+                        readonly
+                        style="cursor: pointer;">
+                    }
+                  </div>
+                }
+
+                <!-- Mostrar Tipo de Cemento: si ya hay valor guardado O si se cargaron los tipos -->
+                @if (encuesta()?.tipoCemento || tiposCementoPorMarca().length > 0) {
+                  <div class="form-group full-width">
+                    <label>Tipo de Cemento</label>
+                    @if (tiposCementoPorMarca().length > 0) {
+                      <select 
+                        [(ngModel)]="encuesta()!.marcaFabricante"
+                        (ngModelChange)="seleccionarMarcaFabricante($event)">
+                        <option [value]="undefined" disabled>Seleccione un tipo de cemento</option>
+                        @for (tipo of tiposCementoPorMarca(); track tipo.marcaFabricanteId) {
+                          <option [value]="tipo.marcaFabricanteId">{{ tipo.tipoCemento }}</option>
+                        }
+                      </select>
+                    } @else {
+                      <!-- Mostrar valor guardado mientras no se carguen los tipos -->
+                      <input 
+                        type="text" 
+                        [value]="encuesta()?.tipoCemento || ''"
+                        disabled>
+                    }
+                  </div>
+
+                  <!-- Mostrar Descripción Física solo si hay tipo de cemento -->
+                  @if (encuesta()?.descFisica) {
+                    <div class="form-group full-width">
+                      <label>Descripción Física</label>
+                      <input 
+                        type="text" 
+                        [value]="encuesta()?.descFisica || ''"
+                        disabled>
+                    </div>
+                  }
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sección 6: Compra -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('compra')"
+          [class.expandida]="esSeccionExpandida('compra')">
+          <h2>Información de Compra
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('compra') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('compra') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('compra') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('compra')) {
+          <div class="seccion-body">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Tipo de Compra</label>
+                <select 
+                  [value]="encuesta()?.tipoCompra || ''"
+                  (change)="seleccionarTipoCompraCemento($any($event.target).value)">
+                  <option value="" disabled>Seleccione un tipo de compra</option>
+                  @for (tipo of tiposCompraCemento(); track tipo.llave) {
+                    <option [value]="tipo.llave">{{ tipo.valor }}</option>
+                  }
+                </select>
+              </div>
+              
+              @if (encuesta()?.tipoCompra === 'GRANEL') {
+                <div class="form-group full-width">
+                  <label>Presentación de Compra</label>
+                  <select 
+                    [value]="encuesta()?.presentacionCompra || ''"
+                    (change)="seleccionarPresentacionCompra($any($event.target).value)">
+                    <option value="" disabled>Seleccione una presentación</option>
+                    @for (presentacion of tiposPresentacionGranel(); track presentacion.llave) {
+                      <option [value]="presentacion.llave">{{ presentacion.valor }}</option>
+                    }
+                  </select>
+                </div>
+              }
+              
+              @if (encuesta()?.tipoCompra === 'BOLSAS') {
+                <div class="form-group full-width">
+                  <label>Cantidad de Cemento por Presentación</label>
+                  <select 
+                    [value]="encuesta()?.cantidadPresentacionCompra || ''"
+                    (change)="seleccionarCantidadPresentacion($any($event.target).value)">
+                    <option value="" disabled>Seleccione una cantidad</option>
+                    @for (cantidad of cantidadPresentacionBolsa(); track cantidad.llave) {
+                      <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                    }
+                  </select>
+                </div>
+              }
+              
+              @if (encuesta()?.tipoCompra === 'GRANEL' && encuesta()?.presentacionCompra) {
+                <div class="form-group full-width">
+                  <label>Cantidad de Cemento por Presentación</label>
+                  <select 
+                    [value]="encuesta()?.cantidadPresentacionCompra || ''"
+                    (change)="seleccionarCantidadPresentacion($any($event.target).value)">
+                    <option value="" disabled>Seleccione una cantidad</option>
+                    @if (encuesta()?.presentacionCompra?.includes('BOMBON') || encuesta()?.presentacionCompra?.includes('Bombona')) {
+                      @for (cantidad of cantidadPresentacionBombona(); track cantidad.llave) {
+                        <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                      }
+                    }
+                    @if (encuesta()?.presentacionCompra?.includes('BIGBAG') || encuesta()?.presentacionCompra?.includes('BIG_BAG') || encuesta()?.presentacionCompra?.includes('Big Bag')) {
+                      @for (cantidad of cantidadPresentacionBigbag(); track cantidad.llave) {
+                        <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                      }
+                    }
+                  </select>
+                </div>
+              }
+              <div class="form-group full-width">
+                <label>Descripción de la Compra</label>
+                <textarea 
+                  rows="4"
+                  placeholder="Describa la compra realizada (frecuencia, cantidad, etc.)"
+                  [value]="encuesta()?.descCompra || ''"
+                  (input)="actualizarDescCompra($any($event.target).value)"></textarea>
+              </div>
+              <div class="form-group full-width precio-igv-container">
+                <div class="precio-input-group">
+                  <label>Precio</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="99999999.99"
+                    step="0.01" 
+                    [value]="encuesta()?.precio || ''"
+                    (input)="actualizarPrecio($any($event.target).value)"
+                    (keydown)="validarLimitePrecio($event)">
+                </div>
+                <div class="igv-toggle-group">
+                  <label>Con IGV</label>
+                  <label class="toggle-switch">
+                    <input 
+                      type="checkbox" 
+                      [checked]="encuesta()?.conIgv === 1"
+                      (change)="toggleIgv($any($event.target).checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Sección 7: Uso y Motivación -->
+      <div class="seccion-card">
+        <div 
+          class="seccion-header" 
+          (click)="toggleSeccion('uso')"
+          [class.expandida]="esSeccionExpandida('uso')">
+          <h2>Uso y Motivación
+            <span class="seccion-tag" [ngStyle]="{ 'background': seccionCompleta('uso') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('uso') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('uso') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('uso')) {
+          <div class="seccion-body">
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label>Uso del Cemento</label>
+                <textarea 
+                  rows="3" 
+                  [value]="encuesta()?.usoCemento || ''"
+                  (input)="actualizarUsoCemento($any($event.target).value)"></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label>Motivo de Compra</label>
+                <textarea 
+                  rows="3" 
+                  [value]="encuesta()?.motivoCompra || ''"
+                  (input)="actualizarMotivoCompra($any($event.target).value)"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Deseo de Regalo</label>
+                <select 
+                  [value]="encuesta()?.deseoRegalo ?? ''"
+                  (change)="actualizarDeseoRegalo($any($event.target).value)">
+                  <option value="" disabled>Seleccione una opción</option>
+                  <option value="0">No</option>
+                  <option value="1">Sí</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-cancelar" (click)="volver()">Cancelar</button>
+      <button class="btn-guardar" (click)="guardarEncuesta()">Guardar Cambios</button>
+      @if (todasLasSeccionesCompletas()) {
+        <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal: Empresa no encontrada -->
+@if (mostrarModalNoEncontrada()) {
+  <div class="modal-overlay" (click)="cerrarModalNoEncontrada()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Empresa no encontrada</h3>
+        <button class="modal-close" (click)="cerrarModalNoEncontrada()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>La empresa que está buscando no se encuentra registrada en el sistema.</p>
+        <p><strong>¿Desea registrar esta empresa ahora?</strong></p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontrada()">
+          No, cancelar
+        </button>
+        <button class="btn-modal-confirmar" (click)="confirmarRegistroEmpresa()">
+          Sí, registrar empresa
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: RUC duplicado -->
+@if (mostrarModalRucDuplicado()) {
+  <div class="modal-overlay" (click)="cerrarModalRucDuplicado()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ RUC ya registrado</h3>
+        <button class="modal-close" (click)="cerrarModalRucDuplicado()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>El RUC de la empresa ya fue registrado.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirmar" (click)="cerrarModalRucDuplicado()">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Éxito -->
+@if (mostrarModalExito()) {
+  <div class="modal-overlay" (click)="cerrarModalExito()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>✅ Operación exitosa</h3>
+        <button class="modal-close" (click)="cerrarModalExito()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>{{ mensajeModal() }}</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirmar" (click)="cerrarModalExito()">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Error -->
+@if (mostrarModalError()) {
+  <div class="modal-overlay" (click)="cerrarModalError()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>❌ Error</h3>
+        <button class="modal-close" (click)="cerrarModalError()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>{{ mensajeModal() }}</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-confirmar" (click)="cerrarModalError()">
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+}
