@@ -1,0 +1,105 @@
+<!-- Pantalla de carga durante navegación -->
+<div *ngIf="isNavigating" class="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <h3 class="text-white mt-4">Cargando...</h3>
+  </div>
+</div>
+
+<section class="bg-gradient-primary py-3 py-md-5 py-xl-8" *ngIf="!isNavigating">
+  <div class="container">
+    <div class="row">
+      <!-- Columna Izquierda - Información -->
+      <div class="text-white left-column">
+        <div class="logo-container mb-4">
+          <h1 class="display-4 fw-bold mb-3">MD Research</h1>
+        </div>
+        <hr class="border-white-subtle mb-4">
+        <h2 class="h1 mb-4">Sistema de gestión de encuestas de mercado</h2>
+        <p class="lead mb-5">Recopilamos, analizamos y gestionamos datos del mercado de cemento para proporcionar información valiosa sobre tendencias, preferencias y comportamiento del consumidor.</p>
+        <div class="features-list">
+          <div class="feature-item mb-3">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>Gestión eficiente de encuestas</span>
+          </div>
+          <div class="feature-item mb-3">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>Análisis de datos en tiempo real</span>
+          </div>
+          <div class="feature-item mb-3">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>Reportes detallados del mercado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Derecha - Formulario -->
+      <div class="right-column">
+        <div class="card border-0 shadow-lg">
+          <div class="card-body">
+            <div class="mb-4">
+              <h3 class="fw-bold">Iniciar Sesión</h3>
+              <p class="text-muted">Por favor, inicia sesión en tu cuenta.</p>
+            </div>
+
+            <form (ngSubmit)="onSubmit()">
+              <div class="mb-3">
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="username"
+                  name="username"
+                  [(ngModel)]="credentials.username"
+                  placeholder="Usuario"
+                  [disabled]="isLoading"
+                  required>
+                <div *ngIf="usernameError" class="alert alert-danger mt-2 mb-0" role="alert">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  {{ usernameError }}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="password"
+                  name="password"
+                  [(ngModel)]="credentials.password"
+                  placeholder="Contraseña"
+                  [disabled]="isLoading"
+                  required>
+                <div *ngIf="passwordError" class="alert alert-danger mt-2 mb-0" role="alert">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  {{ passwordError }}
+                </div>
+              </div>
+
+              <div class="d-grid mb-3">
+                <button 
+                  class="btn btn-primary btn-lg" 
+                  type="submit"
+                  [disabled]="isLoading">
+                  <span *ngIf="!isLoading">Iniciar Sesión</span>
+                  <span *ngIf="isLoading">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Cargando...
+                  </span>
+                </button>
+              </div>
+            </form>
+
+            <div class="text-end mt-3">
+              <a href="#" class="link-secondary text-decoration-none">¿Olvidaste tu contraseña?</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Copyright -->
+  <p class="text-white small mb-0">&copy; 2025 MD Research. Todos los derechos reservados.</p>
+</section>

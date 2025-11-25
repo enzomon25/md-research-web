@@ -1,0 +1,63 @@
+<div class="historial-container">
+  <div class="historial-header">
+    <h3>Historial de Estados</h3>
+    <span class="historial-count">{{ estados().length }} cambio{{ estados().length === 1 ? '' : 's' }}</span>
+  </div>
+
+  @if (estados().length === 0) {
+    <div class="historial-vacio">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p>No hay historial de estados disponible</p>
+    </div>
+  } @else {
+    <div class="timeline">
+      @for (estado of estados(); track estado.encuestaEstadoId; let isFirst = $first; let isLast = $last) {
+        <div class="timeline-item" [class.first]="isFirst" [class.last]="isLast">
+          <div class="timeline-marker">
+            <div class="timeline-dot" [ngClass]="getEstadoClase(estado.estadoId)"></div>
+            @if (!isLast) {
+              <div class="timeline-line"></div>
+            }
+          </div>
+          
+          <div class="timeline-content">
+            <div class="timeline-card">
+              <div class="card-header">
+                <span class="estado-badge" [ngClass]="getEstadoClase(estado.estadoId)">
+                  {{ estado.estadoDescripcion }}
+                </span>
+                @if (isFirst) {
+                  <span class="estado-actual-tag">ACTUAL</span>
+                }
+              </div>
+              
+              <div class="card-body">
+                <div class="info-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="info-label">Fecha:</span>
+                  <span class="info-value">{{ formatearFecha(estado.fechaCreacion) }}</span>
+                </div>
+                
+                <div class="info-row">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span class="info-label">Usuario:</span>
+                  <span class="info-value">{{ estado.usuarioCreacion }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

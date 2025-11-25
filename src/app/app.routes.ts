@@ -3,8 +3,12 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/encuestas',
+    redirectTo: '/inicio-sesion',
     pathMatch: 'full'
+  },
+  {
+    path: 'inicio-sesion',
+    loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'encuestas',

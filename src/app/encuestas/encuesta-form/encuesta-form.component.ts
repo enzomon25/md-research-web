@@ -6,13 +6,20 @@ import { EncuestasService } from '../../core/services/encuestas.service';
 import { EmpresasService } from '../../core/services/empresas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
 import { FabricantesService } from '../../core/services/fabricantes.service';
-import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado } from '../../core/models';
+import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, EncuestaObservacion, EncuestaObservacionHistorial } from '../../core/models';
 import { EncuestadosService } from '../../core/services/encuestados.service';
+import { AuthService } from '../../core/services/auth.service';
+import { EncuestaObservacionService } from '../../core/services/encuesta-observacion.service';
+import { EncuestaObservacionHistorialService } from '../../core/services/encuesta-observacion-historial.service';
+import { ESTADOS_ENCUESTA } from '../../core/constants/estados-encuesta.constants';
+import { ROLES } from '../../core/constants/roles.constants';
+import { CATEGORIAS_PARAMETROS } from '../../core/constants';
+import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados/encuesta-historial-estados.component';
 
 @Component({
   selector: 'app-encuesta-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EncuestaHistorialEstadosComponent],
   templateUrl: './encuesta-form.component.html',
   styleUrl: './encuesta-form.component.css'
 })
@@ -20,6 +27,15 @@ export class EncuestaFormComponent implements OnInit {
   encuesta = signal<Encuesta | null>(null);
   cargando = signal(true);
   encuestaId = signal<number>(0);
+  esEditable = signal(true);
+  
+  // Modal de confirmación para validador
+  mostrarModalConfirmacionRevision = signal(false);
+  procesandoCambioEstado = signal(false);
+  
+  // Modal de confirmación para encuestador (encuesta observada)
+  mostrarModalEncuestaObservada = signal(false);
+  procesandoCambioEstadoCorreccion = signal(false);
 
   // Búsqueda de encuestados
   tipoBusquedaEncuestado = signal<'numdoc' | 'nombres'>('numdoc');
@@ -104,6 +120,28 @@ export class EncuestaFormComponent implements OnInit {
     actividadEconomica: ''
   });
 
+  // Observaciones por sección
+  observaciones = signal<Map<string, EncuestaObservacion>>(new Map());
+  observacionesTexto = signal<Map<string, string>>(new Map());
+  guardandoObservacion = signal<Map<string, boolean>>(new Map());
+
+  // Historial de observaciones por sección (solo para VALIDADOR)
+  historialObservaciones = signal<Map<string, EncuestaObservacionHistorial[]>>(new Map());
+  seccionesHistorialExpandidas = signal<Set<string>>(new Set());
+
+  // Modal de transferencia/aprobación
+  mostrarModalTransferencia = signal(false);
+  procesandoTransferencia = signal(false);
+
+  // Modal de confirmación para desestimar observación
+  mostrarModalDesestimar = signal(false);
+  seccionDesestimar = signal<string>('');
+  procesandoDesestimar = signal(false);
+
+  // Control de cambios sin guardar
+  encuestaOriginal = signal<Encuesta | null>(null);
+  tieneCambiosSinGuardar = signal(false);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -111,14 +149,17 @@ export class EncuestaFormComponent implements OnInit {
     private empresasService: EmpresasService,
     private parametrosService: ParametrosService,
     private fabricantesService: FabricantesService,
-    private encuestadosService: EncuestadosService
+    private encuestadosService: EncuestadosService,
+    private authService: AuthService,
+    private observacionService: EncuestaObservacionService,
+    private historialObservacionService: EncuestaObservacionHistorialService
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.encuestaId.set(+id);
-      this.cargarEncuesta(+id);
+      this.verificarYCargarEncuesta(+id);
     }
     
     // Cargar tipos de empresa
@@ -160,7 +201,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarLugaresCompra(): void {
-    this.parametrosService.listarPorCategoria('LUGAR_COMPRA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.LUGAR_COMPRA).subscribe({
       next: (lugares) => {
         this.lugaresCompra.set(lugares);
       },
@@ -171,7 +212,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarTiposCompraCemento(): void {
-    this.parametrosService.listarPorCategoria('TIPO_COMPRA_CEMENTO').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_COMPRA_CEMENTO).subscribe({
       next: (tipos) => {
         this.tiposCompraCemento.set(tipos);
       },
@@ -182,7 +223,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarTiposPresentacionBolsa(): void {
-    this.parametrosService.listarPorCategoria('TIPO_PRESENTACION_BOLSA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_PRESENTACION_BOLSA).subscribe({
       next: (tipos) => {
         this.tiposPresentacionBolsa.set(tipos);
       },
@@ -193,7 +234,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarTiposPresentacionGranel(): void {
-    this.parametrosService.listarPorCategoria('TIPO_PRESENTACION_GRANEL').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_PRESENTACION_GRANEL).subscribe({
       next: (tipos) => {
         this.tiposPresentacionGranel.set(tipos);
       },
@@ -228,7 +269,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarCantidadPresentacionBolsa(): void {
-    this.parametrosService.listarPorCategoria('CANTIDAD_PRESENTACION_BOLSA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.CANTIDAD_PRESENTACION_BOLSA).subscribe({
       next: (cantidades) => {
         this.cantidadPresentacionBolsa.set(cantidades);
       },
@@ -239,7 +280,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarCantidadPresentacionBombona(): void {
-    this.parametrosService.listarPorCategoria('CANTIDAD_PRESENTACION_BOMBONA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.CANTIDAD_PRESENTACION_BOMBONA).subscribe({
       next: (cantidades) => {
         this.cantidadPresentacionBombona.set(cantidades);
       },
@@ -250,7 +291,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarCantidadPresentacionBigbag(): void {
-    this.parametrosService.listarPorCategoria('CANTIDAD_PRESENTACION_BIGBAG').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.CANTIDAD_PRESENTACION_BIGBAG).subscribe({
       next: (cantidades) => {
         this.cantidadPresentacionBigbag.set(cantidades);
       },
@@ -261,7 +302,7 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   cargarMediosContacto(): void {
-    this.parametrosService.listarPorCategoria('MEDIO_CONTACTO').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.MEDIO_CONTACTO).subscribe({
       next: (medios) => {
         this.mediosContacto.set(medios);
       },
@@ -271,53 +312,31 @@ export class EncuestaFormComponent implements OnInit {
     });
   }
 
-  cargarEncuesta(id: number): void {
+  /**
+   * Verifica si el usuario es VALIDADOR y la encuesta está en TRANSFERIDO
+   * Si es así, muestra modal de confirmación antes de cargar el detalle
+   */
+  verificarYCargarEncuesta(id: number): void {
     this.cargando.set(true);
+    
+    // Primero obtenemos solo el estadoId de la encuesta sin cargar todo el detalle
     this.encuestasService.obtenerPorId(id).subscribe({
       next: (encuesta) => {
-        console.log('Encuesta cargada del backend:', encuesta);
-        
-        // Convertir fechaEncuesta de ISO a formato YYYY-MM-DD si existe
-        if (encuesta.fechaEncuesta) {
-          const fecha = new Date(encuesta.fechaEncuesta);
-          const año = fecha.getFullYear();
-          const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-          const dia = String(fecha.getDate()).padStart(2, '0');
-          encuesta.fechaEncuesta = `${año}-${mes}-${dia}`;
-        }
-        
-        // Si viene marcaFabricanteInfo, autocompletar los campos para mostrarlos
-        if (encuesta.marcaFabricanteInfo) {
-          encuesta.nombreMarca = encuesta.marcaFabricanteInfo.nombreMarca || undefined;
-          encuesta.tipoCemento = encuesta.marcaFabricanteInfo.tipoCemento;
-          encuesta.descFisica = encuesta.marcaFabricanteInfo.descFisica || undefined;
-        }
-        
-        console.log('Encuesta después de autocompletar:', {
-          fabricanteId: encuesta.fabricanteId,
-          nombreMarca: encuesta.nombreMarca,
-          marcaFabricante: encuesta.marcaFabricante,
-          tipoCemento: encuesta.tipoCemento
-        });
-        
-        this.encuesta.set(encuesta);
-        this.cargando.set(false);
-        
-        // Si la encuesta ya tiene empresa, cargar sus datos
-        if (encuesta.empresaId) {
-          this.cargarEmpresaSeleccionada(encuesta.empresaId);
-        }
+        const rolUsuario = this.authService.getRolDescripcion();
+        const esValidador = rolUsuario === ROLES.VALIDADOR;
+        const estaTransferido = encuesta.estadoId === ESTADOS_ENCUESTA.TRANSFERIDO;
 
-        // Si la encuesta tiene datos del encuestado, cargarlos
-        if (encuesta.encuestado) {
-          this.encuestadoSeleccionado.set(encuesta.encuestado);
+        // Si es VALIDADOR y la encuesta está en TRANSFERIDO, mostrar modal de confirmación
+        if (esValidador && estaTransferido) {
+          this.cargando.set(false);
+          this.mostrarModalConfirmacionRevision.set(true);
+        } else {
+          // Caso normal: cargar el detalle directamente
+          this.procesarEncuesta(encuesta);
         }
-        
-        // NO llamar a cargarMarcasPorFabricante aquí
-        // Los datos ya vienen en marcaFabricanteInfo y se muestran directamente
       },
       error: (error) => {
-        console.error('Error al cargar encuesta:', error);
+        console.error('Error al verificar encuesta:', error);
         this.cargando.set(false);
         this.mensajeModal.set('Error al cargar la encuesta');
         this.mostrarModalError.set(true);
@@ -326,6 +345,129 @@ export class EncuestaFormComponent implements OnInit {
         }, 2000);
       }
     });
+  }
+
+  /**
+   * Método llamado cuando el validador acepta revisar la encuesta
+   */
+  aceptarRevision(): void {
+    const id = this.encuestaId();
+    this.procesandoCambioEstado.set(true);
+    
+    // Cambiar estado a EN_REVISION
+    this.encuestasService.cambiarEstado(id, ESTADOS_ENCUESTA.EN_REVISION).subscribe({
+      next: (encuestaActualizada) => {
+        this.procesandoCambioEstado.set(false);
+        this.mostrarModalConfirmacionRevision.set(false);
+        // Ahora sí cargar el detalle completo
+        this.procesarEncuesta(encuestaActualizada);
+      },
+      error: (error) => {
+        console.error('Error al cambiar estado:', error);
+        this.procesandoCambioEstado.set(false);
+        this.mensajeModal.set('Error al cambiar el estado de la encuesta');
+        this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  /**
+   * Método llamado cuando el validador cancela la revisión
+   */
+  cancelarRevision(): void {
+    this.mostrarModalConfirmacionRevision.set(false);
+    this.router.navigate(['/encuestas']);
+  }
+
+  /**
+   * Procesa y muestra el detalle de la encuesta
+   */
+  procesarEncuesta(encuesta: Encuesta): void {
+    console.log('Encuesta cargada del backend:', encuesta);
+    
+    // Convertir fechaEncuesta de ISO a formato YYYY-MM-DD si existe
+    if (encuesta.fechaEncuesta) {
+      const fecha = new Date(encuesta.fechaEncuesta);
+      const año = fecha.getFullYear();
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      encuesta.fechaEncuesta = `${año}-${mes}-${dia}`;
+    }
+    
+    // Guardar copia original para detectar cambios
+    this.encuestaOriginal.set(JSON.parse(JSON.stringify(encuesta)));
+    
+    // Si viene marcaFabricanteInfo, autocompletar los campos para mostrarlos
+    if (encuesta.marcaFabricanteInfo) {
+      encuesta.nombreMarca = encuesta.marcaFabricanteInfo.nombreMarca || undefined;
+      encuesta.tipoCemento = encuesta.marcaFabricanteInfo.tipoCemento;
+      encuesta.descFisica = encuesta.marcaFabricanteInfo.descFisica || undefined;
+    }
+    
+    console.log('Encuesta después de autocompletar:', {
+      fabricanteId: encuesta.fabricanteId,
+      nombreMarca: encuesta.nombreMarca,
+      marcaFabricante: encuesta.marcaFabricante,
+      tipoCemento: encuesta.tipoCemento
+    });
+    
+    this.encuesta.set(encuesta);
+    
+    // Establecer si la encuesta es editable
+    // Para VALIDADOR, los formularios siempre están deshabilitados
+    const rolUsuario = this.authService.getRolDescripcion();
+    const esValidador = rolUsuario === ROLES.VALIDADOR;
+    const esEncuestador = rolUsuario === ROLES.ENCUESTADOR;
+    
+    // Si es ENCUESTADOR y la encuesta está OBSERVADA, mostrar modal
+    if (esEncuestador && encuesta.estadoId === ESTADOS_ENCUESTA.OBSERVADA) {
+      this.mostrarModalEncuestaObservada.set(true);
+    }
+    
+    // VALIDADOR y ADMINISTRADOR: nunca pueden editar campos del formulario (solo lectura)
+    // ENCUESTADOR: solo puede editar en estados EN_REGISTRO (1) y EN_CORRECCION (4)
+    const esAdministrador = rolUsuario === ROLES.ADMINISTRADOR;
+    
+    if (esValidador || esAdministrador) {
+      this.esEditable.set(false);
+    } else if (esEncuestador) {
+      const puedeEditar = 
+        encuesta.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO ||
+        encuesta.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION;
+      this.esEditable.set(puedeEditar);
+    } else {
+      // Otros roles (fallback)
+      this.esEditable.set(false);
+    }
+    
+    this.cargando.set(false);
+    
+    // Si la encuesta ya tiene empresa, cargar sus datos
+    if (encuesta.empresaId) {
+      this.cargarEmpresaSeleccionada(encuesta.empresaId);
+    }
+
+    // Si la encuesta tiene datos del encuestado, cargarlos
+    if (encuesta.encuestado) {
+      this.encuestadoSeleccionado.set(encuesta.encuestado);
+    }
+
+    // Si la encuesta ya tiene fabricante, cargar sus marcas
+    if (encuesta.fabricanteId) {
+      console.log('Cargando marcas para fabricante existente:', encuesta.fabricanteId);
+      this.cargarMarcasPorFabricante(encuesta.fabricanteId);
+    }
+
+    // Cargar observaciones si es VALIDADOR o ENCUESTADOR con encuesta observada/en corrección
+    if ((esValidador || esEncuestador) && encuesta.encuestaId) {
+      this.cargarObservaciones(encuesta.encuestaId);
+    }
+  }
+
+  cargarEncuesta(id: number): void {
+    // Método legacy mantenido por compatibilidad
+    // Ahora usa verificarYCargarEncuesta para el flujo principal
+    this.verificarYCargarEncuesta(id);
   }
 
   cargarEmpresaSeleccionada(empresaId: number): void {
@@ -385,7 +527,6 @@ export class EncuestaFormComponent implements OnInit {
       ...(encuestaActual.cantidadPresentacionCompra && encuestaActual.cantidadPresentacionCompra.trim() !== '' && { cantidadPresentacionCompra: encuestaActual.cantidadPresentacionCompra }),
       ...(encuestaActual.descCompra && { descCompra: encuestaActual.descCompra }),
       ...(encuestaActual.precio !== undefined && encuestaActual.precio !== null && { precio: encuestaActual.precio }),
-      ...(encuestaActual.conIgv !== undefined && encuestaActual.conIgv !== null && { conIgv: encuestaActual.conIgv }),
       ...(encuestaActual.usoCemento && { usoCemento: encuestaActual.usoCemento }),
       ...(encuestaActual.motivoCompra && { motivoCompra: encuestaActual.motivoCompra }),
       ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo })
@@ -394,12 +535,11 @@ export class EncuestaFormComponent implements OnInit {
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
         this.encuesta.set(encuestaGuardada);
+        // Actualizar la copia original y limpiar la bandera de cambios sin guardar
+        this.encuestaOriginal.set(JSON.parse(JSON.stringify(encuestaGuardada)));
+        this.tieneCambiosSinGuardar.set(false);
         this.mensajeModal.set('Encuesta guardada exitosamente');
         this.mostrarModalExito.set(true);
-        // Redirigir al listado después de 1 segundo
-        setTimeout(() => {
-          this.router.navigate(['/encuestas']);
-        }, 1000);
       },
       error: (error) => {
         console.error('Error al guardar encuesta:', error);
@@ -622,57 +762,12 @@ export class EncuestaFormComponent implements OnInit {
     }
   }
 
-  validarLimitePrecio(event: KeyboardEvent): void {
-    const input = event.target as HTMLInputElement;
-    const valorActual = input.value;
-    const key = event.key;
-    
-    // Permitir teclas de control (backspace, delete, tab, escape, enter, arrows)
-    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {
-      return;
-    }
-    
-    // Permitir Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-    if (event.ctrlKey || event.metaKey) {
-      return;
-    }
-    
-    // Construir el nuevo valor que se tendría después de la tecla
-    const selectionStart = input.selectionStart || 0;
-    const selectionEnd = input.selectionEnd || 0;
-    const nuevoValor = valorActual.substring(0, selectionStart) + key + valorActual.substring(selectionEnd);
-    const numero = Number(nuevoValor);
-    
-    // Si el nuevo valor excede el límite, prevenir la entrada
-    if (!isNaN(numero) && numero > 99999999.99) {
-      event.preventDefault();
-    }
-  }
-
   actualizarPrecio(valor: string): void {
     const encuestaActual = this.encuesta();
     if (encuestaActual) {
-      const numero = Number(valor);
-      const MAX_PRECIO = 99999999.99;
-      
-      // Si excede el límite, no actualizar (mantener valor anterior)
-      if (numero > MAX_PRECIO) {
-        return;
-      }
-      
       this.encuesta.set({
         ...encuestaActual,
-        precio: valor && numero >= 0 ? numero : undefined
-      });
-    }
-  }
-
-  toggleIgv(checked: boolean): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual) {
-      this.encuesta.set({
-        ...encuestaActual,
-        conIgv: checked ? 1 : 0
+        precio: valor || undefined
       });
     }
   }
@@ -777,6 +872,401 @@ export class EncuestaFormComponent implements OnInit {
 
   volver(): void {
     this.router.navigate(['/encuestas']);
+  }
+
+  /**
+   * Cargar observaciones de la encuesta
+   */
+  cargarObservaciones(encuestaId: number): void {
+    this.observacionService.listarObservaciones(encuestaId).subscribe({
+      next: (observaciones) => {
+        const map = new Map<string, EncuestaObservacion>();
+        const textoMap = new Map<string, string>();
+        
+        observaciones.forEach(obs => {
+          map.set(obs.seccion, obs);
+          textoMap.set(obs.seccion, obs.observacion);
+        });
+        
+        this.observaciones.set(map);
+        this.observacionesTexto.set(textoMap);
+
+        // Cargar historial de observaciones para todos los usuarios
+        this.cargarHistorialObservaciones(encuestaId);
+      },
+      error: (error) => {
+        console.error('Error al cargar observaciones:', error);
+      }
+    });
+  }
+
+  /**
+   * Cargar historial de observaciones para todos los usuarios
+   */
+  cargarHistorialObservaciones(encuestaId: number): void {
+    console.log('🔍 Cargando historial para encuesta:', encuestaId);
+    this.historialObservacionService.listarPorEncuesta(encuestaId).subscribe({
+      next: (historial) => {
+        console.log('📦 Historial recibido:', historial);
+        // Agrupar por sección
+        const map = new Map<string, EncuestaObservacionHistorial[]>();
+        
+        // Verificar que historial no sea null
+        if (historial && Array.isArray(historial)) {
+          historial.forEach(item => {
+            const lista = map.get(item.seccion) || [];
+            lista.push(item);
+            map.set(item.seccion, lista);
+            console.log(`✅ Agregado historial para sección "${item.seccion}":`, item);
+          });
+        }
+        
+        console.log('📊 Map final de historial:', map);
+        this.historialObservaciones.set(map);
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar historial de observaciones:', error);
+        // Inicializar con Map vacío en caso de error
+        this.historialObservaciones.set(new Map());
+      }
+    });
+  }
+
+  /**
+   * Verificar si una sección tiene historial de observaciones
+   */
+  tieneHistorial(seccion: string): boolean {
+    const historial = this.historialObservaciones().get(seccion);
+    return !!historial && historial.length > 0;
+  }
+
+  /**
+   * Alternar expansión de sección de historial
+   */
+  toggleHistorialSeccion(seccion: string): void {
+    const expandidas = new Set(this.seccionesHistorialExpandidas());
+    if (expandidas.has(seccion)) {
+      expandidas.delete(seccion);
+    } else {
+      expandidas.add(seccion);
+    }
+    this.seccionesHistorialExpandidas.set(expandidas);
+  }
+
+  /**
+   * Verificar si el historial de una sección está expandido
+   */
+  esHistorialExpandido(seccion: string): boolean {
+    return this.seccionesHistorialExpandidas().has(seccion);
+  }
+
+  /**
+   * Obtener historial de una sección ordenado por ciclo descendente
+   */
+  obtenerHistorialSeccion(seccion: string): EncuestaObservacionHistorial[] {
+    return this.historialObservaciones().get(seccion) || [];
+  }
+
+  /**
+   * Guardar observación de una sección
+   */
+  guardarObservacion(seccion: string): void {
+    const encuestaId = this.encuesta()?.encuestaId;
+    if (!encuestaId) return;
+
+    const observacion = this.observacionesTexto().get(seccion) || '';
+    
+    // Marcar como guardando
+    const guardandoMap = new Map(this.guardandoObservacion());
+    guardandoMap.set(seccion, true);
+    this.guardandoObservacion.set(guardandoMap);
+
+    this.observacionService.guardarObservacion(encuestaId, seccion, observacion).subscribe({
+      next: () => {
+        // Actualizar estado de guardado
+        guardandoMap.set(seccion, false);
+        this.guardandoObservacion.set(guardandoMap);
+        
+        // Recargar observaciones para obtener datos actualizados
+        this.cargarObservaciones(encuestaId);
+      },
+      error: (error) => {
+        console.error('Error al guardar observación:', error);
+        guardandoMap.set(seccion, false);
+        this.guardandoObservacion.set(guardandoMap);
+      }
+    });
+  }
+
+  /**
+   * Abrir modal para confirmar desestimar observación
+   */
+  abrirModalDesestimar(seccion: string): void {
+    this.seccionDesestimar.set(seccion);
+    this.mostrarModalDesestimar.set(true);
+  }
+
+  /**
+   * Cerrar modal de desestimar observación
+   */
+  cerrarModalDesestimar(): void {
+    this.mostrarModalDesestimar.set(false);
+    this.seccionDesestimar.set('');
+  }
+
+  /**
+   * Confirmar y eliminar observación de una sección
+   */
+  confirmarDesestimar(): void {
+    const encuestaId = this.encuesta()?.encuestaId;
+    const seccion = this.seccionDesestimar();
+    
+    if (!encuestaId || !seccion) return;
+
+    this.procesandoDesestimar.set(true);
+
+    // Guardar con texto vacío para desactivar lógicamente
+    this.observacionService.guardarObservacion(encuestaId, seccion, '').subscribe({
+      next: () => {
+        // Limpiar el texto local
+        const textoMap = new Map(this.observacionesTexto());
+        textoMap.set(seccion, '');
+        this.observacionesTexto.set(textoMap);
+        
+        this.procesandoDesestimar.set(false);
+        this.cerrarModalDesestimar();
+        
+        // Recargar observaciones
+        this.cargarObservaciones(encuestaId);
+      },
+      error: (error) => {
+        console.error('Error al eliminar observación:', error);
+        this.procesandoDesestimar.set(false);
+        this.mensajeModal.set('Error al desestimar la observación');
+        this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  /**
+   * Actualizar texto de observación
+   */
+  actualizarObservacionTexto(seccion: string, texto: string): void {
+    const textoMap = new Map(this.observacionesTexto());
+    textoMap.set(seccion, texto);
+    this.observacionesTexto.set(textoMap);
+  }
+
+  /**
+   * Verificar si es validador
+   */
+  esValidador(): boolean {
+    return this.authService.getRolDescripcion() === ROLES.VALIDADOR;
+  }
+
+  /**
+   * Verificar si es encuestador
+   */
+  esEncuestador(): boolean {
+    return this.authService.getRolDescripcion() === ROLES.ENCUESTADOR;
+  }
+
+  /**
+   * Verificar si el validador puede editar observaciones
+   * Solo puede editar cuando la encuesta está en estado EN_REVISION (2)
+   */
+  puedeEditarObservaciones(): boolean {
+    return this.esValidador() && this.encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REVISION;
+  }
+
+
+
+  /**
+   * Verificar si el validador o administrador puede ver observaciones en modo lectura
+   * Puede ver cuando es validador/admin pero la encuesta ya fue procesada
+   */
+  puedeVerObservaciones(): boolean {
+    const estadoId = this.encuesta()?.estadoId;
+    const esAdmin = this.authService.getRolDescripcion() === ROLES.ADMINISTRADOR;
+    return (this.esValidador() || esAdmin) && (
+      estadoId === ESTADOS_ENCUESTA.OBSERVADA || 
+      estadoId === ESTADOS_ENCUESTA.APROBADO ||
+      estadoId === ESTADOS_ENCUESTA.EN_CORRECCION
+    );
+  }
+
+  /**
+   * Verificar si el encuestador puede ver observaciones
+   * Puede ver cuando es encuestador y la encuesta está OBSERVADA o EN_CORRECCION
+   */
+  encuestadorPuedeVerObservaciones(): boolean {
+    const estadoId = this.encuesta()?.estadoId;
+    return this.esEncuestador() && (
+      estadoId === ESTADOS_ENCUESTA.OBSERVADA ||
+      estadoId === ESTADOS_ENCUESTA.EN_CORRECCION
+    );
+  }
+
+  /**
+   * Confirmar que el encuestador vio las observaciones y cambiar a EN_CORRECCION
+   */
+  confirmarVisualizacionObservaciones(): void {
+    const encuestaActual = this.encuesta();
+    if (!encuestaActual || !encuestaActual.encuestaId) {
+      return;
+    }
+
+    this.procesandoCambioEstadoCorreccion.set(true);
+    
+    this.encuestasService.cambiarEstado(encuestaActual.encuestaId, ESTADOS_ENCUESTA.EN_CORRECCION).subscribe({
+      next: (encuestaActualizada) => {
+        this.encuesta.set(encuestaActualizada);
+        this.mostrarModalEncuestaObservada.set(false);
+        this.procesandoCambioEstadoCorreccion.set(false);
+        this.mensajeModal.set('Ahora puede editar los campos observados');
+        this.mostrarModalExito.set(true);
+        setTimeout(() => {
+          this.mostrarModalExito.set(false);
+        }, 2000);
+      },
+      error: (error) => {
+        console.error('Error al cambiar estado:', error);
+        this.procesandoCambioEstadoCorreccion.set(false);
+        this.mensajeModal.set('Error al cambiar el estado de la encuesta');
+        this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  /**
+   * Cancelar visualización y redirigir al listado
+   */
+  cancelarVisualizacionObservaciones(): void {
+    this.router.navigate(['/encuestas']);
+  }
+
+  /**
+   * Obtener texto de observación
+   */
+  obtenerObservacionTexto(seccion: string): string {
+    return this.observacionesTexto().get(seccion) || '';
+  }
+
+  /**
+   * Verificar si se está guardando observación
+   */
+  estaGuardandoObservacion(seccion: string): boolean {
+    return this.guardandoObservacion().get(seccion) || false;
+  }
+
+  /**
+   * Contar observaciones con texto
+   */
+  contarObservaciones(): number {
+    let count = 0;
+    this.observacionesTexto().forEach((texto) => {
+      if (texto && texto.trim().length > 0) {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  /**
+   * Obtener secciones con observaciones
+   */
+  obtenerSeccionesConObservaciones(): string[] {
+    const secciones: string[] = [];
+    const seccionesNombres: { [key: string]: string } = {
+      empresa: 'Empresa',
+      encuestado: 'Encuestado',
+      productos: 'Productos',
+      fabricante: 'Fabricante',
+      compra: 'Compra',
+    };
+
+    this.observacionesTexto().forEach((texto, seccion) => {
+      if (texto && texto.trim().length > 0) {
+        secciones.push(seccionesNombres[seccion] || seccion);
+      }
+    });
+
+    return secciones;
+  }
+
+  /**
+   * Verificar si hay observaciones
+   */
+  tieneObservaciones(): boolean {
+    return this.contarObservaciones() > 0;
+  }
+
+  /**
+   * Obtener total de registros en historial
+   */
+  obtenerHistorialTotal(): number {
+    let total = 0;
+    this.historialObservaciones().forEach((lista) => {
+      total += lista.length;
+    });
+    return total;
+  }
+
+  /**
+   * Abrir modal de transferencia
+   */
+  abrirModalTransferencia(): void {
+    this.mostrarModalTransferencia.set(true);
+  }
+
+  /**
+   * Cerrar modal de transferencia
+   */
+  cerrarModalTransferencia(): void {
+    this.mostrarModalTransferencia.set(false);
+  }
+
+  /**
+   * Transferir o aprobar encuesta según observaciones
+   */
+  confirmarTransferencia(): void {
+    const encuestaId = this.encuesta()?.encuestaId;
+    if (!encuestaId) return;
+
+    this.procesandoTransferencia.set(true);
+
+    // Si hay observaciones → OBSERVADA (6)
+    // Si no hay observaciones → APROBADO (5)
+    const nuevoEstado = this.tieneObservaciones()
+      ? ESTADOS_ENCUESTA.OBSERVADA
+      : ESTADOS_ENCUESTA.APROBADO;
+
+    this.encuestasService.cambiarEstado(encuestaId, nuevoEstado).subscribe({
+      next: () => {
+        this.procesandoTransferencia.set(false);
+        this.mostrarModalTransferencia.set(false);
+        this.mensajeModal.set(
+          this.tieneObservaciones()
+            ? 'Encuesta devuelta al encuestador con observaciones'
+            : 'Encuesta aprobada correctamente'
+        );
+        this.mostrarModalExito.set(true);
+        
+        setTimeout(() => {
+          this.router.navigate(['/encuestas']);
+        }, 2000);
+      },
+      error: (error) => {
+        console.error('Error al transferir encuesta:', error);
+        this.procesandoTransferencia.set(false);
+        this.mostrarModalTransferencia.set(false);
+        
+        // Mostrar mensaje de error específico del backend
+        const mensajeError = error?.error?.message || 'Error al procesar la encuesta';
+        this.mensajeModal.set(mensajeError);
+        this.mostrarModalError.set(true);
+      }
+    });
   }
 
   buscarEmpresa(): void {
@@ -1327,9 +1817,10 @@ export class EncuestaFormComponent implements OnInit {
           this.encuesta()?.tipoLugarCompra
         );
       case 'fabricante':
+        // Solo requiere fabricanteId y marcaFabricante (que es marca_fabricante_id)
+        // nombreMarca es solo para visualización y no se guarda
         return !!(
           this.encuesta()?.fabricanteId &&
-          this.encuesta()?.nombreMarca &&
           this.encuesta()?.marcaFabricante
         );
       case 'compra':
@@ -1362,6 +1853,45 @@ export class EncuestaFormComponent implements OnInit {
     return secciones.every(seccion => this.seccionCompleta(seccion));
   }
 
+  // Determina si los campos deben estar deshabilitados
+  camposDeshabilitados(): boolean {
+    return !this.esEditable();
+  }
+
+  /**
+   * Detectar si hay cambios sin guardar
+   */
+  detectarCambios(): void {
+    const original = this.encuestaOriginal();
+    const actual = this.encuesta();
+    
+    if (!original || !actual) {
+      this.tieneCambiosSinGuardar.set(false);
+      return;
+    }
+
+    // Comparar campos relevantes
+    const hayCambios = 
+      original.fechaEncuesta !== actual.fechaEncuesta ||
+      original.empresaId !== actual.empresaId ||
+      original.encuestadoId !== actual.encuestadoId ||
+      original.tipoLugarCompra !== actual.tipoLugarCompra ||
+      original.tipoCompra !== actual.tipoCompra ||
+      original.presentacionCompra !== actual.presentacionCompra ||
+      original.cantidadPresentacionCompra !== actual.cantidadPresentacionCompra ||
+      original.marcaFabricante !== actual.marcaFabricante ||
+      original.fabricanteId !== actual.fabricanteId ||
+      original.concretoPremezclado !== actual.concretoPremezclado ||
+      original.articulosConcreto !== actual.articulosConcreto ||
+      original.precio !== actual.precio ||
+      original.usoCemento !== actual.usoCemento ||
+      original.motivoCompra !== actual.motivoCompra ||
+      original.deseoRegalo !== actual.deseoRegalo ||
+      original.descCompra !== actual.descCompra;
+
+    this.tieneCambiosSinGuardar.set(hayCambios);
+  }
+
   completarEncuesta(): void {
     const encuestaActual = this.encuesta();
     if (!encuestaActual || !encuestaActual.encuestaId) {
@@ -1377,8 +1907,16 @@ export class EncuestaFormComponent implements OnInit {
       return;
     }
 
-    // Cambiar estado a 3 (Transferido) usando el nuevo endpoint
-    this.encuestasService.cambiarEstado(encuestaActual.encuestaId, 3).subscribe({
+    // Validar que no haya cambios sin guardar
+    this.detectarCambios();
+    if (this.tieneCambiosSinGuardar()) {
+      this.mensajeModal.set('Tiene cambios sin guardar. Por favor, guarde los cambios antes de completar la encuesta.');
+      this.mostrarModalError.set(true);
+      return;
+    }
+
+    // Cambiar estado a TRANSFERIDO usando el nuevo endpoint
+    this.encuestasService.cambiarEstado(encuestaActual.encuestaId, ESTADOS_ENCUESTA.TRANSFERIDO).subscribe({
       next: (encuestaActualizada) => {
         // Si viene marcaFabricanteInfo, extraer los campos para mostrarlos
         if (encuestaActualizada.marcaFabricanteInfo) {

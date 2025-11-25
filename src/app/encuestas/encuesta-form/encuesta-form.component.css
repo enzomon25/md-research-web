@@ -5,6 +5,34 @@
   font-family: 'Nunito', sans-serif;
 }
 
+/* Deshabilitar todos los campos cuando el formulario no es editable */
+.formulario-deshabilitado input:not([readonly]),
+.formulario-deshabilitado select,
+.formulario-deshabilitado textarea:not(.observacion-container textarea) {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background-color: #f8f9fc !important;
+}
+
+/* Los textarea de observaciones siempre están habilitados */
+.observacion-container textarea {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: text !important;
+}
+
+/* Estilo específico para botones deshabilitados en formulario-deshabilitado */
+.formulario-deshabilitado button:not(.btn-volver):not(.btn-cancelar):not(.btn-cancelar-registro):not(.btn-devolver):not(.btn-aprobar):not(.btn-modal-devolver):not(.btn-modal-cancelar):not(.btn-modal-confirmar):not(.btn-eliminar-observacion):not(.seccion-header) {
+  pointer-events: none;
+  cursor: not-allowed !important;
+  background-color: #e3e6f0 !important;
+  color: #858796 !important;
+  border-color: #d1d3e2 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
 .loading {
   text-align: center;
   padding: 3rem;
@@ -26,6 +54,28 @@
   border-radius: 0.35rem;
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
   border: 1px solid #e3e6f0;
+}
+
+.alerta-solo-lectura {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: 0.35rem;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.alerta-solo-lectura svg {
+  flex-shrink: 0;
+}
+
+.alerta-solo-lectura span {
+  font-weight: 500;
 }
 
 .btn-volver {
@@ -264,9 +314,16 @@
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.btn-guardar:hover {
+.btn-guardar:hover:not(:disabled) {
   background-color: #17a673;
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-guardar:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-completar {
@@ -351,9 +408,16 @@
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.btn-cambiar-empresa:hover {
+.btn-cambiar-empresa:hover:not(:disabled) {
   background-color: #2e59d9;
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-cambiar-empresa:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .empresa-search-row {
@@ -851,4 +915,488 @@
 
 .btn-modal-confirmar:hover {
   background-color: #17a673;
+}
+
+/* Contenedor de observaciones del validador */
+.observacion-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #4e73df;
+  background-color: #f8f9fc;
+  padding: 1.5rem;
+  border-radius: 0.35rem;
+}
+
+.observacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.observacion-container label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4e73df;
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+}
+
+.btn-eliminar-observacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.btn-eliminar-observacion:hover {
+  background-color: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-eliminar-observacion svg {
+  flex-shrink: 0;
+}
+
+.observacion-readonly {
+  background-color: #e9ecef !important;
+  border-top-color: #858796 !important;
+}
+
+.observacion-readonly label {
+  color: #858796 !important;
+}
+
+.observacion-readonly textarea {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  border-color: #ced4da !important;
+}
+
+.badge-readonly {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: #858796;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.observacion-container textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.15s ease-in-out;
+}
+
+.observacion-container textarea:focus {
+  border-color: #4e73df;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.observacion-container textarea::placeholder {
+  color: #858796;
+  font-style: italic;
+}
+
+.guardando-observacion {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #858796;
+  font-style: italic;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Resumen de revisión para validador */
+.resumen-revision {
+  background: white;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.resumen-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  color: white;
+}
+
+.resumen-header svg {
+  flex-shrink: 0;
+}
+
+.resumen-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-body {
+  padding: 1.5rem;
+}
+
+.resumen-estadistica {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fc;
+  border-radius: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.estadistica-label {
+  font-size: 0.875rem;
+  color: #5a5c69;
+  font-family: 'Nunito', sans-serif;
+}
+
+.estadistica-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4e73df;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-secciones {
+  padding: 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #f6c23e;
+  border-radius: 0.35rem;
+}
+
+.secciones-titulo {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #856404;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-secciones ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.resumen-secciones li {
+  font-size: 0.875rem;
+  color: #856404;
+  margin-bottom: 0.25rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-sin-observaciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #d4edda;
+  border-left: 4px solid #1cc88a;
+  border-radius: 0.35rem;
+  color: #155724;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-sin-observaciones svg {
+  flex-shrink: 0;
+  stroke: #1cc88a;
+}
+
+/* Botones de acción del validador */
+.btn-devolver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #f6c23e;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-devolver:hover {
+  background-color: #f4b30d;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-devolver svg {
+  flex-shrink: 0;
+}
+
+.btn-aprobar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #1cc88a;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-aprobar:hover {
+  background-color: #17a673;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-aprobar svg {
+  flex-shrink: 0;
+}
+
+/* Estilos para el modal de transferencia */
+.modal-lista-observaciones {
+  background: #fff3cd;
+  border-left: 4px solid #f6c23e;
+  border-radius: 0.35rem;
+  padding: 1rem 1rem 1rem 2rem;
+  margin: 1rem 0;
+  list-style: disc;
+}
+
+.modal-lista-observaciones li {
+  color: #856404;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.btn-modal-devolver {
+  padding: 0.75rem 1.5rem;
+  background-color: #f6c23e;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-modal-devolver:hover {
+  background-color: #f4b30d;
+}
+
+.btn-modal-devolver:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+
+/* ===================================
+   HISTORIAL DE OBSERVACIONES
+   =================================== */
+
+.historial-observaciones-container {
+  margin-top: 1rem;
+  border: 2px solid #a8b1c7;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f8f9fc;
+}
+
+.historial-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.historial-header:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a4190 100%);
+}
+
+.historial-header.expandido {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.historial-icono {
+  font-size: 1.25rem;
+  filter: brightness(0) invert(1);
+}
+
+.historial-header label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+  margin: 0;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.historial-toggle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.historial-body {
+  padding: 1rem;
+  background-color: #ffffff;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.historial-item {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-left: 4px solid #667eea;
+  border-radius: 0.35rem;
+  background-color: #f8f9fc;
+  transition: all 0.2s ease;
+}
+
+.historial-item:hover {
+  border-left-color: #764ba2;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.historial-item:last-child {
+  margin-bottom: 0;
+}
+
+.historial-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.historial-ciclo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.historial-usuario {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background-color: #4e73df;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+}
+
+.historial-usuario::before {
+  content: '👤 ';
+  margin-right: 0.25rem;
+}
+
+.historial-fecha {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background-color: #858796;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+}
+
+.historial-fecha::before {
+  content: '🕐 ';
+  margin-right: 0.25rem;
+}
+
+.historial-texto {
+  padding: 0.75rem;
+  background-color: #ffffff;
+  border-radius: 0.25rem;
+  color: #5a5c69;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid #e3e6f0;
+}
+
+.historial-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.historial-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.historial-body::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.historial-body::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
 }

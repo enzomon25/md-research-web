@@ -38,6 +38,16 @@ export interface Encuestado {
   contacto?: string;
 }
 
+export interface Estado {
+  estadoId: number;
+  descripcionEstado: string;
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion: string;
+  usuarioModificacion: string;
+  indActivo: number;
+}
+
 export interface Encuesta {
   encuestaId?: number;
   encuestadoId?: number;
@@ -65,8 +75,7 @@ export interface Encuesta {
   motivoCompra?: string;
   deseoRegalo?: number;
   fechaEncuesta?: string;
-  precio?: number;
-  conIgv?: number;
+  precio?: string;
   fechaCreacion?: string;
   usuarioCreacion?: string;
   fechaModificacion?: string;
@@ -74,6 +83,19 @@ export interface Encuesta {
   indActivo?: number;
   empresa?: Empresa | null;
   fabricante?: Fabricante | null;
+  estado?: Estado;
+  estados?: Array<{
+    encuestaEstadoId: number;
+    estadoId: number;
+    estadoDescripcion: string;
+    encuestaId: number;
+    fechaCreacion: string;
+    usuarioCreacion: string;
+    fechaModificacion: string;
+    usuarioModificacion: string;
+    indActivo: number;
+  }>;
+  editable?: boolean;
 }
 
 export interface Empresa {
@@ -108,4 +130,31 @@ export interface PaginacionRespuesta<T> {
   pagina: number;
   limite: number;
   totalPaginas: number;
+}
+
+export interface EncuestaObservacion {
+  observacionId: number;
+  encuestaId: number;
+  seccion: string;
+  observacion: string;
+  usuarioId: number;
+  fechaCreacion: string;
+  fechaModificacion: string;
+  usuarioCreacion: string;
+  usuarioModificacion: string;
+}
+
+export interface EncuestaObservacionHistorial {
+  historialId: number;
+  encuestaId: number;
+  seccion: string;
+  texto: string;
+  fechaArchivado: string;
+  usuarioValidador: string;
+  cicloRevision: number;
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion: string;
+  usuarioModificacion: string;
+  indActivo: number;
 }

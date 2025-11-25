@@ -1,10 +1,23 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EncuestasService } from '../../core/services/encuestas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
+import { AuthService } from '../../core/services/auth.service';
+import { ModulosService, Modulo } from '../../core/services/modulos.service';
 import { Encuesta, Parametro, PaginacionRespuesta } from '../../core/models';
+import { ESTADOS_ENCUESTA, CATEGORIAS_PARAMETROS } from '../../core/constants';
+
+interface TipoEmpresa {
+  tipoEmpresaId: number;
+  descripcionTipoEmpresa: string;
+}
+
+interface Estado {
+  estadoId: string;
+  descripcionEstado: string;
+}
 
 @Component({
   selector: 'app-encuestas-list',
@@ -21,10 +34,15 @@ export class EncuestasListComponent implements OnInit {
   cargando = signal(false);
   mostrarModalTipo = signal(false);
   mostrarDrawer = signal(false);
+  mostrarMenuUsuario = signal(false);
   tiposEncuesta = signal<Parametro[]>([]);
-  tiposEmpresa = signal<any[]>([]);
-  estados = signal<any[]>([]);
+  tiposEmpresa = signal<TipoEmpresa[]>([]);
+  estados = signal<Estado[]>([]);
   creandoEncuesta = signal(false);
+  modulos = signal<Modulo[]>([]);
+  
+  // Constantes para el template
+  readonly MODULOS_KEYS = { ENCUESTAS: 'ENCUESTAS' };
   
   // Fecha máxima (hoy)
   fechaHoy: string;
@@ -44,6 +62,8 @@ export class EncuestasListComponent implements OnInit {
   constructor(
     private encuestasService: EncuestasService,
     private parametrosService: ParametrosService,
+    private authService: AuthService,
+    private modulosService: ModulosService,
     private router: Router
   ) {
     // Establecer fecha máxima como hoy en formato YYYY-MM-DD
@@ -55,6 +75,18 @@ export class EncuestasListComponent implements OnInit {
     this.cargarEncuestas();
     this.cargarEstados();
     this.cargarTiposEmpresa();
+    this.cargarModulos();
+  }
+
+  cargarModulos(): void {
+    this.modulosService.obtenerModulosDisponibles().subscribe({
+      next: (modulos) => {
+        this.modulos.set(modulos);
+      },
+      error: (error) => {
+        console.error('Error al cargar módulos:', error);
+      }
+    });
   }
 
   toggleDrawer(): void {
@@ -78,9 +110,9 @@ export class EncuestasListComponent implements OnInit {
   }
 
   cargarEstados(): void {
-    this.parametrosService.listarPorCategoria('ESTADO_ENCUESTA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.ESTADO_ENCUESTA).subscribe({
       next: (estados: Parametro[]) => {
-        this.estados.set(estados.map(e => ({
+        this.estados.set(estados.map((e): Estado => ({
           estadoId: e.llave,
           descripcionEstado: e.valor
         })));
@@ -95,9 +127,9 @@ export class EncuestasListComponent implements OnInit {
     // Cargar tipos de empresa del servicio correspondiente
     // Por ahora, definir tipos estáticos si no existe el servicio
     this.tiposEmpresa.set([
-      { tipoEmpresaId: 1, descripcionTipoEmpresa: 'Privada' },
-      { tipoEmpresaId: 2, descripcionTipoEmpresa: 'Pública' },
-      { tipoEmpresaId: 3, descripcionTipoEmpresa: 'Mixta' }
+      { tipoEmpresaId: 1, descripcionTipoEmpresa: 'Privada' } as TipoEmpresa,
+      { tipoEmpresaId: 2, descripcionTipoEmpresa: 'Pública' } as TipoEmpresa,
+      { tipoEmpresaId: 3, descripcionTipoEmpresa: 'Mixta' } as TipoEmpresa
     ]);
   }
 
@@ -177,7 +209,7 @@ export class EncuestasListComponent implements OnInit {
 
   nuevaEncuesta(): void {
     this.mostrarModalTipo.set(true);
-    this.parametrosService.listarPorCategoria('TIPO_ENCUESTA').subscribe({
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_ENCUESTA).subscribe({
       next: (tipos: Parametro[]) => {
         this.tiposEncuesta.set(tipos);
       },
@@ -220,23 +252,98 @@ export class EncuestasListComponent implements OnInit {
     this.cargarEncuestas();
   }
 
-  getEstadoClass(estadoValor: string): string {
-    const estado = estadoValor.toLowerCase();
+  mostrarColumnaUsuarioCreador(): boolean {
+    return this.encuestas().some(encuesta => !!encuesta.usuarioCreacion);
+  }
+
+  obtenerNombreUsuario(): string {
+    const userData = this.authService.getUserData();
+    return userData?.nombres || 'Usuario';
+  }
+
+  obtenerRolUsuario(): string {
+    return this.authService.getRolDescripcion();
+  }
+
+  obtenerInicialesUsuario(): string {
+    const userData = this.authService.getUserData();
+    if (!userData) return 'U';
     
-    if (estado.includes('registro')) {
-      return 'estado-en-registro';
+    const inicialNombre = userData.nombres?.charAt(0).toUpperCase() || '';
+    const inicialApellido = userData.apepat?.charAt(0).toUpperCase() || '';
+    
+    return inicialNombre + inicialApellido;
+  }
+
+  obtenerNombreCompletoUsuario(): string {
+    const userData = this.authService.getUserData();
+    if (!userData) return 'Usuario';
+    
+    return `${userData.nombres} ${userData.apepat}`.trim();
+  }
+
+  obtenerEmailUsuario(): string {
+    const userData = this.authService.getUserData();
+    return userData?.username || '';
+  }
+
+  toggleMenuUsuario(): void {
+    this.mostrarMenuUsuario.set(!this.mostrarMenuUsuario());
+  }
+
+  cerrarSesion(): void {
+    // Agregar clase de fade-out
+    const layoutContainer = document.querySelector('.layout-container');
+    if (layoutContainer) {
+      layoutContainer.classList.add('fade-out');
     }
-    if (estado.includes('completa') || estado.includes('finalizada')) {
-      return 'estado-completa';
+
+    // Esperar la animación antes de cerrar sesión
+    setTimeout(() => {
+      this.authService.logout().subscribe({
+        next: () => {
+          this.router.navigate(['/inicio-sesion']);
+        },
+        error: (error) => {
+          console.error('Error al cerrar sesión:', error);
+          // Aunque falle el request, redirigimos igual
+          this.router.navigate(['/inicio-sesion']);
+        }
+      });
+    }, 300);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const userMenuContainer = target.closest('.user-menu-container');
+    
+    if (!userMenuContainer && this.mostrarMenuUsuario()) {
+      this.mostrarMenuUsuario.set(false);
     }
-    if (estado.includes('cancelada') || estado.includes('anulada')) {
-      return 'estado-cancelada';
-    }
-    if (estado.includes('revision') || estado.includes('pendiente')) {
-      return 'estado-en-revision';
+  }
+
+  getEstadoClass(estadoId: number | undefined): string {
+    if (!estadoId) {
+      return 'estado-default';
     }
     
-    return 'estado-default';
+    switch (estadoId) {
+      case ESTADOS_ENCUESTA.EN_REGISTRO:
+        return 'estado-en-registro';
+      case ESTADOS_ENCUESTA.EN_REVISION:
+        return 'estado-en-revision';
+      case ESTADOS_ENCUESTA.TRANSFERIDO:
+        return 'estado-completa';
+      case ESTADOS_ENCUESTA.EN_CORRECCION:
+        return 'estado-en-correccion';
+      case ESTADOS_ENCUESTA.APROBADO:
+        return 'estado-aprobado';
+      case ESTADOS_ENCUESTA.OBSERVADA:
+        return 'estado-observada';
+      default:
+        return 'estado-default';
+    }
   }
 
   reanudarEncuesta(encuestaId: number): void {

@@ -1,4 +1,4 @@
-<div class="encuesta-form-container">
+<div class="encuesta-form-container" [class.formulario-deshabilitado]="!esEditable()">
   @if (cargando()) {
     <div class="loading">
       <p>Cargando encuesta...</p>
@@ -12,6 +12,16 @@
         <h1>Encuesta: {{ encuesta()?.tipoEncuestaValor || encuesta()?.tipoEncuesta }}</h1>
         <span class="encuesta-id">ID: {{ encuesta()?.encuestaId }}</span>
       </div>
+      @if (!esEditable()) {
+        <div class="alerta-solo-lectura">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Esta encuesta no se puede modificar.</span>
+        </div>
+      }
     </div>
 
     <div class="form-sections">
@@ -41,9 +51,92 @@
                   type="date" 
                   [value]="encuesta()?.fechaEncuesta" 
                   (change)="actualizarFechaEncuesta($event)"
-                  [max]="fechaMaxima">
+                  [max]="fechaMaxima"
+                  [disabled]="camposDeshabilitados()">
               </div>
             </div>
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación - Datos Generales</label>
+                  @if (obtenerObservacionTexto('datos_encuesta').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('datos_encuesta')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('datos_encuesta')"
+                  (input)="actualizarObservacionTexto('datos_encuesta', $any($event.target).value)"
+                  (blur)="guardarObservacion('datos_encuesta')"
+                  placeholder="Agregar observaciones sobre datos generales y empresa..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('datos_encuesta')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (puedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación - Datos Generales</label>
+                  <span class="badge-readonly">Solo lectura</span>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('datos_encuesta')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Datos Generales</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('datos_encuesta')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones -->
+            @if (tieneHistorial('datos_encuesta')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('datos_encuesta')"
+                  [class.expandido]="esHistorialExpandido('datos_encuesta')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('datos_encuesta') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('datos_encuesta')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('datos_encuesta'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -84,7 +177,7 @@
                     <span>{{ empresaSeleccionada()?.tamanoEmpresa || 'N/A' }}</span>
                   </div>
                 </div>
-                <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()">
+                <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()" [disabled]="camposDeshabilitados()">
                   Cambiar Empresa
                 </button>
               </div>
@@ -216,6 +309,76 @@
                   </div>
                 </div>
               }
+            }
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación</label>
+                  @if (obtenerObservacionTexto('empresa').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('empresa')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('empresa')"
+                  (input)="actualizarObservacionTexto('empresa', $any($event.target).value)"
+                  (blur)="guardarObservacion('empresa')"
+                  placeholder="Agregar observaciones sobre esta sección..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('empresa')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('empresa').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Empresa</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('empresa')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones (solo VALIDADOR y ADMINISTRADOR) -->
+            @if (tieneHistorial('empresa')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('empresa')"
+                  [class.expandido]="esHistorialExpandido('empresa')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('empresa') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('empresa')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('empresa'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
             }
           </div>
         }
@@ -414,6 +577,76 @@
                 </div>
               }
             }
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación</label>
+                  @if (obtenerObservacionTexto('encuestado').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('encuestado')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('encuestado')"
+                  (input)="actualizarObservacionTexto('encuestado', $any($event.target).value)"
+                  (blur)="guardarObservacion('encuestado')"
+                  placeholder="Agregar observaciones sobre esta sección..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('encuestado')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('encuestado').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Encuestado</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('encuestado')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones -->
+            @if (tieneHistorial('encuestado')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('encuestado')"
+                  [class.expandido]="esHistorialExpandido('encuestado')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('encuestado') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('encuestado')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('encuestado'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -469,6 +702,76 @@
                 </select>
               </div>
             </div>
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación</label>
+                  @if (obtenerObservacionTexto('productos').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('productos')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('productos')"
+                  (input)="actualizarObservacionTexto('productos', $any($event.target).value)"
+                  (blur)="guardarObservacion('productos')"
+                  placeholder="Agregar observaciones sobre esta sección..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('productos')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('productos').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Productos</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('productos')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones -->
+            @if (tieneHistorial('productos')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('productos')"
+                  [class.expandido]="esHistorialExpandido('productos')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('productos') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('productos')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('productos'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -575,6 +878,76 @@
                 }
               }
             </div>
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación</label>
+                  @if (obtenerObservacionTexto('fabricante').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('fabricante')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('fabricante')"
+                  (input)="actualizarObservacionTexto('fabricante', $any($event.target).value)"
+                  (blur)="guardarObservacion('fabricante')"
+                  placeholder="Agregar observaciones sobre esta sección..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('fabricante')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('fabricante').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Fabricante</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('fabricante')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones -->
+            @if (tieneHistorial('fabricante')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('fabricante')"
+                  [class.expandido]="esHistorialExpandido('fabricante')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('fabricante') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('fabricante')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('fabricante'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -663,28 +1036,13 @@
                   [value]="encuesta()?.descCompra || ''"
                   (input)="actualizarDescCompra($any($event.target).value)"></textarea>
               </div>
-              <div class="form-group full-width precio-igv-container">
-                <div class="precio-input-group">
-                  <label>Precio</label>
-                  <input 
-                    type="number" 
-                    min="0" 
-                    max="99999999.99"
-                    step="0.01" 
-                    [value]="encuesta()?.precio || ''"
-                    (input)="actualizarPrecio($any($event.target).value)"
-                    (keydown)="validarLimitePrecio($event)">
-                </div>
-                <div class="igv-toggle-group">
-                  <label>Con IGV</label>
-                  <label class="toggle-switch">
-                    <input 
-                      type="checkbox" 
-                      [checked]="encuesta()?.conIgv === 1"
-                      (change)="toggleIgv($any($event.target).checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
+              <div class="form-group full-width">
+                <label>Precio</label>
+                <input 
+                  type="text" 
+                  maxlength="1000"
+                  [value]="encuesta()?.precio || ''"
+                  (input)="actualizarPrecio($any($event.target).value)">
               </div>
             </div>
           </div>
@@ -732,16 +1090,155 @@
                 </select>
               </div>
             </div>
+            
+            <!-- Observación del Validador -->
+            @if (puedeEditarObservaciones()) {
+              <div class="observacion-container">
+                <div class="observacion-header">
+                  <label>Observaciones de Validación</label>
+                  @if (obtenerObservacionTexto('compra').trim()) {
+                    <button
+                      type="button"
+                      class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimar('compra')"
+                      title="Desestimar observación">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('compra')"
+                  (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
+                  (blur)="guardarObservacion('compra')"
+                  placeholder="Agregar observaciones sobre esta sección..."
+                  rows="3"></textarea>
+                @if (estaGuardandoObservacion('compra')) {
+                  <span class="guardando-observacion">Guardando...</span>
+                }
+              </div>
+            }
+            @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('compra').trim()) {
+              <div class="observacion-container observacion-readonly">
+                <div class="observacion-header">
+                  <label>⚠️ Observaciones del Validador - Uso y Compra</label>
+                </div>
+                <textarea
+                  [value]="obtenerObservacionTexto('compra')"
+                  readonly
+                  rows="3"></textarea>
+              </div>
+            }
+            
+            <!-- Historial de Observaciones -->
+            @if (tieneHistorial('compra')) {
+              <div class="historial-observaciones-container">
+                <div 
+                  class="historial-header"
+                  (click)="toggleHistorialSeccion('compra')"
+                  [class.expandido]="esHistorialExpandido('compra')">
+                  <span class="historial-icono">📜</span>
+                  <label>Historial de Observaciones Anteriores</label>
+                  <span class="historial-toggle">{{ esHistorialExpandido('compra') ? '−' : '+' }}</span>
+                </div>
+                @if (esHistorialExpandido('compra')) {
+                  <div class="historial-body">
+                    @for (item of obtenerHistorialSeccion('compra'); track item.historialId) {
+                      <div class="historial-item">
+                        <div class="historial-meta">
+                          <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                          <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                          <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div class="historial-texto">{{ item.texto }}</div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         }
       </div>
     </div>
 
+    <!-- Panel de Resumen de Revisión (visible para todos los usuarios) -->
+    @if (contarObservaciones() > 0 || obtenerHistorialTotal() > 0) {
+      <div class="resumen-revision">
+        <div class="resumen-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <h3>Resumen de Revisión</h3>
+        </div>
+        <div class="resumen-body">
+          <div class="resumen-estadistica">
+            <span class="estadistica-label">Observaciones activas:</span>
+            <span class="estadistica-valor">{{ contarObservaciones() }}</span>
+          </div>
+          <div class="resumen-estadistica">
+            <span class="estadistica-label">Observaciones archivadas:</span>
+            <span class="estadistica-valor">{{ obtenerHistorialTotal() }}</span>
+          </div>
+          @if (contarObservaciones() > 0) {
+            <div class="resumen-secciones">
+              <p class="secciones-titulo">Secciones con observaciones activas:</p>
+              <ul>
+                @for (seccion of obtenerSeccionesConObservaciones(); track seccion) {
+                  <li>{{ seccion }}</li>
+                }
+              </ul>
+            </div>
+          }
+          @if (obtenerHistorialTotal() === 0 && contarObservaciones() === 0) {
+            <div class="resumen-sin-observaciones">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>No hay observaciones registradas</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Historial de Estados -->
+    @if (encuesta()?.estados && encuesta()!.estados!.length > 0) {
+      <app-encuesta-historial-estados [estadosInput]="encuesta()!.estados!" />
+    }
+
     <div class="form-actions">
       <button class="btn-cancelar" (click)="volver()">Cancelar</button>
-      <button class="btn-guardar" (click)="guardarEncuesta()">Guardar Cambios</button>
-      @if (todasLasSeccionesCompletas()) {
-        <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+      @if (!esValidador()) {
+        <button class="btn-guardar" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados()">Guardar Cambios</button>
+        @if (todasLasSeccionesCompletas() && esEditable()) {
+          <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+        }
+      }
+      @if (puedeEditarObservaciones()) {
+        @if (tieneObservaciones()) {
+          <button class="btn-devolver" (click)="abrirModalTransferencia()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 14 4 9 9 4"></polyline>
+              <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+            </svg>
+            Devolver con Observaciones
+          </button>
+        } @else {
+          <button class="btn-aprobar" (click)="abrirModalTransferencia()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Aprobar Encuesta
+          </button>
+        }
       }
     </div>
   }
@@ -791,6 +1288,153 @@
   </div>
 }
 
+<!-- Modal: Confirmación de Revisión (Validador) -->
+@if (mostrarModalConfirmacionRevision()) {
+  <div class="modal-overlay">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>📋 Revisión de Encuesta</h3>
+      </div>
+      <div class="modal-body">
+        <p><strong>Esta encuesta ha sido transferida para su revisión.</strong></p>
+        <p>Al aceptar, la encuesta cambiará a estado "En revisión" y podrá visualizar y editar su contenido.</p>
+        <p>¿Desea revisar esta encuesta?</p>
+      </div>
+      <div class="modal-actions">
+        <button 
+          class="btn-modal-cancelar" 
+          (click)="cancelarRevision()"
+          [disabled]="procesandoCambioEstado()">
+          Cancelar
+        </button>
+        <button 
+          class="btn-modal-confirmar" 
+          (click)="aceptarRevision()"
+          [disabled]="procesandoCambioEstado()">
+          {{ procesandoCambioEstado() ? 'Procesando...' : 'Aceptar revisión' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Encuesta Observada (Encuestador) -->
+@if (mostrarModalEncuestaObservada()) {
+  <div class="modal-overlay">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Encuesta con Observaciones</h3>
+      </div>
+      <div class="modal-body">
+        <p><strong>Esta encuesta tiene observaciones del validador.</strong></p>
+        <p>Al aceptar, podrá visualizar las observaciones y la encuesta cambiará a estado "En corrección".</p>
+        <p>Podrá editar los campos observados para corregirlos.</p>
+        <p><strong>¿Desea continuar?</strong></p>
+      </div>
+      <div class="modal-actions">
+        <button 
+          class="btn-modal-cancelar" 
+          (click)="cancelarVisualizacionObservaciones()"
+          [disabled]="procesandoCambioEstadoCorreccion()">
+          Cancelar
+        </button>
+        <button 
+          class="btn-modal-confirmar" 
+          (click)="confirmarVisualizacionObservaciones()"
+          [disabled]="procesandoCambioEstadoCorreccion()">
+          {{ procesandoCambioEstadoCorreccion() ? 'Procesando...' : 'Ver observaciones' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Transferencia/Aprobación -->
+@if (mostrarModalTransferencia()) {
+  <div class="modal-overlay">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        @if (tieneObservaciones()) {
+          <h3>⚠️ Devolver Encuesta</h3>
+        } @else {
+          <h3>✓ Aprobar Encuesta</h3>
+        }
+      </div>
+      <div class="modal-body">
+        @if (tieneObservaciones()) {
+          <p><strong>¿Devolver encuesta al encuestador?</strong></p>
+          <p>Se encontraron <strong>{{ contarObservaciones() }}</strong> observaciones en:</p>
+          <ul class="modal-lista-observaciones">
+            @for (seccion of obtenerSeccionesConObservaciones(); track seccion) {
+              <li>{{ seccion }}</li>
+            }
+          </ul>
+          <p>El encuestador deberá corregir estos puntos antes de volver a transferir la encuesta.</p>
+        } @else {
+          <p><strong>¿Aprobar esta encuesta?</strong></p>
+          <p>No se encontraron observaciones.</p>
+          <p>La encuesta será marcada como <strong>APROBADA</strong> y completada.</p>
+        }
+      </div>
+      <div class="modal-actions">
+        <button 
+          class="btn-modal-cancelar" 
+          (click)="cerrarModalTransferencia()"
+          [disabled]="procesandoTransferencia()">
+          Cancelar
+        </button>
+        @if (tieneObservaciones()) {
+          <button 
+            class="btn-modal-devolver" 
+            (click)="confirmarTransferencia()"
+            [disabled]="procesandoTransferencia()">
+            {{ procesandoTransferencia() ? 'Procesando...' : 'Devolver Encuesta' }}
+          </button>
+        } @else {
+          <button 
+            class="btn-modal-confirmar" 
+            (click)="confirmarTransferencia()"
+            [disabled]="procesandoTransferencia()">
+            {{ procesandoTransferencia() ? 'Procesando...' : '✓ Aprobar' }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Desestimar Observación -->
+@if (mostrarModalDesestimar()) {
+  <div class="modal-overlay" (click)="cerrarModalDesestimar()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Confirmar Desestimar</h3>
+        <button class="modal-close" (click)="cerrarModalDesestimar()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Está seguro que desea desestimar esta observación?</p>
+        <p style="font-size: 0.875rem; color: #858796; margin-top: 0.5rem;">
+          La observación será eliminada de forma permanente y no se podrá recuperar.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button 
+          class="btn-modal-cancelar" 
+          (click)="cerrarModalDesestimar()"
+          [disabled]="procesandoDesestimar()">
+          Cancelar
+        </button>
+        <button 
+          class="btn-modal-devolver" 
+          (click)="confirmarDesestimar()"
+          [disabled]="procesandoDesestimar()">
+          {{ procesandoDesestimar() ? 'Procesando...' : 'Sí, Desestimar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- Modal: Éxito -->
 @if (mostrarModalExito()) {
   <div class="modal-overlay" (click)="cerrarModalExito()">
@@ -830,3 +1474,4 @@
     </div>
   </div>
 }
+

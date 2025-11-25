@@ -1,0 +1,372 @@
+/* Sección principal */
+section.bg-gradient-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  position: relative;
+}
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem !important;
+}
+
+.row {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  margin: 0 !important;
+}
+
+.left-column {
+  flex: 0 0 500px;
+  padding: 0;
+  padding-right: 3rem;
+}
+
+.right-column {
+  flex: 1;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 2rem !important;
+}
+
+/* Contenido izquierdo */
+.logo-container h1 {
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+  color: white !important;
+  margin-bottom: 0;
+}
+
+.border-white-subtle {
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1;
+  margin: 1.5rem 0;
+}
+
+.text-white {
+  color: white !important;
+}
+
+.text-white h2 {
+  font-weight: 600;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.3;
+  margin-bottom: 1.5rem;
+  color: white !important;
+}
+
+.text-white .lead {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  line-height: 1.6;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.features-list {
+  margin-top: 2rem;
+}
+
+.feature-item {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.feature-item i {
+  font-size: 1.2rem;
+  color: #a8ff78;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.feature-item span {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Tarjeta del formulario */
+.card {
+  border-radius: 1.5rem;
+  background: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 600px;
+}
+
+.card-body {
+  padding: 3rem !important;
+}
+
+.card h3 {
+  color: #2d3436;
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Formulario */
+.card-body .form-label {
+  display: block;
+  font-weight: 600;
+  color: #2d3436 !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 0.95rem;
+}
+
+.card-body .mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+.card-body .form-control {
+  font-size: 1rem;
+  padding: 0.75rem !important;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  transition: all 0.3s ease;
+  width: 100%;
+  display: block;
+}
+
+.card-body .form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+  outline: 0;
+}
+
+.card-body .form-control::placeholder {
+  color: #a8a8a8;
+}
+
+/* Botón */
+.btn-primary {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  border: none;
+  transition: all 0.3s ease;
+  border-radius: 0.35rem;
+  color: white !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(78, 115, 223, 0.4);
+  background: linear-gradient(135deg, #224abe 0%, #4e73df 100%);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-lg {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Alerta */
+.alert {
+  border-radius: 0.35rem;
+  border: none;
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+}
+
+.alert-danger {
+  background-color: transparent;
+  color: #dc3545;
+  padding: 0.5rem 0;
+}
+
+/* Pantalla de carga durante navegación */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #5a6268;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-content h3 {
+  font-weight: 600;
+  color: white;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Texto muted */
+.text-muted {
+  color: #6c757d !important;
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+/* Enlaces */
+.link-secondary {
+  color: #6c757d !important;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.link-secondary:hover {
+  color: #4e73df !important;
+}
+
+/* Footer copyright */
+/* Footer copyright */
+.text-white.small {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 400;
+  font-size: 0.875rem;
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  width: 100%;
+}
+
+section.bg-gradient-primary {
+  position: relative;
+}
+/* Spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* Alineación vertical */
+.align-items-center {
+  align-items: center !important;
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+  .row {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 991px) {
+  .container {
+    max-width: 960px;
+  }
+  
+  .logo-container h1 {
+    font-size: 2.5rem;
+  }
+  
+  .text-white h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 767px) {
+  section.bg-gradient-primary {
+    padding: 2rem 0;
+  }
+  
+  .row {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .left-column,
+  .right-column {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .logo-container h1 {
+    font-size: 2.5rem;
+  }
+  
+  .text-white h2 {
+    font-size: 1.75rem;
+  }
+  
+  .text-white .lead {
+    font-size: 1rem;
+  }
+  
+  .feature-item {
+    font-size: 0.95rem;
+  }
+  
+  .card {
+    margin-top: 2rem;
+  }
+  
+  .card-body {
+    padding: 2rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .row > [class*='col-'] {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .logo-container h1 {
+    font-size: 2rem;
+  }
+  
+  .text-white h2 {
+    font-size: 1.5rem;
+  }
+  
+  .features-list {
+    margin-top: 1.5rem;
+  }
+  
+  .card-body {
+    padding: 1.5rem !important;
+  }
+}

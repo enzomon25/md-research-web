@@ -2,6 +2,29 @@
   display: flex;
   min-height: 100vh;
   background: #f8f9fc;
+  animation: fadeInContent 0.5s ease-in;
+}
+
+@keyframes fadeInContent {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.layout-container.fade-out {
+  animation: fadeOutContent 0.3s ease-out forwards;
+}
+
+@keyframes fadeOutContent {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .sidebar {
@@ -52,18 +75,40 @@
   width: 100%;
 }
 
+.user-welcome {
+  padding: 0.75rem 1.5rem 0.25rem;
+  width: 100%;
+}
+
+.user-greeting {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.25rem 0;
+  font-family: 'Nunito', 'Roboto', sans-serif;
+}
+
+.user-role {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+}
+
 .sidebar nav {
   width: 100%;
 }
 
 .sidebar-heading {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1.5rem;
   font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05rem;
   color: rgba(255, 255, 255, 0.4);
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sidebar nav ul {
@@ -98,6 +143,16 @@
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border-left: 3px solid #fff;
+}
+
+.sidebar-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sidebar-item.disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .sidebar-item svg {
@@ -636,6 +691,21 @@ tbody tr:hover {
   color: #fff;
 }
 
+.estado-en-correccion {
+  background-color: #f6c23e;
+  color: #856404;
+}
+
+.estado-aprobado {
+  background-color: #1cc88a;
+  color: #155724;
+}
+
+.estado-observada {
+  background-color: #e74a3b;
+  color: #fff;
+}
+
 .estado-default {
   background-color: #858796;
   color: #fff;
@@ -670,4 +740,157 @@ tbody tr:hover {
 
 .btn-accion svg {
   display: block;
+}
+
+/* User Menu Styles */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu-container {
+  position: relative;
+}
+
+.user-menu-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.user-menu-trigger:hover {
+  transform: scale(1.05);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: box-shadow 0.2s ease;
+}
+
+.user-avatar:hover {
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border: 1px solid #e3e6f0;
+  min-width: 280px;
+  z-index: 1000;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-dropdown-header {
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-dropdown-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  font-family: 'Nunito', sans-serif;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.user-dropdown-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-dropdown-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #5a5c69;
+  font-family: 'Nunito', sans-serif;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown-email {
+  font-size: 0.75rem;
+  color: #858796;
+  font-family: 'Nunito', sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown-divider {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #e3e6f0;
+}
+
+.user-dropdown-item {
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-family: 'Nunito', sans-serif;
+  color: #5a5c69;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-align: left;
+}
+
+.user-dropdown-item:hover {
+  background-color: #f8f9fc;
+  color: #4e73df;
+}
+
+.user-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }

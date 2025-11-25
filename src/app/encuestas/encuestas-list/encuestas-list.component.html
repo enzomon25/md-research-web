@@ -11,13 +11,25 @@
         <span class="sidebar-brand-text">MD Research</span>
       </div>
       <hr class="sidebar-divider">
+      
+      <!-- Saludo y rol del usuario -->
+      <div class="user-welcome">
+        <h3 class="user-greeting">Hola, {{ obtenerNombreUsuario() }}</h3>
+        <p class="user-role">{{ obtenerRolUsuario() }}</p>
+      </div>
+      <hr class="sidebar-divider">
     </div>
     <nav>
       <div class="sidebar-heading">Módulos</div>
       <ul>
-        <li class="sidebar-item active">Encuestas</li>
-        <li class="sidebar-item">Usuarios</li>
-        <li class="sidebar-item">Zonificación</li>
+        @for (modulo of modulos(); track modulo.llave) {
+          <li class="sidebar-item" [class.active]="modulo.llave === MODULOS_KEYS.ENCUESTAS">
+            {{ modulo.valor }}
+          </li>
+        }
+        @empty {
+          <li class="sidebar-item disabled">No hay módulos disponibles</li>
+        }
       </ul>
     </nav>
   </aside>
@@ -25,9 +37,39 @@
     <div class="encuestas-container">
       <div class="header">
         <h1>Gestión de Encuestas</h1>
-        <button class="btn-nueva-encuesta" (click)="nuevaEncuesta()">
-          + Nueva Encuesta
-        </button>
+        <div class="header-actions">
+          <button class="btn-nueva-encuesta" (click)="nuevaEncuesta()">
+            + Nueva Encuesta
+          </button>
+          
+          <!-- Menú de usuario -->
+          <div class="user-menu-container">
+            <button class="user-menu-trigger" (click)="toggleMenuUsuario()">
+              <div class="user-avatar">{{ obtenerInicialesUsuario() }}</div>
+            </button>
+            
+            @if (mostrarMenuUsuario()) {
+              <div class="user-dropdown">
+                <div class="user-dropdown-header">
+                  <div class="user-dropdown-badge">{{ obtenerInicialesUsuario() }}</div>
+                  <div class="user-dropdown-info">
+                    <div class="user-dropdown-name">{{ obtenerNombreCompletoUsuario() }}</div>
+                    <div class="user-dropdown-email">{{ obtenerEmailUsuario() }}</div>
+                  </div>
+                </div>
+                <hr class="user-dropdown-divider">
+                <button class="user-dropdown-item" (click)="cerrarSesion()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Cerrar sesión
+                </button>
+              </div>
+            }
+          </div>
+        </div>
       </div>
 
       @if (cargando()) {
@@ -127,6 +169,9 @@
                 <th>RUC</th>
                 <th>Fecha de Encuesta</th>
                 <th>Fecha de Creación</th>
+                @if (mostrarColumnaUsuarioCreador()) {
+                  <th>Creado Por</th>
+                }
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -139,14 +184,17 @@
                   <td>{{ encuesta.empresa?.ruc || '-' }}</td>
                   <td>{{ encuesta.fechaEncuesta || '-' }}</td>
                   <td>{{ encuesta.fechaCreacion || '-' }}</td>
+                  @if (mostrarColumnaUsuarioCreador()) {
+                    <td>{{ encuesta.usuarioCreacion || '-' }}</td>
+                  }
                   <td>
-                    <div class="estado-badge" [ngClass]="getEstadoClass(encuesta.estadoValor || '')">
-                      {{ encuesta.estadoValor || encuesta.estadoId }}
+                    <div class="estado-badge" [ngClass]="getEstadoClass(encuesta.estadoId)">
+                      {{ encuesta.estado?.descripcionEstado || encuesta.estadoId }}
                     </div>
                   </td>
                   <td>
                     <div class="acciones-container">
-                      @if (encuesta.estadoValor && encuesta.estadoValor.toLowerCase().includes('registro')) {
+                      @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('registro')) {
                         <button 
                           class="btn-accion" 
                           (click)="reanudarEncuesta(encuesta.encuestaId!)"
@@ -157,7 +205,7 @@
                           </svg>
                         </button>
                       }
-                      @if (encuesta.estadoValor && encuesta.estadoValor.toLowerCase().includes('observ')) {
+                      @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('observ')) {
                         <button 
                           class="btn-accion" 
                           (click)="editarEncuesta(encuesta.encuestaId!)"
@@ -168,7 +216,7 @@
                           </svg>
                         </button>
                       }
-                      @if (encuesta.estadoValor && !encuesta.estadoValor.toLowerCase().includes('registro') && !encuesta.estadoValor.toLowerCase().includes('observ')) {
+                      @if (encuesta.estado?.descripcionEstado && !(encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('registro')) && !(encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('observ'))) {
                         <button 
                           class="btn-accion" 
                           (click)="revisarEncuesta(encuesta.encuestaId!)"
@@ -184,7 +232,7 @@
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="empty-message">No hay encuestas registradas</td>
+                  <td [attr.colspan]="mostrarColumnaUsuarioCreador() ? 8 : 7" class="empty-message">No hay encuestas registradas</td>
                 </tr>
               }
             </tbody>
