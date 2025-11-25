@@ -904,10 +904,8 @@ export class EncuestaFormComponent implements OnInit {
    * Cargar historial de observaciones para todos los usuarios
    */
   cargarHistorialObservaciones(encuestaId: number): void {
-    console.log('🔍 Cargando historial para encuesta:', encuestaId);
     this.historialObservacionService.listarPorEncuesta(encuestaId).subscribe({
       next: (historial) => {
-        console.log('📦 Historial recibido:', historial);
         // Agrupar por sección
         const map = new Map<string, EncuestaObservacionHistorial[]>();
         
@@ -917,15 +915,13 @@ export class EncuestaFormComponent implements OnInit {
             const lista = map.get(item.seccion) || [];
             lista.push(item);
             map.set(item.seccion, lista);
-            console.log(`✅ Agregado historial para sección "${item.seccion}":`, item);
           });
         }
         
-        console.log('📊 Map final de historial:', map);
         this.historialObservaciones.set(map);
       },
       error: (error) => {
-        console.error('❌ Error al cargar historial de observaciones:', error);
+        console.error('Error al cargar historial de observaciones:', error);
         // Inicializar con Map vacío en caso de error
         this.historialObservaciones.set(new Map());
       }
