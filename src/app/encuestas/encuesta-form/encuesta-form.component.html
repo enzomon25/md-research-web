@@ -643,7 +643,7 @@
           </div>
           <div class="form-group">
             <label>¿Cuál es el lugar de compra?</label>
-            <select [value]="encuesta()?.tipoLugarCompra || ''"
+            <select [(ngModel)]="encuesta()!.tipoLugarCompra"
               (change)="seleccionarLugarCompra($any($event.target).value)">
               <option value="" disabled>Seleccione un lugar</option>
               @for (lugar of lugaresCompra(); track lugar.llave) {
@@ -1142,18 +1142,6 @@
         }
       </div>
 
-    <div class="modal-body">
-      <p>La empresa que está buscando no se encuentra registrada en el sistema.</p>
-      <p><strong>¿Desea registrar esta empresa ahora?</strong></p>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontrada()">
-        No, cancelar
-      </button>
-      <button class="btn-modal-confirmar" (click)="confirmarRegistroEmpresa()">
-        Sí, registrar empresa
-      </button>
-    </div>
 
     <!-- Modal: encuestado no encontrada -->
     @if (mostrarModalNoEncontradaEncuestado()) {
@@ -1173,6 +1161,7 @@
           </div>
         </div>
       </div>
+
     }
 
     <!-- Modal: empresa no encontrada -->
