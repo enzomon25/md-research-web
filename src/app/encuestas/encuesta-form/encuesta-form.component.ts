@@ -1401,8 +1401,24 @@ export class EncuestaFormComponent implements OnInit {
     }
   }
 
+  confirmarRegistroEncuestado(): void {
+    this.mostrarModalNoEncontradaEncuestado.set(false);
+    this.mostrarFormularioRegistroEncuestado.set(true);
+
+    const termino = this.terminoBusquedaEncuestado().trim();
+    if (this.tipoBusquedaEncuestado() === 'numdoc') {
+      this.nuevoEncuestado = { ...this.nuevoEncuestado, numdoc: termino };
+    } else {
+      this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
+    }
+  }
+
   cerrarModalNoEncontrada(): void {
     this.mostrarModalNoEncontrada.set(false);
+  }
+
+  cerrarModalNoEncontradaEncuestado(): void {
+    this.mostrarModalNoEncontradaEncuestado.set(false);
   }
 
   cancelarRegistroEmpresa(): void {
@@ -1587,7 +1603,8 @@ export class EncuestaFormComponent implements OnInit {
         // Si no hay resultados, mostrar formulario de registro directamente
         if (response.data.length === 0) {
           console.log('No hay resultados, mostrando formulario de registro');
-          this.mostrarFormularioRegistroEncuestado.set(true);
+          // this.mostrarFormularioRegistroEncuestado.set(true);
+          this.mostrarModalNoEncontradaEncuestado.set(true);
           this.mostrarResultadosEncuestado.set(false);
           
           // Pre-llenar el campo según el tipo de búsqueda

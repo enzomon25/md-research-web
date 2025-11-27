@@ -1155,6 +1155,45 @@
       </button>
     </div>
 
+    <!-- Modal: encuestado no encontrada -->
+    @if (mostrarModalNoEncontradaEncuestado()) {
+      <div class="modal-overlay" (click)="cerrarModalNoEncontradaEncuestado()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Encuestado no encontrado</h3>
+            <button class="modal-close" (click)="cerrarModalNoEncontradaEncuestado()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>El encuestado que está buscando no se encuentra registrado en el sistema.</p>
+            <p><strong>¿Desea registrar este encuestado ahora?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontradaEncuestado()">No, cancelar</button>
+            <button class="btn-modal-confirmar" (click)="confirmarRegistroEncuestado()">Sí, registrar encuestado</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal: empresa no encontrada -->
+    @if (mostrarModalNoEncontrada()) {
+      <div class="modal-overlay" (click)="cerrarModalNoEncontrada()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Empresa no encontrada</h3>
+            <button class="modal-close" (click)="cerrarModalNoEncontrada()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>La empresa que está buscando no se encuentra registrada en el sistema.</p>
+            <p><strong>¿Desea registrar esta empresa ahora?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontrada()">No, cancelar</button>
+            <button class="btn-modal-confirmar" (click)="confirmarRegistroEmpresa()">Sí, registrar empresa</button>
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- Modal: RUC duplicado -->
     @if (mostrarModalRucDuplicado()) {
