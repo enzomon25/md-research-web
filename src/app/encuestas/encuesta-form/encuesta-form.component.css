@@ -1,3 +1,97 @@
+/* Botón guardar observación */
+.btn-guardar-observacion {
+  margin-top: 0.75rem;
+  float: right;
+  background-color: #4e73df;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.08);
+  transition: background 0.2s;
+  display: inline-block;
+}
+.btn-guardar-observacion:hover:not(:disabled) {
+  background-color: #2e59d9;
+}
+.btn-guardar-observacion:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+.observacion-actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.25rem;
+  gap: 1rem;
+}
+/* Contenedor relativo para toda la fila de búsqueda */
+.dropdown-row-container {
+  position: relative;
+  width: 100%;
+}
+.search-results--row-width {
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+/* El dropdown solo del ancho del input */
+.search-results--input-width {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  left: 0;
+  right: auto;
+}
+/* Contenedor relativo para input y dropdown */
+.input-dropdown-container {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.input-dropdown-container .search-results {
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+/* Botón buscar encuestado, igual a btn-guardar-empresa pero azul */
+.btn-buscar-encuestado {
+  padding: 0.4rem 1.2rem;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  background-color: #4e73df;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-buscar-encuestado:hover:not(:disabled) {
+  background-color: #2e59d9;
+}
+.btn-buscar-encuestado:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
 .encuesta-form-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -430,6 +524,7 @@
   flex: 0 0 70%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .search-type {
@@ -501,8 +596,6 @@
 .search-results {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: 0;
   background: white;
   border: 1px solid #d1d3e2;
   border-top: none;
