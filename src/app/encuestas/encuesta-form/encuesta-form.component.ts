@@ -115,8 +115,6 @@ export class EncuestaFormComponent implements OnInit {
     razonSocial: '',
     ruc: '',
     tipoEmpresaId: 1,
-    condicionContribuyente: '',
-    tamanoEmpresa: '',
     actividadEconomica: ''
   });
 
@@ -1287,8 +1285,6 @@ export class EncuestaFormComponent implements OnInit {
       razonSocial: '',
       ruc: '',
       tipoEmpresaId: 1,
-      condicionContribuyente: '',
-      tamanoEmpresa: '',
       actividadEconomica: ''
     });
 
@@ -1375,8 +1371,6 @@ export class EncuestaFormComponent implements OnInit {
       razonSocial: '',
       ruc: '',
       tipoEmpresaId: 1,
-      condicionContribuyente: '',
-      tamanoEmpresa: '',
       actividadEconomica: ''
     });
   }
@@ -1407,8 +1401,7 @@ export class EncuestaFormComponent implements OnInit {
     const empresa = this.nuevaEmpresa();
     
     // Validar que todos los campos obligatorios estén completos
-    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || 
-        !empresa.condicionContribuyente || !empresa.tamanoEmpresa || !empresa.actividadEconomica) {
+    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || !empresa.actividadEconomica) {
       this.mensajeModal.set('Todos los campos son obligatorios');
       this.mostrarModalError.set(true);
       return;
@@ -1457,8 +1450,6 @@ export class EncuestaFormComponent implements OnInit {
                 razonSocial: '',
                 ruc: '',
                 tipoEmpresaId: 1,
-                condicionContribuyente: '',
-                tamanoEmpresa: '',
                 actividadEconomica: ''
               });
               

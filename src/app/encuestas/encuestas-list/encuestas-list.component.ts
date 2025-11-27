@@ -51,7 +51,7 @@ export class EncuestasListComponent implements OnInit {
   filtroRuc = '';
   filtroNombreEmpresa = '';
   filtroFechaEncuesta = '';
-  filtroTamanoEmpresa = '';
+  // filtroTamanoEmpresa eliminado
   filtroTipoEmpresa = '';
   filtroEstado = '';
   
@@ -158,12 +158,7 @@ export class EncuestasListComponent implements OnInit {
       );
     }
 
-    // Filtrar por tamaño de empresa
-    if (this.filtroTamanoEmpresa) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.empresa?.tamanoEmpresa === this.filtroTamanoEmpresa
-      );
-    }
+    // Eliminado: filtro por tamaño de empresa
 
     // Filtrar por tipo de empresa
     if (this.filtroTipoEmpresa) {
@@ -199,7 +194,7 @@ export class EncuestasListComponent implements OnInit {
     this.filtroRuc = '';
     this.filtroNombreEmpresa = '';
     this.filtroFechaEncuesta = '';
-    this.filtroTamanoEmpresa = '';
+    // this.filtroTamanoEmpresa = '';
     this.filtroTipoEmpresa = '';
     this.filtroEstado = '';
     this.filtroFechaCreacionDesde = '';

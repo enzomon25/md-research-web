@@ -168,14 +168,7 @@
                     <label>Razón Social</label>
                     <span>{{ empresaSeleccionada()?.razonSocial }}</span>
                   </div>
-                  <div class="dato-empresa">
-                    <label>Condición Contribuyente</label>
-                    <span>{{ empresaSeleccionada()?.condicionContribuyente || 'N/A' }}</span>
-                  </div>
-                  <div class="dato-empresa">
-                    <label>Tamaño Empresa</label>
-                    <span>{{ empresaSeleccionada()?.tamanoEmpresa || 'N/A' }}</span>
-                  </div>
+                  <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
                 </div>
                 <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()" [disabled]="camposDeshabilitados()">
                   Cambiar Empresa
@@ -274,22 +267,7 @@
                         }
                       </select>
                     </div>
-                    <div class="registro-form-group">
-                      <label>Condición Contribuyente *</label>
-                      <input 
-                        type="text" 
-                        [(ngModel)]="nuevaEmpresa().condicionContribuyente"
-                        placeholder="Condición"
-                        required>
-                    </div>
-                    <div class="registro-form-group">
-                      <label>Tamaño Empresa *</label>
-                      <input 
-                        type="text" 
-                        [(ngModel)]="nuevaEmpresa().tamanoEmpresa"
-                        placeholder="Tamaño"
-                        required>
-                    </div>
+                    <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
                     <div class="registro-form-group">
                       <label>Actividad Económica *</label>
                       <input 

@@ -103,8 +103,6 @@ export interface Empresa {
   razonSocial: string;
   ruc: string;
   tipoEmpresaId: number;
-  condicionContribuyente?: string;
-  tamanoEmpresa?: string;
   tamanoEmpresaTop10k?: string;
   actividadEconomica?: string;
   fechaCreacion: string;
