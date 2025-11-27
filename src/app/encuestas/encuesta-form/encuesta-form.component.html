@@ -1173,11 +1173,11 @@
             <span class="estadistica-label">Observaciones archivadas:</span>
             <span class="estadistica-valor">{{ obtenerHistorialTotal() }}</span>
           </div>
-          @if (contarObservaciones() > 0) {
+          @if (obtenerSeccionesConObservacionesVisibles().length > 0) {
             <div class="resumen-secciones">
-              <p class="secciones-titulo">Secciones con observaciones activas:</p>
+              <p class="secciones-titulo">Secciones observadas:</p>
               <ul>
-                @for (seccion of obtenerSeccionesConObservaciones(); track seccion) {
+                @for (seccion of obtenerSeccionesConObservacionesVisibles(); track seccion) {
                   <li>{{ seccion }}</li>
                 }
               </ul>

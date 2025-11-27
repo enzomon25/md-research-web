@@ -24,6 +24,8 @@ interface EstadoHistorial {
 export class EncuestaHistorialEstadosComponent {
   // Input con signals API - recibe el array de estados desde el componente padre
   estadosInput = input<EstadoHistorial[]>([]);
+  // Controla si el historial está expandido o colapsado
+  expanded = false;
   
   /**
    * Computed signal que ordena los estados por encuestaEstadoId descendente
@@ -32,6 +34,20 @@ export class EncuestaHistorialEstadosComponent {
   estados = computed(() => {
     return [...this.estadosInput()].sort((a, b) => b.encuestaEstadoId - a.encuestaEstadoId);
   });
+
+  /**
+   * Devuelve solo el estado actual (más reciente)
+   */
+  estadoActual = computed(() => {
+    return this.estados().length > 0 ? [this.estados()[0]] : [];
+  });
+
+  /**
+   * Alterna el estado expandido/colapsado
+   */
+  toggleExpand() {
+    this.expanded = !this.expanded;
+  }
 
   /**
    * Formatea una fecha ISO a formato legible

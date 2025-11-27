@@ -1,3 +1,49 @@
+/* Botón para colapsar/expandir historial, igual a btn-guardar-empresa pero azul */
+/* Botón historial compacto y centrado */
+.btn-toggle-historial {
+  padding: 0.32rem 1.1rem;
+  min-width: 160px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.98rem;
+  margin: 18px auto 0 auto;
+  box-sizing: border-box;
+  background-color: #4e73df;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(80, 112, 255, 0.07);
+}
+
+.btn-toggle-historial:hover:not(:disabled) {
+  background-color: #2e59d9;
+  box-shadow: 0 4px 16px rgba(80, 112, 255, 0.12);
+}
+
+.btn-toggle-historial:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+/* Solo margen para separar el botón, sin afectar estilos Bootstrap */
+.historial-toggle-btn-container {
+  margin-top: 12px;
+}
+.estado-badge-container {
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .historial-container {
   background: white;
   border-radius: 0.35rem;
@@ -25,38 +71,60 @@
   margin: 0;
 }
 
-.historial-count {
-  background-color: #f8f9fc;
-  color: #858796;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 400;
+
+.timeline-card.compact-card {
+  background: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 0.25rem;
 }
 
-.historial-vacio {
+.timeline-card.compact-card:hover {
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+
+.card-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  color: #858796;
-  text-align: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.95em;
 }
 
-.historial-vacio svg {
-  margin-bottom: 1rem;
-  opacity: 0.5;
+.card-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
-.historial-vacio p {
-  margin: 0;
-  font-size: 0.95rem;
+.card-row-actual {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  min-width: 60px;
+  justify-content: flex-end;
 }
 
-.timeline {
-  position: relative;
-  padding: 0;
+.icon-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #5a5c69;
+  font-size: 0.95em;
+
+  .estado-badge {
+    width: 100%;
+    text-align: left;
+    justify-content: flex-start;
+    display: inline-flex;
+    overflow: hidden;
+    white-space: nowrap;
+  }
 }
 
 .timeline-item {
@@ -76,6 +144,11 @@
   align-items: center;
   margin-right: 1.5rem;
   flex-shrink: 0;
+
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  margin-right: 0;
 }
 
 .timeline-dot {
@@ -127,6 +200,8 @@
 .timeline-content {
   flex: 1;
   animation: slideIn 0.3s ease-out;
+
+  padding-left: 0.5rem;
 }
 
 @keyframes slideIn {
@@ -134,6 +209,7 @@
     opacity: 0;
     transform: translateX(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -237,7 +313,8 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #5a5c69;
+
+  padding-left: 0;
 }
 
 .info-row svg {
