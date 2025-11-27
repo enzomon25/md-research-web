@@ -24,6 +24,47 @@ import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados
   styleUrl: './encuesta-form.component.css'
 })
 export class EncuestaFormComponent implements OnInit {
+    /**
+     * Obtener secciones observadas activas o del último ciclo del historial
+     * Para encuestador: si no hay activas, mostrar del último ciclo del historial
+     */
+    obtenerSeccionesConObservacionesVisibles(): string[] {
+      const seccionesNombres: { [key: string]: string } = {
+        empresa: 'Empresa',
+        encuestado: 'Encuestado',
+        productos: 'Productos',
+        fabricante: 'Fabricante',
+        compra: 'Compra',
+      };
+      // 1. Si hay observaciones activas, usar las activas
+      const activas: string[] = [];
+      this.observacionesTexto().forEach((texto, seccion) => {
+        if (texto && texto.trim().length > 0) {
+          activas.push(seccionesNombres[seccion] || seccion);
+        }
+      });
+      if (activas.length > 0) return activas;
+
+      // 2. Si no hay activas, buscar en el historial el último ciclo
+      let maxCiclo = 0;
+      // Buscar el ciclo más alto
+      this.historialObservaciones().forEach((lista) => {
+        lista.forEach(item => {
+          if (item.cicloRevision > maxCiclo) maxCiclo = item.cicloRevision;
+        });
+      });
+      if (maxCiclo === 0) return [];
+      // Mapear secciones únicas del último ciclo
+      const seccionesUltimoCiclo = new Set<string>();
+      this.historialObservaciones().forEach((lista, seccion) => {
+        lista.forEach(item => {
+          if (item.cicloRevision === maxCiclo) {
+            seccionesUltimoCiclo.add(seccionesNombres[seccion] || seccion);
+          }
+        });
+      });
+      return Array.from(seccionesUltimoCiclo);
+    }
   encuesta = signal<Encuesta | null>(null);
   cargando = signal(true);
   encuestaId = signal<number>(0);

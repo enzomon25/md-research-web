@@ -15,47 +15,92 @@
     </div>
   } @else {
     <div class="timeline">
-      @for (estado of estados(); track estado.encuestaEstadoId; let isFirst = $first; let isLast = $last) {
-        <div class="timeline-item" [class.first]="isFirst" [class.last]="isLast">
-          <div class="timeline-marker">
-            <div class="timeline-dot" [ngClass]="getEstadoClase(estado.estadoId)"></div>
-            @if (!isLast) {
-              <div class="timeline-line"></div>
-            }
-          </div>
-          
-          <div class="timeline-content">
-            <div class="timeline-card">
-              <div class="card-header">
-                <span class="estado-badge" [ngClass]="getEstadoClase(estado.estadoId)">
-                  {{ estado.estadoDescripcion }}
-                </span>
-                @if (isFirst) {
-                  <span class="estado-actual-tag">ACTUAL</span>
-                }
-              </div>
-              
-              <div class="card-body">
-                <div class="info-row">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  <span class="info-label">Fecha:</span>
-                  <span class="info-value">{{ formatearFecha(estado.fechaCreacion) }}</span>
-                </div>
-                
-                <div class="info-row">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                  <span class="info-label">Usuario:</span>
-                  <span class="info-value">{{ estado.usuarioCreacion }}</span>
+      @if (!expanded) {
+        @for (estado of estadoActual(); track estado.encuestaEstadoId; let isFirst = $first; let isLast = $last) {
+          <div class="timeline-item" [class.first]="isFirst" [class.last]="isLast">
+            <div class="timeline-marker">
+              <div class="timeline-dot" [ngClass]="getEstadoClase(estado.estadoId)"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-card compact-card">
+                <div class="card-row">
+                  <div class="card-row-main">
+                    <div class="estado-badge-container">
+                      <span class="estado-badge" [ngClass]="getEstadoClase(estado.estadoId)">
+                        {{ estado.estadoDescripcion }}
+                      </span>
+                    </div>
+                    <span class="icon-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      {{ formatearFecha(estado.fechaCreacion) }}
+                    </span>
+                    <span class="icon-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      {{ estado.usuarioCreacion }}
+                    </span>
+                  </div>
+                  <div class="card-row-actual">
+                    <span class="estado-actual-tag">ACTUAL</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        }
+        <div class="historial-toggle-btn-container">
+          <button type="button" class="btn-toggle-historial" (click)="toggleExpand()">Ver historial completo</button>
+        </div>
+      } @else {
+        @for (estado of estados(); track estado.encuestaEstadoId; let isFirst = $first; let isLast = $last) {
+          <div class="timeline-item" [class.first]="isFirst" [class.last]="isLast">
+            <div class="timeline-marker">
+              <div class="timeline-dot" [ngClass]="getEstadoClase(estado.estadoId)"></div>
+              @if (!isLast) {
+                <div class="timeline-line"></div>
+              }
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-card compact-card">
+                <div class="card-row">
+                  <div class="card-row-main">
+                    <div class="estado-badge-container">
+                      <span class="estado-badge" [ngClass]="getEstadoClase(estado.estadoId)">
+                        {{ estado.estadoDescripcion }}
+                      </span>
+                    </div>
+                    <span class="icon-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      {{ formatearFecha(estado.fechaCreacion) }}
+                    </span>
+                    <span class="icon-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      {{ estado.usuarioCreacion }}
+                    </span>
+                  </div>
+                  <div class="card-row-actual">
+                    @if (isFirst) {
+                      <span class="estado-actual-tag">ACTUAL</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        <div class="historial-toggle-btn-container">
+          <button type="button" class="btn-toggle-historial" (click)="toggleExpand()">Ocultar historial</button>
         </div>
       }
     </div>
