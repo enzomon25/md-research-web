@@ -1,3 +1,5 @@
+
+
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,8 +7,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EncuestasService } from '../../core/services/encuestas.service';
 import { EmpresasService } from '../../core/services/empresas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
+import { UbicacionService } from '../../core/services/ubicacion.service';
 import { FabricantesService } from '../../core/services/fabricantes.service';
-import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, EncuestaObservacion, EncuestaObservacionHistorial } from '../../core/models';
+import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, EncuestaObservacion, EncuestaObservacionHistorial, Direccion } from '../../core/models';
 import { EncuestadosService } from '../../core/services/encuestados.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EncuestaObservacionService } from '../../core/services/encuesta-observacion.service';
@@ -21,9 +24,127 @@ import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados
   standalone: true,
   imports: [CommonModule, FormsModule, EncuestaHistorialEstadosComponent],
   templateUrl: './encuesta-form.component.html',
-  styleUrl: './encuesta-form.component.css'
+  styleUrls: [
+    './encuesta-form.component.css',
+    './subseccion-direccion-planta.css'
+  ]
 })
 export class EncuestaFormComponent implements OnInit {
+
+        // Getter to always return a valid Direccion object for template binding
+      get direccionNuevaEmpresa() {
+        if (!this.nuevaEmpresa().direccion) {
+          this.nuevaEmpresa().direccion = this.direccionDefault();
+        }
+        return this.nuevaEmpresa().direccion!;
+      }
+      // Catálogos para Dirección de planta
+      paises: { paisId: number, descPais: string, codPais: string }[] = [];
+      departamentos: { departamentoId: number, descDepartamento: string, codPais: string, codDepartamento: string }[] = [];
+      provincias: { provinciaId: number, descProvincia: string, codPais: string, codDepartamento: string, codProvincia: string }[] = [];
+      distritos: { distritoId: number, descDistrito: string, codPais: string, codDepartamento: string, codProvincia: string, codDistrito: string }[] = [];
+      tiposVia: string[] = [
+        'Avenida',
+        'Calle',
+        'Jirón',
+        'Pasaje',
+        'Carretera',
+        'Prolongación',
+        'Alameda',
+        'Otro'
+      ];
+
+      // Métodos para cargar catálogos de ubicación
+      cargarPaises(): void {
+        this.ubicacionService.listarPaises().subscribe({
+          next: (data: any[]) => { this.paises = data; },
+          error: () => { this.paises = []; }
+        });
+      }
+      cargarDepartamentos(codPais: string): void {
+        this.ubicacionService.listarDepartamentos(codPais).subscribe({
+          next: (data: any[]) => { this.departamentos = data; },
+          error: () => { this.departamentos = []; }
+        });
+      }
+      cargarProvincias(codDepartamento: string, codPais: string): void {
+        this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
+          next: (data: any[]) => { this.provincias = data; },
+          error: () => { this.provincias = []; }
+        });
+      }
+      cargarDistritos(codProvincia: string, codDepartamento: string, codPais: string): void {
+        this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
+          next: (data: any[]) => { this.distritos = data; },
+          error: () => { this.distritos = []; }
+        });
+      }
+
+      // Handlers para cambios en los dropdowns
+
+      private direccionDefault(): Direccion {
+        return {
+          codPais: '',
+          codDepartamento: '',
+          codProvincia: '',
+          codDistrito: '',
+          tipoVia: '',
+          nombreVia: '',
+          numeroVia: '',
+          referencia: ''
+        };
+      }
+
+      onPaisChange(): void {
+        if (!this.nuevaEmpresa().direccion) {
+          this.nuevaEmpresa().direccion = this.direccionDefault();
+        }
+        const direccion = this.nuevaEmpresa().direccion;
+        if (!direccion) return;
+        const codPais = direccion.codPais;
+        if (codPais) {
+          this.cargarDepartamentos(codPais);
+          this.departamentos = [];
+          this.provincias = [];
+          this.distritos = [];
+          direccion.codDepartamento = '';
+          direccion.codProvincia = '';
+          direccion.codDistrito = '';
+        }
+      }
+      onDepartamentoChange(): void {
+        if (!this.nuevaEmpresa().direccion) {
+          this.nuevaEmpresa().direccion = this.direccionDefault();
+        }
+        const direccion = this.nuevaEmpresa().direccion;
+        if (!direccion) return;
+        const codDepartamento = direccion.codDepartamento;
+        const codPais = direccion.codPais;
+        if (codDepartamento) {
+          this.cargarProvincias(codDepartamento, codPais);
+          this.provincias = [];
+          this.distritos = [];
+          direccion.codProvincia = '';
+          direccion.codDistrito = '';
+        }
+      }
+      onProvinciaChange(): void {
+        if (!this.nuevaEmpresa().direccion) {
+          this.nuevaEmpresa().direccion = this.direccionDefault();
+        }
+        const direccion = this.nuevaEmpresa().direccion;
+        if (!direccion) return;
+        const codProvincia = direccion.codProvincia;
+        const codDepartamento = direccion.codDepartamento;
+        const codPais = direccion.codPais;
+
+        if (codProvincia) {
+          this.cargarDistritos(codProvincia, codDepartamento, codPais);
+          this.distritos = [];
+          direccion.codDistrito = '';
+        }
+      }
+
     /**
      * Obtener secciones observadas activas o del último ciclo del historial
      * Para encuestador: si no hay activas, mostrar del último ciclo del historial
@@ -128,36 +249,46 @@ export class EncuestaFormComponent implements OnInit {
   empresaSeleccionada = signal<Empresa | null>(null);
   errorBusquedaRuc = signal(false);
   
-  // Registro de nueva empresa
-  mostrarFormularioRegistro = signal(false);
-  mostrarModalNoEncontrada = signal(false);
-  mostrarModalRucDuplicado = signal(false);
-  mostrarModalExito = signal(false);
-  mostrarModalError = signal(false);
-  mensajeModal = signal('');
-  guardandoEmpresa = signal(false);
-  errorRucRegistro = signal('');
-  tiposEmpresa = signal<TipoEmpresa[]>([]);
-  lugaresCompra = signal<Parametro[]>([]);
-  tiposCompraCemento = signal<Parametro[]>([]);
-  tiposPresentacionBolsa = signal<Parametro[]>([]);
-  tiposPresentacionGranel = signal<Parametro[]>([]);
-  cantidadPresentacionBolsa = signal<Parametro[]>([]);
-  cantidadPresentacionBombona = signal<Parametro[]>([]);
-  cantidadPresentacionBigbag = signal<Parametro[]>([]);
-  mediosContacto = signal<Parametro[]>([]);
-  fabricantes = signal<any[]>([]);
-  fabricantesCargados = signal(false);
-  marcasFabricante = signal<any[]>([]);
-  marcasCargadasPorFabricante = signal<{[key: number]: boolean}>({});
-  marcasUnicas = signal<string[]>([]);
-  tiposCementoPorMarca = signal<any[]>([]);
-  nuevaEmpresa = signal<Partial<Empresa>>({
-    razonSocial: '',
-    ruc: '',
-    tipoEmpresaId: 1,
-    actividadEconomica: ''
-  });
+      // Registro de nueva empresa
+      mostrarFormularioRegistro = signal(false);
+      mostrarModalNoEncontrada = signal(false);
+      mostrarModalRucDuplicado = signal(false);
+      mostrarModalExito = signal(false);
+      mostrarModalError = signal(false);
+      mensajeModal = signal('');
+      guardandoEmpresa = signal(false);
+      errorRucRegistro = signal('');
+      tiposEmpresa = signal<TipoEmpresa[]>([]);
+      lugaresCompra = signal<Parametro[]>([]);
+      tiposCompraCemento = signal<Parametro[]>([]);
+      tiposPresentacionBolsa = signal<Parametro[]>([]);
+      tiposPresentacionGranel = signal<Parametro[]>([]);
+      cantidadPresentacionBolsa = signal<Parametro[]>([]);
+      cantidadPresentacionBombona = signal<Parametro[]>([]);
+      cantidadPresentacionBigbag = signal<Parametro[]>([]);
+      mediosContacto = signal<Parametro[]>([]);
+      fabricantes = signal<any[]>([]);
+      fabricantesCargados = signal(false);
+      marcasFabricante = signal<any[]>([]);
+      marcasCargadasPorFabricante = signal<{[key: number]: boolean}>({});
+      marcasUnicas = signal<string[]>([]);
+      tiposCementoPorMarca = signal<any[]>([]);
+      nuevaEmpresa = signal<Partial<Empresa>>({
+        razonSocial: '',
+        ruc: '',
+        tipoEmpresaId: 1,
+        actividadEconomica: '',
+        direccion: {
+          codPais: '',
+          codDepartamento: '',
+          codProvincia: '',
+          codDistrito: '',
+          tipoVia: '',
+          nombreVia: '',
+          numeroVia: '',
+          referencia: ''
+        }
+      });
 
   // Observaciones por sección
   observaciones = signal<Map<string, EncuestaObservacion>>(new Map());
@@ -187,6 +318,7 @@ export class EncuestaFormComponent implements OnInit {
     private encuestasService: EncuestasService,
     private empresasService: EmpresasService,
     private parametrosService: ParametrosService,
+    private ubicacionService: UbicacionService,
     private fabricantesService: FabricantesService,
     private encuestadosService: EncuestadosService,
     private authService: AuthService,
@@ -195,6 +327,8 @@ export class EncuestaFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+      // Cargar catálogos de ubicación para Dirección de planta
+      this.cargarPaises();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.encuestaId.set(+id);
@@ -1456,10 +1590,20 @@ export class EncuestaFormComponent implements OnInit {
 
   guardarNuevaEmpresa(): void {
     const empresa = this.nuevaEmpresa();
-    
-    // Validar que todos los campos obligatorios estén completos
-    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || !empresa.actividadEconomica) {
-      this.mensajeModal.set('Todos los campos son obligatorios');
+
+    // Validar que todos los campos obligatorios estén completos, incluyendo dirección
+    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || !empresa.actividadEconomica || !empresa.direccion) {
+      this.mensajeModal.set('Todos los campos son obligatorios, incluyendo la dirección');
+      this.mostrarModalError.set(true);
+      return;
+    }
+
+    const dir = empresa.direccion;
+    if (
+      dir.codPais === undefined || dir.codDepartamento === undefined || dir.codProvincia === undefined ||
+      dir.codDistrito === undefined || !dir.tipoVia || !dir.nombreVia || !dir.numeroVia || !dir.referencia
+    ) {
+      this.mensajeModal.set('Todos los campos de la dirección son obligatorios');
       this.mostrarModalError.set(true);
       return;
     }
@@ -1477,7 +1621,7 @@ export class EncuestaFormComponent implements OnInit {
 
     this.errorRucRegistro.set('');
     this.guardandoEmpresa.set(true);
-    
+
     // Paso 1: Crear la empresa
     this.empresasService.crear(empresa).subscribe({
       next: (empresaCreada) => {

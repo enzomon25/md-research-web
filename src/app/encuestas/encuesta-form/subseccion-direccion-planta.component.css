@@ -1,0 +1,64 @@
+.subseccion-direccion-planta {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px 0 rgba(44,62,80,0.04);
+  border: 1px solid #e3e6f0;
+}
+.subseccion-direccion-planta h4 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #2a4365;
+  margin-bottom: 1.2rem;
+}
+.subseccion-direccion-planta label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.3rem;
+}
+.subseccion-direccion-planta .form-control,
+.subseccion-direccion-planta input[type="text"],
+.subseccion-direccion-planta select {
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  box-shadow: none;
+  transition: border-color 0.2s;
+}
+.subseccion-direccion-planta .form-control:focus,
+.subseccion-direccion-planta input[type="text"]:focus,
+.subseccion-direccion-planta select:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+.subseccion-direccion-planta .row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+.subseccion-direccion-planta .col-md-6,
+.subseccion-direccion-planta .col-md-12 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.subseccion-direccion-planta .registro-form-actions {
+  text-align: right;
+  margin-top: 1.2rem;
+}
+.subseccion-direccion-planta .btn-guardar-empresa {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.08);
+  transition: background 0.2s;
+}
+.subseccion-direccion-planta .btn-guardar-empresa:hover {
+  background: #059669;
+}

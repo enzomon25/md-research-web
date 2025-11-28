@@ -1,0 +1,26 @@
+/* Forzar layout de Dirección de planta en filas de 2 columnas */
+.subseccion-direccion-planta .direccion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.subseccion-direccion-planta .direccion-col {
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.subseccion-direccion-planta label {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.subseccion-direccion-planta input,
+.subseccion-direccion-planta select {
+  min-height: 38px;
+  font-size: 1rem;
+}
+.subseccion-direccion-planta .direccion-row:last-child {
+  margin-bottom: 0;
+}

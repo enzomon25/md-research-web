@@ -98,7 +98,19 @@ export interface Encuesta {
   editable?: boolean;
 }
 
+export interface Direccion {
+  codPais: string;
+  codDepartamento: string;
+  codProvincia: string;
+  codDistrito: string;
+  tipoVia: string;
+  nombreVia: string;
+  numeroVia: string;
+  referencia: string;
+}
+
 export interface Empresa {
+  direccion: Direccion;
   empresaId: number;
   razonSocial: string;
   ruc: string;

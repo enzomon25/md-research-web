@@ -279,7 +279,76 @@
               <label>Actividad Económica *</label>
               <input type="text" [(ngModel)]="nuevaEmpresa().actividadEconomica" placeholder="Actividad" required>
             </div>
-            <div class="registro-form-actions">
+          </div>
+        <!-- Dirección de planta al mismo nivel -->
+          <div style="margin-top:25px;">
+            <div class="registro-empresa-header">
+              <h3>Dirección de la planta</h3>
+            </div>
+          </div>
+          <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>País *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codPais" (change)="onPaisChange()" required>
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (pais of paises; track pais.codPais) {
+                  <option [ngValue]="pais.codPais">{{ pais.descPais }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Departamento *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDepartamento" (change)="onDepartamentoChange()" required [disabled]="!direccionNuevaEmpresa.codPais">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dep of departamentos; track [dep.codDepartamento, dep.codPais]) {
+                  <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Provincia *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codProvincia" (change)="onProvinciaChange()" required [disabled]="!direccionNuevaEmpresa.codDepartamento">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (prov of provincias; track prov.codProvincia) {
+                  <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Distrito *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDistrito" required [disabled]="!direccionNuevaEmpresa.codProvincia">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dist of distritos; track [dist.codDistrito, dist.codProvincia, dist.codDepartamento, dist.codPais]) {
+                  <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Tipo de Vía *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.tipoVia" required>
+                <option [ngValue]="null" disabled selected>Elige una opción</option>
+                @for (via of tiposVia; track via) {
+                  <option [ngValue]="via">{{ via }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Nombre de la Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.nombreVia" placeholder="Nombre de la vía" required>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Nº de Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.numeroVia" placeholder="Número de la vía" required>
+            </div>
+            <div class="registro-form-group">
+              <label>Referencia *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.referencia" placeholder="Referencia">
+            </div>
+
+            <div class="registro-form-actions mt-3">
               <button class="btn-guardar-empresa" (click)="guardarNuevaEmpresa()" [disabled]="guardandoEmpresa()">
                 {{ guardandoEmpresa() ? 'Guardando...' : 'Guardar Empresa' }}
               </button>
