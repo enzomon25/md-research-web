@@ -1,3 +1,123 @@
+/* Simulación de grid tipo bootstrap para filas de selects de marcas/fabricantes */
+.row-bootstrap {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -8px;
+  margin-left: -8px;
+}
+.col-bootstrap {
+  flex: 1 1 0;
+  padding-right: 8px;
+  padding-left: 8px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.col-select-bootstrap {
+  min-width: 220px;
+  max-width: 350px;
+}
+.col-btn-bootstrap {
+  flex: 0 0 40px;
+  max-width: 40px;
+  min-width: 40px;
+  justify-content: center;
+}
+.align-center {
+  align-items: center;
+}
+.form-control-bootstrap {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  background: #fff;
+  transition: border 0.2s;
+}
+.form-control-bootstrap:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+.marca-fabricante-row-bootstrap {
+  margin-bottom: 0.5rem;
+}
+.btn-add-marca.mt-2 {
+  margin-top: 1rem;
+}
+.fila-dropdown {
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.dropdown-row-container {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+}
+.btn-add-marca {
+  margin-top: 1rem;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  display: block;
+}
+/* Mejoras para la sección de Fabricantes y Marcas */
+.marcas-multiline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.marca-fabricante-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.marca-select {
+  min-width: 220px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  background: #fff;
+  transition: border 0.2s;
+}
+.marca-select:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+.btn-remove-marca {
+  background: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 0.2rem;
+}
+.btn-remove-marca:disabled {
+  background: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+.btn-remove-marca:hover:not(:disabled) {
+  background: #be2617;
+}
+.btn-add-marca {
+  margin-top: 0.5rem;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
 /* Botón guardar observación */
 .btn-guardar-observacion {
   margin-top: 0.75rem;

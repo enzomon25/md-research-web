@@ -53,11 +53,9 @@ export interface Encuesta {
   encuestadoId?: number;
   encuestado?: Encuestado;
   empresaId?: number;
-  fabricanteId?: number;
   nombreMarca?: string;
   tipoCemento?: string;
   descFisica?: string;
-  marcaFabricante?: number;
   marcaFabricanteInfo?: MarcaFabricanteInfo;
   estadoEncuesta?: number;
   estadoId: number;
@@ -82,7 +80,6 @@ export interface Encuesta {
   usuarioModificacion?: string;
   indActivo?: number;
   empresa?: Empresa | null;
-  fabricante?: Fabricante | null;
   estado?: Estado;
   estados?: Array<{
     encuestaEstadoId: number;
@@ -95,6 +92,7 @@ export interface Encuesta {
     usuarioModificacion: string;
     indActivo: number;
   }>;
+  marcas?: Array<{ marcaFabricanteId: number; fabricanteId: number }>;
   editable?: boolean;
 }
 
