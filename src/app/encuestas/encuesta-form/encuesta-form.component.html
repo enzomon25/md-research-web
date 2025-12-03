@@ -787,6 +787,7 @@
     </div>
 
     <!-- Sección 5: Fabricante -->
+
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('fabricante')"
         [class.expandida]="esSeccionExpandida('fabricante')">
@@ -802,71 +803,70 @@
       <div class="seccion-body">
         <div class="form-grid">
           <div class="form-group full-width">
-            <label>Fabricante</label>
-            @if (fabricantes().length > 0) {
-            <select [(ngModel)]="encuesta()!.fabricanteId" (click)="onFabricanteDropdownClick()"
-              (ngModelChange)="seleccionarFabricante($event)">
-              <option [value]="undefined" disabled>Seleccione un fabricante</option>
-              @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
-              <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
-              }
-            </select>
-            } @else {
-            <!-- Mostrar valor guardado mientras no se carguen los fabricantes -->
-            <input type="text" [value]="encuesta()?.fabricante?.razonSocial || 'Click para seleccionar fabricante'"
-              (click)="onFabricanteDropdownClick()" readonly style="cursor: pointer;">
-            }
-          </div>
-
-          @if (encuesta()?.fabricanteId) {
-          <!-- Mostrar Marca: si ya hay valor guardado O si se cargaron las marcas -->
-            @if (encuesta()?.nombreMarca || marcasUnicas().length > 0) {
-            <div class="form-group full-width">
-              <label>Marca</label>
-              @if (marcasUnicas().length > 0) {
-              <select [(ngModel)]="encuesta()!.nombreMarca" (click)="onMarcaDropdownClick()"
-                (ngModelChange)="seleccionarNombreMarca($event)">
-                <option [value]="undefined" disabled>Seleccione una marca</option>
-                @for (nombreMarca of marcasUnicas(); track nombreMarca) {
-                <option [value]="nombreMarca">{{ nombreMarca }}</option>
-                }
-              </select>
-              } @else {
-              <!-- Mostrar valor guardado mientras no se carguen las marcas -->
-              <input type="text" [value]="encuesta()?.nombreMarca || ''" (click)="onMarcaDropdownClick()"
-                placeholder="Click para cargar marcas" readonly style="cursor: pointer;">
+            <label>Fabricantes y Marcas</label>
+            <div class="marcas-multiline-container">
+              @for (marcaSeleccionada of marcasSeleccionadas(); track $index) {
+                <div style="margin-bottom: 1.5rem;">
+                  <!-- Fabricante -->
+                  <div style="width: 100%; margin-bottom: 0.5rem;">
+                    <select class="form-control-bootstrap" style="width: 100%;"
+                      [(ngModel)]="marcaSeleccionada.fabricanteId"
+                      (ngModelChange)="onFabricanteChange($index, $event)"
+                      [disabled]="camposDeshabilitados()">
+                      <option [ngValue]="0" [selected]="!marcaSeleccionada.fabricanteId">Seleccione un fabricante</option>
+                      @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
+                        <option [ngValue]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
+                      }
+                    </select>
+                  </div>
+                  <!-- Marca -->
+                  <div style="width: 100%; margin-bottom: 0.5rem;">
+                    <select class="form-control-bootstrap" style="width: 100%;"
+                      [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
+                      (ngModelChange)="onMarcaChange($index, $event)"
+                      [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId">
+                      <option [ngValue]="0" [selected]="!marcaSeleccionada.marcaFabricanteId">Seleccione una marca</option>
+                      @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
+                        <option [ngValue]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
+                      }
+                    </select>
+                  </div>
+                  <!-- Tipo de Cemento -->
+                  <div style="width: 100%; margin-bottom: 0.5rem;">
+                    <select class="form-control-bootstrap" style="width: 100%;"
+                      [(ngModel)]="marcaSeleccionada.tipoCemento"
+                      (ngModelChange)="onTipoCementoChange($index, $event)"
+                      [disabled]="camposDeshabilitados() || !marcaSeleccionada.marcaFabricanteId">
+                      <option [ngValue]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
+                      @for (tipo of tiposCementoPorFila[$index]; track tipo) {
+                        <option [ngValue]="tipo">{{ tipo }}</option>
+                      }
+                    </select>
+                  </div>
+                  <!-- Descripción física (autoselección si 1 a 1) -->
+                  <div style="width: 100%; margin-bottom: 0.5rem;">
+                    @if (descripcionesFisicasPorFila[$index]?.length === 1 && marcaSeleccionada.tipoCemento) {
+                      <input class="form-control-bootstrap" style="width: 100%;" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
+                    } @else {
+                      <select class="form-control-bootstrap" style="width: 100%;"
+                        [(ngModel)]="marcaSeleccionada.descFisica"
+                        (ngModelChange)="onDescFisicaChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !marcaSeleccionada.tipoCemento">
+                        <option [ngValue]="''" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
+                        @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
+                          <option [ngValue]="desc">{{ desc }}</option>
+                        }
+                      </select>
+                    }
+                  </div>
+                </div>
               }
             </div>
-          }
-
-          <!-- Mostrar Tipo de Cemento: si ya hay valor guardado O si se cargaron los tipos -->
-          @if (encuesta()?.tipoCemento || tiposCementoPorMarca().length > 0) {
-          <div class="form-group full-width">
-            <label>Tipo de Cemento</label>
-            @if (tiposCementoPorMarca().length > 0) {
-            <select [(ngModel)]="encuesta()!.marcaFabricante" (ngModelChange)="seleccionarMarcaFabricante($event)">
-              <option [value]="undefined" disabled>Seleccione un tipo de cemento</option>
-              @for (tipo of tiposCementoPorMarca(); track tipo.marcaFabricanteId) {
-              <option [value]="tipo.marcaFabricanteId">{{ tipo.tipoCemento }}</option>
-              }
-            </select>
-            } @else {
-            <!-- Mostrar valor guardado mientras no se carguen los tipos -->
-            <input type="text" [value]="encuesta()?.tipoCemento || ''" disabled>
-            }
+            <button type="button" class="btn-guardar-empresa btn-add-marca mt-2" (click)="agregarMarcaFabricante()">
+              Agregar otra marca/fabricante
+            </button>
           </div>
-          }
-
-          <!-- Mostrar Descripción Física solo si hay tipo de cemento -->
-          @if (encuesta()?.descFisica) {
-          <div class="form-group full-width">
-            <label>Descripción Física</label>
-            <input type="text" [value]="encuesta()?.descFisica || ''" disabled>
-          </div>
-          }
-        }
-        </div>
-
+                  </div>
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
         <div class="observacion-container">
@@ -1200,16 +1200,17 @@
       }
 
 
-      <div class="form-actions">
-        <button class="btn-cancelar" (click)="volver()">Cancelar</button>
-        @if (!esValidador()) {
-          <button class="btn-guardar" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados()">Guardar
-            Cambios</button>
-        }
-        @if (todasLasSeccionesCompletas() && esEditable()) {
-          <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
-        }
-      </div>
+        <div class="form-actions">
+          <button class="btn-cancelar" (click)="volver()">Cancelar</button>
+          @if (!esValidador()) {
+            <button class="btn-guardar-empresa" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados()">
+              {{ camposDeshabilitados() ? 'Guardando...' : 'Guardar Encuesta' }}
+            </button>
+          }
+          @if (todasLasSeccionesCompletas() && esEditable()) {
+            <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+          }
+        </div>
 
 
     <!-- Modal: encuestado no encontrada -->

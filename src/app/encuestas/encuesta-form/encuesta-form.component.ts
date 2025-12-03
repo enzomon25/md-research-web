@@ -1,5 +1,6 @@
 
 
+
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +31,120 @@ import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados
   ]
 })
 export class EncuestaFormComponent implements OnInit {
+
+
+  // --- Lógica clásica para cascada de marcas/tipoCemento/descFisica por fila ---
+  marcasPorFila: any[][] = [[/* primer fila */]];
+  tiposCementoPorFila: string[][] = [[]];
+  descripcionesFisicasPorFila: string[][] = [[]];
+
+  // Modelo extendido: ahora incluye tipoCemento y descFisica (ambos string)
+  marcasSeleccionadas = signal<Array<{ marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string }>>([
+    { marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '' }
+  ]);
+
+  onFabricanteChange(index: number, fabricanteId: number) {
+    this.actualizarMarcaFabricante(index, 'fabricanteId', fabricanteId);
+    this.actualizarMarcaFabricante(index, 'marcaFabricanteId', 0);
+    this.actualizarMarcaFabricante(index, 'tipoCemento', '');
+    this.actualizarMarcaFabricante(index, 'descFisica', '');
+    this.marcasPorFila[index] = [];
+    this.tiposCementoPorFila[index] = [];
+    this.descripcionesFisicasPorFila[index] = [];
+    if (!fabricanteId) {
+      return;
+    }
+    this.fabricantesService.obtenerMarcasPorFabricante(fabricanteId).subscribe({
+      next: (marcas: any[]) => {
+        this.marcasPorFila[index] = marcas || [];
+      },
+      error: (error: any) => {
+        this.marcasPorFila[index] = [];
+        console.error('Error al cargar marcas del fabricante', fabricanteId, error);
+      }
+    });
+  }
+
+  onMarcaChange(index: number, marcaFabricanteId: number) {
+    this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaFabricanteId);
+    this.actualizarMarcaFabricante(index, 'tipoCemento', '');
+    this.actualizarMarcaFabricante(index, 'descFisica', '');
+    this.tiposCementoPorFila[index] = [];
+    this.descripcionesFisicasPorFila[index] = [];
+    if (!marcaFabricanteId) {
+      return;
+    }
+    // Buscar la marca seleccionada en marcasPorFila[index]
+    const marca = (this.marcasPorFila[index] || []).find(m => m.marcaFabricanteId === marcaFabricanteId);
+    let tiposCemento: string[] = [];
+    let descripcionesFisicas: string[] = [];
+    if (marca && marca.tipoCemento) {
+      tiposCemento = Array.isArray(marca.tipoCemento) ? marca.tipoCemento : [marca.tipoCemento];
+    }
+    if (marca && marca.descFisica) {
+      descripcionesFisicas = Array.isArray(marca.descFisica) ? marca.descFisica : [marca.descFisica];
+    }
+    // Lógica anti-duplicados para tipoCemento y descFisica
+    // Excluir los tiposCemento ya seleccionados en otras filas
+    const tiposSeleccionados = this.marcasSeleccionadas().map((m, i) => i !== index ? m.tipoCemento : '').filter(Boolean);
+    tiposCemento = tiposCemento.filter(tc => !tiposSeleccionados.includes(tc));
+    // Excluir las descripciones físicas ya seleccionadas en otras filas
+    const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
+    descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
+    this.tiposCementoPorFila[index] = tiposCemento;
+    this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
+  }
+
+  // Lógica anti-duplicados para marcas: solo mostrar marcas no seleccionadas en otras filas y sin duplicados por fabricanteId-nombre
+  marcasDisponiblesParaFila(index: number): any[] {
+    const seleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.marcaFabricanteId : 0).filter(id => !!id);
+    const marcas = (this.marcasPorFila[index] || []).filter(m => !seleccionadas.includes(m.marcaFabricanteId));
+    // Filtrar duplicados por fabricanteId y nombreMarca
+    const unicos = new Map<string, any>();
+    for (const marca of marcas) {
+      const key = `${marca.fabricanteId}-${marca.nombreMarca}`;
+      if (!unicos.has(key)) {
+        unicos.set(key, marca);
+      }
+    }
+    return Array.from(unicos.values());
+  }
+
+  onTipoCementoChange(index: number, tipoCemento: string) {
+    this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
+    // Si la relación tipoCemento-descFisica es 1 a 1, autoseleccionar descFisica
+    const descs = this.descripcionesFisicasPorFila[index];
+    if (descs && descs.length === 1 && tipoCemento) {
+      this.actualizarMarcaFabricante(index, 'descFisica', descs[0]);
+    } else {
+      this.actualizarMarcaFabricante(index, 'descFisica', '');
+    }
+  }
+
+  onDescFisicaChange(index: number, descFisica: string) {
+    this.actualizarMarcaFabricante(index, 'descFisica', descFisica);
+  }
+
+  agregarMarcaFabricante(): void {
+    this.marcasSeleccionadas.set([
+      ...this.marcasSeleccionadas(),
+      { marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '' }
+    ]);
+    this.marcasPorFila.push([]);
+    this.tiposCementoPorFila.push([]);
+    this.descripcionesFisicasPorFila.push([]);
+  }
+
+  eliminarMarcaFabricante(index: number): void {
+    if (this.marcasSeleccionadas().length > 1) {
+      const nuevas = [...this.marcasSeleccionadas()];
+      nuevas.splice(index, 1);
+      this.marcasSeleccionadas.set(nuevas);
+      this.marcasPorFila.splice(index, 1);
+      this.tiposCementoPorFila.splice(index, 1);
+      this.descripcionesFisicasPorFila.splice(index, 1);
+    }
+  }
 
         // Getter to always return a valid Direccion object for template binding
       get direccionNuevaEmpresa() {
@@ -234,6 +349,20 @@ export class EncuestaFormComponent implements OnInit {
     cargo: ''
   });
 
+  // (Eliminado: declaración duplicada de marcasSeleccionadas)
+
+  // (Las versiones de agregarMarcaFabricante y eliminarMarcaFabricante que usan marcasPorFila ya están definidas arriba)
+
+  actualizarMarcaFabricante(
+    index: number,
+    campo: keyof { marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string },
+    valor: any
+  ): void {
+    const nuevas = [...this.marcasSeleccionadas()];
+    (nuevas[index] as any)[campo] = valor;
+    this.marcasSeleccionadas.set(nuevas);
+  }
+
   // Control de secciones expandidas
   seccionExpandida = signal<string | null>(null);
 
@@ -327,37 +456,37 @@ export class EncuestaFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-      // Cargar catálogos de ubicación para Dirección de planta
-      this.cargarPaises();
+    // Cargar catálogos de ubicación para Dirección de planta
+    this.cargarPaises();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.encuestaId.set(+id);
       this.verificarYCargarEncuesta(+id);
     }
-    
+
     // Cargar tipos de empresa
     this.cargarTiposEmpresa();
-    
+
     // Cargar lugares de compra
     this.cargarLugaresCompra();
-    
+
     // Cargar tipos de compra de cemento
     this.cargarTiposCompraCemento();
-    
+
     // Cargar tipos de presentación bolsa
     this.cargarTiposPresentacionBolsa();
-    
+
     // Cargar tipos de presentación granel
     this.cargarTiposPresentacionGranel();
-    
-    // NO cargar fabricantes automáticamente
-    // this.cargarFabricantes();
-    
+
+    // Cargar fabricantes automáticamente para el select
+    this.cargarFabricantes();
+
     // Cargar cantidades de presentación
     this.cargarCantidadPresentacionBolsa();
     this.cargarCantidadPresentacionBombona();
     this.cargarCantidadPresentacionBigbag();
-    
+
     // Cargar medios de contacto
     this.cargarMediosContacto();
   }
@@ -570,41 +699,60 @@ export class EncuestaFormComponent implements OnInit {
     // Guardar copia original para detectar cambios
     this.encuestaOriginal.set(JSON.parse(JSON.stringify(encuesta)));
     
-    // Si viene marcaFabricanteInfo, autocompletar los campos para mostrarlos
-    if (encuesta.marcaFabricanteInfo) {
-      encuesta.nombreMarca = encuesta.marcaFabricanteInfo.nombreMarca || undefined;
-      encuesta.tipoCemento = encuesta.marcaFabricanteInfo.tipoCemento;
-      encuesta.descFisica = encuesta.marcaFabricanteInfo.descFisica || undefined;
-    }
-    
-    console.log('Encuesta después de autocompletar:', {
-      fabricanteId: encuesta.fabricanteId,
-      nombreMarca: encuesta.nombreMarca,
-      marcaFabricante: encuesta.marcaFabricante,
-      tipoCemento: encuesta.tipoCemento
-    });
-    
+    // Limpieza: ya no se usa marcaFabricanteInfo ni campos legacy
+    // console.log('Encuesta después de autocompletar:', encuesta);
+
     this.encuesta.set(encuesta);
-    
+
+    // --- NUEVO: Poblar marcasSeleccionadas y marcasPorFila desde la API si existen ---
+    if (Array.isArray(encuesta.marcas) && encuesta.marcas.length > 0) {
+      // Asegurarse de que cada item tenga marcaFabricanteId y fabricanteId
+      const marcasAdaptadas = encuesta.marcas.map((m: any) => ({
+        marcaFabricanteId: m.marcaFabricanteId || 0,
+        fabricanteId: m.fabricanteId || 0
+      }));
+      this.marcasSeleccionadas.set(marcasAdaptadas);
+      // Inicializar marcasPorFila con la misma longitud y cargar marcas de cada fabricante
+      this.marcasPorFila = Array(marcasAdaptadas.length).fill([]);
+      marcasAdaptadas.forEach((item, idx) => {
+        if (item.fabricanteId) {
+          this.fabricantesService.obtenerMarcasPorFabricante(item.fabricanteId).subscribe({
+            next: (marcas: any[]) => {
+              this.marcasPorFila[idx] = marcas || [];
+            },
+            error: () => {
+              this.marcasPorFila[idx] = [];
+            }
+          });
+        } else {
+          this.marcasPorFila[idx] = [];
+        }
+      });
+    } else {
+      // Si no hay marcas, dejar al menos una fila vacía
+      this.marcasSeleccionadas.set([{ marcaFabricanteId: 0, fabricanteId: 0 }]);
+      this.marcasPorFila = [[]];
+    }
+
     // Establecer si la encuesta es editable
     // Para VALIDADOR, los formularios siempre están deshabilitados
     const rolUsuario = this.authService.getRolDescripcion();
     const esValidador = rolUsuario === ROLES.VALIDADOR;
     const esEncuestador = rolUsuario === ROLES.ENCUESTADOR;
-    
+
     // Si es ENCUESTADOR y la encuesta está OBSERVADA, mostrar modal
     if (esEncuestador && encuesta.estadoId === ESTADOS_ENCUESTA.OBSERVADA) {
       this.mostrarModalEncuestaObservada.set(true);
     }
-    
+
     // VALIDADOR y ADMINISTRADOR: nunca pueden editar campos del formulario (solo lectura)
     // ENCUESTADOR: solo puede editar en estados EN_REGISTRO (1) y EN_CORRECCION (4)
     const esAdministrador = rolUsuario === ROLES.ADMINISTRADOR;
-    
+
     if (esValidador || esAdministrador) {
       this.esEditable.set(false);
     } else if (esEncuestador) {
-      const puedeEditar = 
+      const puedeEditar =
         encuesta.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO ||
         encuesta.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION;
       this.esEditable.set(puedeEditar);
@@ -612,9 +760,9 @@ export class EncuestaFormComponent implements OnInit {
       // Otros roles (fallback)
       this.esEditable.set(false);
     }
-    
+
     this.cargando.set(false);
-    
+
     // Si la encuesta ya tiene empresa, cargar sus datos
     if (encuesta.empresaId) {
       this.cargarEmpresaSeleccionada(encuesta.empresaId);
@@ -625,11 +773,7 @@ export class EncuestaFormComponent implements OnInit {
       this.encuestadoSeleccionado.set(encuesta.encuestado);
     }
 
-    // Si la encuesta ya tiene fabricante, cargar sus marcas
-    if (encuesta.fabricanteId) {
-      console.log('Cargando marcas para fabricante existente:', encuesta.fabricanteId);
-      this.cargarMarcasPorFabricante(encuesta.fabricanteId);
-    }
+    // Limpieza: ya no se usa fabricanteId ni carga de marcas por fabricante legacy
 
     // Cargar observaciones si es VALIDADOR o ENCUESTADOR con encuesta observada/en corrección
     if ((esValidador || esEncuestador) && encuesta.encuestaId) {
@@ -670,6 +814,14 @@ export class EncuestaFormComponent implements OnInit {
       return;
     }
 
+    // Validar que al menos una marca/fabricante esté seleccionada
+    const marcasValidas = this.marcasSeleccionadas().filter(m => m.marcaFabricanteId && m.fabricanteId);
+    if (marcasValidas.length === 0) {
+      this.mensajeModal.set('Debe seleccionar al menos un fabricante y marca.');
+      this.mostrarModalError.set(true);
+      return;
+    }
+
     // Preparar payload solo con campos que tienen valor (no undefined, no null, no strings vacíos)
     const encuestadoData = this.datosEncuestado();
     const encuestaParaGuardar: Partial<Encuesta> = {
@@ -692,8 +844,6 @@ export class EncuestaFormComponent implements OnInit {
       }),
       ...(encuestaActual.concretoPremezclado !== undefined && encuestaActual.concretoPremezclado !== null && { concretoPremezclado: encuestaActual.concretoPremezclado }),
       ...(encuestaActual.articulosConcreto !== undefined && encuestaActual.articulosConcreto !== null && { articulosConcreto: encuestaActual.articulosConcreto }),
-      ...(encuestaActual.fabricanteId && { fabricanteId: encuestaActual.fabricanteId }),
-      ...(encuestaActual.marcaFabricante && { marcaFabricante: encuestaActual.marcaFabricante }),
       ...(encuestaActual.tipoLugarCompra && { tipoLugarCompra: encuestaActual.tipoLugarCompra }),
       ...(encuestaActual.tipoCompra && { tipoCompra: encuestaActual.tipoCompra }),
       ...(encuestaActual.presentacionCompra && { presentacionCompra: encuestaActual.presentacionCompra }),
@@ -702,7 +852,8 @@ export class EncuestaFormComponent implements OnInit {
       ...(encuestaActual.precio !== undefined && encuestaActual.precio !== null && { precio: encuestaActual.precio }),
       ...(encuestaActual.usoCemento && { usoCemento: encuestaActual.usoCemento }),
       ...(encuestaActual.motivoCompra && { motivoCompra: encuestaActual.motivoCompra }),
-      ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo })
+      ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo }),
+      marcas: marcasValidas
     };
 
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
@@ -727,6 +878,10 @@ export class EncuestaFormComponent implements OnInit {
       this.seccionExpandida.set(null);
     } else {
       this.seccionExpandida.set(seccion);
+      // Si se expande la sección de fabricante, cargar fabricantes si no están cargados
+      if (seccion === 'fabricante' && !this.fabricantesCargados()) {
+        this.cargarFabricantes();
+      }
     }
   }
 
@@ -769,127 +924,20 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   seleccionarFabricante(fabricanteId: number | undefined): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual && fabricanteId) {
-      console.log('Fabricante seleccionado:', fabricanteId);
-      this.encuesta.set({
-        ...encuestaActual,
-        fabricanteId: fabricanteId,
-        marcaFabricante: undefined, // Resetear la referencia de marca
-        nombreMarca: undefined, // Resetear la marca al cambiar fabricante
-        tipoCemento: undefined, // Resetear tipo cemento
-        descFisica: undefined // Resetear descripción física
-      });
-      
-      // Cargar marcas del fabricante seleccionado
-      this.cargarMarcasPorFabricante(fabricanteId);
-    } else {
-      this.marcasFabricante.set([]);
-      this.marcasUnicas.set([]);
-      this.tiposCementoPorMarca.set([]);
-    }
-  }
-
-  cargarMarcasPorFabricante(fabricanteId: number): void {
-    // Verificar si ya se cargaron las marcas para este fabricante
-    const yaEstanCargadas = this.marcasCargadasPorFabricante()[fabricanteId];
-    if (yaEstanCargadas) {
-      console.log('Marcas del fabricante', fabricanteId, 'ya están cargadas, no se vuelve a llamar al endpoint');
-      return;
-    }
-    
-    console.log('Cargando marcas para fabricanteId:', fabricanteId);
-    this.fabricantesService.obtenerMarcasPorFabricante(fabricanteId).subscribe({
-      next: (marcas) => {
-        console.log('Marcas cargadas:', marcas);
-        this.marcasFabricante.set(marcas);
-        
-        // Marcar como cargadas
-        const cargadas = this.marcasCargadasPorFabricante();
-        this.marcasCargadasPorFabricante.set({ ...cargadas, [fabricanteId]: true });
-        
-        // Obtener nombres de marca únicos
-        const nombresUnicos = [...new Set(marcas.map((m: any) => m.nombreMarca))].filter(Boolean);
-        console.log('Marcas únicas:', nombresUnicos);
-        this.marcasUnicas.set(nombresUnicos as string[]);
-        
-        // Si la encuesta ya tiene nombreMarca, cargar los tipos de cemento para esa marca
-        const encuestaActual = this.encuesta();
-        console.log('Encuesta actual al cargar marcas:', {
-          nombreMarca: encuestaActual?.nombreMarca,
-          marcaFabricante: encuestaActual?.marcaFabricante
-        });
-        
-        if (encuestaActual?.nombreMarca) {
-          const tiposCemento = marcas.filter((m: any) => m.nombreMarca === encuestaActual.nombreMarca);
-          console.log('Tipos de cemento filtrados para marca', encuestaActual.nombreMarca, ':', tiposCemento);
-          this.tiposCementoPorMarca.set(tiposCemento);
-        } else {
-          // Resetear tipos de cemento solo si no hay nombreMarca
-          this.tiposCementoPorMarca.set([]);
-        }
-      },
-      error: (error) => {
-        console.error('Error al cargar marcas del fabricante:', error);
-        this.marcasFabricante.set([]);
-        this.marcasUnicas.set([]);
-        this.tiposCementoPorMarca.set([]);
-      }
-    });
+    // Legacy: método obsoleto, ya no se usa con el nuevo modelo de marcasSeleccionadas
+    // Mantener vacío o eliminar en limpieza final
   }
 
   onMarcaDropdownClick(): void {
-    const fabricanteId = this.encuesta()?.fabricanteId;
-    if (fabricanteId) {
-      console.log('Click en dropdown de Marca');
-      this.cargarMarcasPorFabricante(fabricanteId);
-    }
+    // Legacy: método obsoleto, ya no se usa con el nuevo modelo de marcasSeleccionadas
   }
 
   seleccionarNombreMarca(nombreMarca: string | undefined): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual && nombreMarca) {
-      console.log('Marca seleccionada:', nombreMarca);
-      // Filtrar tipos de cemento disponibles para esta marca
-      const tiposCemento = this.marcasFabricante().filter(m => m.nombreMarca === nombreMarca);
-      console.log('Tipos de cemento para esta marca:', tiposCemento);
-      this.tiposCementoPorMarca.set(tiposCemento);
-      
-      this.encuesta.set({
-        ...encuestaActual,
-        nombreMarca: nombreMarca,
-        marcaFabricante: undefined, // Resetear marcaFabricante hasta que seleccione tipo de cemento
-        tipoCemento: undefined,
-        descFisica: undefined
-      });
-    }
+    // Legacy: método obsoleto, ya no se usa con el nuevo modelo de marcasSeleccionadas
   }
 
   seleccionarMarcaFabricante(marcaFabricanteId: number | undefined): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual && marcaFabricanteId) {
-      console.log('Tipo de cemento seleccionado (marcaFabricanteId):', marcaFabricanteId, 'tipo:', typeof marcaFabricanteId);
-      
-      // Convertir a número si viene como string
-      const idNumerico = typeof marcaFabricanteId === 'string' ? Number(marcaFabricanteId) : marcaFabricanteId;
-      
-      // Buscar la marca seleccionada para obtener sus datos completos
-      const marcaSeleccionada = this.marcasFabricante().find(m => m.marcaFabricanteId === idNumerico);
-      console.log('Datos completos de la marca:', marcaSeleccionada);
-      console.log('Descripción física a establecer:', marcaSeleccionada?.descFisica);
-      
-      const nuevaEncuesta = {
-        ...encuestaActual,
-        marcaFabricante: idNumerico,
-        // NO actualizar nombreMarca aquí, mantener el valor actual
-        tipoCemento: marcaSeleccionada?.tipoCemento,
-        descFisica: marcaSeleccionada?.descFisica
-      };
-      
-      console.log('Encuesta actualizada:', nuevaEncuesta);
-      this.encuesta.set(nuevaEncuesta);
-      console.log('Encuesta después de set:', this.encuesta());
-    }
+    // Legacy: método obsoleto, ya no se usa con el nuevo modelo de marcasSeleccionadas
   }
 
   seleccionarTipoCompraCemento(llave: string): void {
@@ -2006,12 +2054,8 @@ export class EncuestaFormComponent implements OnInit {
           this.encuesta()?.tipoLugarCompra
         );
       case 'fabricante':
-        // Solo requiere fabricanteId y marcaFabricante (que es marca_fabricante_id)
-        // nombreMarca es solo para visualización y no se guarda
-        return !!(
-          this.encuesta()?.fabricanteId &&
-          this.encuesta()?.marcaFabricante
-        );
+        // Ahora requiere al menos una marca/fabricante válida en el array
+        return this.marcasSeleccionadas().some(m => m.marcaFabricanteId && m.fabricanteId);
       case 'compra':
         const enc = this.encuesta();
         if (!enc?.tipoCompra || !enc?.descCompra || enc?.precio == null) {
@@ -2059,7 +2103,7 @@ export class EncuestaFormComponent implements OnInit {
       return;
     }
 
-    // Comparar campos relevantes
+    // Comparar campos relevantes (sin fabricanteId ni marcaFabricante)
     const hayCambios = 
       original.fechaEncuesta !== actual.fechaEncuesta ||
       original.empresaId !== actual.empresaId ||
@@ -2068,8 +2112,6 @@ export class EncuestaFormComponent implements OnInit {
       original.tipoCompra !== actual.tipoCompra ||
       original.presentacionCompra !== actual.presentacionCompra ||
       original.cantidadPresentacionCompra !== actual.cantidadPresentacionCompra ||
-      original.marcaFabricante !== actual.marcaFabricante ||
-      original.fabricanteId !== actual.fabricanteId ||
       original.concretoPremezclado !== actual.concretoPremezclado ||
       original.articulosConcreto !== actual.articulosConcreto ||
       original.precio !== actual.precio ||
