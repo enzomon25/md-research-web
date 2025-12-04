@@ -811,54 +811,65 @@
                   <div style="width: 100%; margin-bottom: 0.5rem;">
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.fabricanteId"
-                      (ngModelChange)="onFabricanteChange($index, $event)"
+                      (change)="onFabricanteChange($index, $event)"
                       [disabled]="camposDeshabilitados()">
-                      <option [ngValue]="0" [selected]="!marcaSeleccionada.fabricanteId">Seleccione un fabricante</option>
+                      <option [value]="0">Seleccione un fabricante</option>
                       @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
-                        <option [ngValue]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
+                        <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
                       }
                     </select>
                   </div>
-                  <!-- Marca -->
+
+                  <!-- Marca: solo si fabricante seleccionado -->
+                  @if (marcaSeleccionada.fabricanteId) {
                   <div style="width: 100%; margin-bottom: 0.5rem;">
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
-                      (ngModelChange)="onMarcaChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId">
-                      <option [ngValue]="0" [selected]="!marcaSeleccionada.marcaFabricanteId">Seleccione una marca</option>
+                      (change)="onMarcaChange($index, $event)"
+                      [disabled]="camposDeshabilitados()">
+                      <option [value]="0">Seleccione una marca</option>
                       @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
-                        <option [ngValue]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
+                        <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
                       }
                     </select>
                   </div>
-                  <!-- Tipo de Cemento -->
+                  }
+
+                  <!-- Tipo de Cemento: solo si marca seleccionada -->
+                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId) {
                   <div style="width: 100%; margin-bottom: 0.5rem;">
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.tipoCemento"
-                      (ngModelChange)="onTipoCementoChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !marcaSeleccionada.marcaFabricanteId">
-                      <option [ngValue]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
+                      (change)="onTipoCementoChange($index, $event)"
+                      [disabled]="camposDeshabilitados()">
+                      <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
                       @for (tipo of tiposCementoPorFila[$index]; track tipo) {
-                        <option [ngValue]="tipo">{{ tipo }}</option>
+                        <option [value]="tipo">{{ tipo }}</option>
                       }
                     </select>
                   </div>
-                  <!-- Descripción física (autoselección si 1 a 1) -->
-                  <div style="width: 100%; margin-bottom: 0.5rem;">
-                    @if (descripcionesFisicasPorFila[$index]?.length === 1 && marcaSeleccionada.tipoCemento) {
-                      <input class="form-control-bootstrap" style="width: 100%;" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
+                  }
+
+                  <!-- Descripción física: solo si tipoCemento seleccionado -->
+                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId && marcaSeleccionada.tipoCemento) {
+                    @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
+                      <div style="width: 100%; margin-bottom: 0.5rem;">
+                        <input class="form-control-bootstrap" style="width: 100%;" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
+                      </div>
                     } @else {
-                      <select class="form-control-bootstrap" style="width: 100%;"
-                        [(ngModel)]="marcaSeleccionada.descFisica"
-                        (ngModelChange)="onDescFisicaChange($index, $event)"
-                        [disabled]="camposDeshabilitados() || !marcaSeleccionada.tipoCemento">
-                        <option [ngValue]="''" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
-                        @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
-                          <option [ngValue]="desc">{{ desc }}</option>
-                        }
-                      </select>
+                      <div style="width: 100%; margin-bottom: 0.5rem;">
+                        <select class="form-control-bootstrap" style="width: 100%;"
+                          [(ngModel)]="marcaSeleccionada.descFisica"
+                          (change)="onDescFisicaChange($index, $event)"
+                          [disabled]="camposDeshabilitados()">
+                          <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
+                          @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
+                            <option [ngValue]="desc">{{ desc }}</option>
+                          }
+                        </select>
+                      </div>
                     }
-                  </div>
+                  }
                 </div>
               }
             </div>

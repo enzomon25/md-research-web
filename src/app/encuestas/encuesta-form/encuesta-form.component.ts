@@ -43,29 +43,46 @@ export class EncuestaFormComponent implements OnInit {
     { marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '' }
   ]);
 
-  onFabricanteChange(index: number, fabricanteId: number) {
+  onFabricanteChange(index: number, event: Event) {
+    if (!event.target) return;
+    const fabricanteId = +(event.target as HTMLSelectElement).value;
+    // Reiniciar toda la cascada dependiente al cambiar fabricante
     this.actualizarMarcaFabricante(index, 'fabricanteId', fabricanteId);
     this.actualizarMarcaFabricante(index, 'marcaFabricanteId', 0);
     this.actualizarMarcaFabricante(index, 'tipoCemento', '');
     this.actualizarMarcaFabricante(index, 'descFisica', '');
+    // Inicializar arrays dependientes para evitar render vacío
     this.marcasPorFila[index] = [];
     this.tiposCementoPorFila[index] = [];
     this.descripcionesFisicasPorFila[index] = [];
     if (!fabricanteId) {
+      // Si no hay fabricante, limpiar dependientes y salir
+      this.marcasPorFila[index] = [];
+      this.tiposCementoPorFila[index] = [];
+      this.descripcionesFisicasPorFila[index] = [];
       return;
     }
+    // Llamar al endpoint de marcas inmediatamente
     this.fabricantesService.obtenerMarcasPorFabricante(fabricanteId).subscribe({
       next: (marcas: any[]) => {
         this.marcasPorFila[index] = marcas || [];
+        // Forzar actualización del binding para el dropdown de marca
+        this.tiposCementoPorFila[index] = [];
+        this.descripcionesFisicasPorFila[index] = [];
       },
       error: (error: any) => {
         this.marcasPorFila[index] = [];
+        this.tiposCementoPorFila[index] = [];
+        this.descripcionesFisicasPorFila[index] = [];
         console.error('Error al cargar marcas del fabricante', fabricanteId, error);
       }
     });
   }
 
-  onMarcaChange(index: number, marcaFabricanteId: number) {
+  onMarcaChange(index: number, event: Event) {
+    if (!event.target) return;
+    const marcaFabricanteId = +(event.target as HTMLSelectElement).value;
+    // Reiniciar dependientes al cambiar marca
     this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaFabricanteId);
     this.actualizarMarcaFabricante(index, 'tipoCemento', '');
     this.actualizarMarcaFabricante(index, 'descFisica', '');
@@ -74,25 +91,51 @@ export class EncuestaFormComponent implements OnInit {
     if (!marcaFabricanteId) {
       return;
     }
-    // Buscar la marca seleccionada en marcasPorFila[index]
-    const marca = (this.marcasPorFila[index] || []).find(m => m.marcaFabricanteId === marcaFabricanteId);
-    let tiposCemento: string[] = [];
+    console.log('onMarcaChange index:', index);
+    console.log('marcasPorFila[index] (todas las marcas del fabricante):', JSON.stringify(this.marcasPorFila[index], null, 2));
+    // Buscar todas las marcas de la marca seleccionada (por nombreMarca)
+    const marcas = this.marcasPorFila[index] || [];
+    const marcaObj = marcas.find(m => m.marcaFabricanteId === marcaFabricanteId);
+    const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
+    console.log('marcaObj seleccionado:', JSON.stringify(marcaObj, null, 2));
+    console.log('nombreMarcaSeleccionada:', nombreMarcaSeleccionada);
+    const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
+    console.log('marcasSeleccionadas (todas las variantes de la marca):', JSON.stringify(marcasSeleccionadas, null, 2));
+    // Extraer todos los tipos de cemento únicos
+    let tiposCemento = Array.from(new Set(marcasSeleccionadas.map(m => m.tipoCemento).filter(Boolean)));
+    console.log('tiposCemento posibles:', tiposCemento);
+    // Extraer todas las descripciones físicas únicas (solo por nombreMarca y tipoCemento)
     let descripcionesFisicas: string[] = [];
-    if (marca && marca.tipoCemento) {
-      tiposCemento = Array.isArray(marca.tipoCemento) ? marca.tipoCemento : [marca.tipoCemento];
-    }
-    if (marca && marca.descFisica) {
-      descripcionesFisicas = Array.isArray(marca.descFisica) ? marca.descFisica : [marca.descFisica];
+    // Si ya hay tipoCemento seleccionado en la fila, filtrar por ese tipoCemento
+    const tipoCementoSeleccionado = this.marcasSeleccionadas()[index]?.tipoCemento || '';
+    console.log('tipoCementoSeleccionado en la fila:', tipoCementoSeleccionado);
+    if (tipoCementoSeleccionado) {
+      const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCementoSeleccionado);
+      console.log('marcasFiltradasPorTipo (por nombreMarca y tipoCemento):', JSON.stringify(marcasFiltradasPorTipo, null, 2));
+      descripcionesFisicas = Array.from(new Set(
+        marcasFiltradasPorTipo
+          .map(m => m.descFisica)
+          .filter(Boolean)
+      ));
+      console.log('descripcionesFisicas filtradas (por nombreMarca y tipoCemento):', descripcionesFisicas);
+    } else {
+      // Si no hay tipoCemento seleccionado, mostrar todas las descripciones físicas de la marca
+      descripcionesFisicas = Array.from(new Set(marcasSeleccionadas.map(m => m.descFisica).filter(Boolean)));
+      console.log('descripcionesFisicas sin filtro de tipoCemento:', descripcionesFisicas);
     }
     // Lógica anti-duplicados para tipoCemento y descFisica
     // Excluir los tiposCemento ya seleccionados en otras filas
     const tiposSeleccionados = this.marcasSeleccionadas().map((m, i) => i !== index ? m.tipoCemento : '').filter(Boolean);
+    console.log('tiposSeleccionados en otras filas:', tiposSeleccionados);
     tiposCemento = tiposCemento.filter(tc => !tiposSeleccionados.includes(tc));
     // Excluir las descripciones físicas ya seleccionadas en otras filas
     const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
+    console.log('descsSeleccionadas en otras filas:', descsSeleccionadas);
     descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
     this.tiposCementoPorFila[index] = tiposCemento;
     this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
+    console.log('tiposCementoPorFila[index] FINAL:', this.tiposCementoPorFila[index]);
+    console.log('descripcionesFisicasPorFila[index] FINAL:', this.descripcionesFisicasPorFila[index]);
   }
 
   // Lógica anti-duplicados para marcas: solo mostrar marcas no seleccionadas en otras filas y sin duplicados por fabricanteId-nombre
@@ -110,18 +153,46 @@ export class EncuestaFormComponent implements OnInit {
     return Array.from(unicos.values());
   }
 
-  onTipoCementoChange(index: number, tipoCemento: string) {
-    this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
-    // Si la relación tipoCemento-descFisica es 1 a 1, autoseleccionar descFisica
-    const descs = this.descripcionesFisicasPorFila[index];
-    if (descs && descs.length === 1 && tipoCemento) {
-      this.actualizarMarcaFabricante(index, 'descFisica', descs[0]);
-    } else {
-      this.actualizarMarcaFabricante(index, 'descFisica', '');
-    }
+  onTipoCementoChange(index: number, event: Event) {
+    if (!event.target) return;
+        const tipoCemento = (event.target as HTMLSelectElement).value;
+        console.log('onTipoCementoChange index:', index);
+        console.log('tipoCemento seleccionado:', tipoCemento);
+        // Reiniciar dependientes al cambiar tipoCemento
+        this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
+
+        // Filtrar descripciones físicas por tipoCemento seleccionado
+        const marcas = this.marcasPorFila[index] || [];
+        const marcaObj = marcas.find(m => m.marcaFabricanteId === this.marcasSeleccionadas()[index].marcaFabricanteId);
+        const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
+        const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
+        const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCemento);
+        let descripcionesFisicas = Array.from(new Set(
+          marcasFiltradasPorTipo.map(m => m.descFisica).filter(Boolean)
+        ));
+        // Lógica anti-duplicados para descFisica
+        const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
+        descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
+        this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
+        console.log('descripcionesFisicasPorFila[index] filtradas por tipoCemento:', descripcionesFisicas);
+
+        // Verificar el estado de descripciones físicas antes de autoselección
+        if (descripcionesFisicas && descripcionesFisicas.length === 1 && tipoCemento) {
+          console.log('Autoseleccionando descFisica:', descripcionesFisicas[0]);
+          this.actualizarMarcaFabricante(index, 'descFisica', descripcionesFisicas[0]);
+        } else {
+          console.log('No se autoselecciona descFisica, se limpia.');
+          this.actualizarMarcaFabricante(index, 'descFisica', '');
+        }
+        // Mostrar el estado final de la fila seleccionada
+        console.log('marcasSeleccionadas()[index] después de tipoCemento:', this.marcasSeleccionadas()[index]);
+        console.log('tiposCementoPorFila[index]:', this.tiposCementoPorFila[index]);
+        console.log('descripcionesFisicasPorFila[index]:', this.descripcionesFisicasPorFila[index]);
   }
 
-  onDescFisicaChange(index: number, descFisica: string) {
+  onDescFisicaChange(index: number, event: Event) {
+    if (!event.target) return;
+    const descFisica = (event.target as HTMLSelectElement).value;
     this.actualizarMarcaFabricante(index, 'descFisica', descFisica);
   }
 
