@@ -44,4 +44,8 @@ export class FabricantesService {
   obtenerMarcasPorFabricante(fabricanteId: number): Observable<MarcaFabricante[]> {
     return this.http.get<MarcaFabricante[]>(`${this.apiUrl}/${fabricanteId}`);
   }
+
+  eliminarMarcaFabricante(marcaFabricanteId: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/marca-fabricante/${marcaFabricanteId}`);
+  }
 }

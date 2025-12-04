@@ -142,6 +142,7 @@
   color: #858796;
   cursor: not-allowed;
 }
+
 .observacion-actions {
   width: 100%;
   display: flex;
@@ -237,7 +238,7 @@
 }
 
 /* Estilo específico para botones deshabilitados en formulario-deshabilitado */
-.formulario-deshabilitado button:not(.btn-volver):not(.btn-cancelar):not(.btn-cancelar-registro):not(.btn-devolver):not(.btn-aprobar):not(.btn-modal-devolver):not(.btn-modal-cancelar):not(.btn-modal-confirmar):not(.btn-eliminar-observacion):not(.seccion-header) {
+.formulario-deshabilitado button:not(.btn-volver):not(.btn-cancelar):not(.btn-cancelar-registro):not(.btn-devolver):not(.btn-aprobar):not(.btn-modal-devolver):not(.btn-modal-cancelar):not(.btn-modal-confirmar):not(.btn-eliminar-observacion):not(.btn-guardar-observacion):not(.seccion-header) {
   pointer-events: none;
   cursor: not-allowed !important;
   background-color: #e3e6f0 !important;

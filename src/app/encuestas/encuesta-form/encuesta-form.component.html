@@ -60,7 +60,7 @@
           <div class="observacion-header">
             <label>Observaciones de Validación - Datos Generales</label>
             <div class="observacion-header-actions">
-              <button type="button" class="btn-desestimar-observacion" (click)="abrirModalDesestimar('datos_encuesta')"
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('datos_encuesta')"
                 [disabled]="estaGuardandoObservacion('datos_encuesta') || !obtenerObservacionTexto('datos_encuesta').trim()"
                 *ngIf="obtenerObservacionTexto('datos_encuesta').trim()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -364,10 +364,7 @@
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             <div class="observacion-header-actions">
-              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('empresa')"
-                [disabled]="estaGuardandoObservacion('empresa')">
-                Guardar
-              </button>
+              <!-- Botón Guardar duplicado eliminado -->
               @if (obtenerObservacionTexto('empresa').trim()) {
               <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('empresa')"
                 title="Desestimar observación">
@@ -612,10 +609,7 @@
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             <div class="observacion-header-actions">
-              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('encuestado')"
-                [disabled]="estaGuardandoObservacion('encuestado')">
-                Guardar
-              </button>
+              <!-- Botón Guardar duplicado eliminado -->
               @if (obtenerObservacionTexto('encuestado').trim()) {
               <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('encuestado')"
                 title="Desestimar observación">
@@ -633,8 +627,9 @@
             (input)="actualizarObservacionTexto('encuestado', $any($event.target).value)"
             placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
           <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('encuestado')"
-              [disabled]="estaGuardandoObservacion('encuestado')">
+            <button type="button" class="btn-guardar-observacion"
+              [disabled]="estaGuardandoObservacion('encuestado')"
+              (click)="guardarObservacion('encuestado')">
               Guardar
             </button>
             @if (estaGuardandoObservacion('encuestado')) {
@@ -721,7 +716,6 @@
             </select>
           </div>
         </div>
-
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
         <div class="observacion-container">
@@ -739,13 +733,18 @@
             </button>
             }
           </div>
-          <textarea [value]="obtenerObservacionTexto('productos')"
-            (input)="actualizarObservacionTexto('productos', $any($event.target).value)"
-            (blur)="guardarObservacion('productos')" placeholder="Agregar observaciones sobre esta sección..."
-            rows="3"></textarea>
-          @if (estaGuardandoObservacion('productos')) {
-          <span class="guardando-observacion">Guardando...</span>
-          }
+            <textarea [value]="obtenerObservacionTexto('productos')"
+              (input)="actualizarObservacionTexto('productos', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+              rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('productos')"
+              [disabled]="estaGuardandoObservacion('productos')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('productos')) {
+              <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
         </div>
         }
         @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('productos').trim()) {
@@ -812,7 +811,7 @@
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.fabricanteId"
                       (change)="onFabricanteChange($index, $event)"
-                      [disabled]="camposDeshabilitados()">
+                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
                       <option [value]="0">Seleccione un fabricante</option>
                       @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
                         <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
@@ -826,7 +825,7 @@
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
                       (change)="onMarcaChange($index, $event)"
-                      [disabled]="camposDeshabilitados()">
+                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
                       <option [value]="0">Seleccione una marca</option>
                       @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
                         <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
@@ -841,7 +840,7 @@
                     <select class="form-control-bootstrap" style="width: 100%;"
                       [(ngModel)]="marcaSeleccionada.tipoCemento"
                       (change)="onTipoCementoChange($index, $event)"
-                      [disabled]="camposDeshabilitados()">
+                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
                       <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
                       @for (tipo of tiposCementoPorFila[$index]; track tipo) {
                         <option [value]="tipo">{{ tipo }}</option>
@@ -861,7 +860,7 @@
                         <select class="form-control-bootstrap" style="width: 100%;"
                           [(ngModel)]="marcaSeleccionada.descFisica"
                           (change)="onDescFisicaChange($index, $event)"
-                          [disabled]="camposDeshabilitados()">
+                          [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
                           <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
                           @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
                             <option [ngValue]="desc">{{ desc }}</option>
@@ -869,6 +868,22 @@
                         </select>
                       </div>
                     }
+                  }
+
+                  <!-- Botón Desestimar para cada elemento completo y con encuestaFabricanteId -->
+                  @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {
+                    <button type="button" class="btn-eliminar-observacion"
+                      (click)="abrirModalDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
+                      [disabled]="estaGuardandoDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
+                      title="Desestimar observación de fabricante"
+                      style="margin-top: 0.5rem;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
                   }
                 </div>
               }
@@ -895,13 +910,18 @@
             </button>
             }
           </div>
-          <textarea [value]="obtenerObservacionTexto('fabricante')"
-            (input)="actualizarObservacionTexto('fabricante', $any($event.target).value)"
-            (blur)="guardarObservacion('fabricante')" placeholder="Agregar observaciones sobre esta sección..."
-            rows="3"></textarea>
-          @if (estaGuardandoObservacion('fabricante')) {
-          <span class="guardando-observacion">Guardando...</span>
-          }
+            <textarea [value]="obtenerObservacionTexto('fabricante')"
+              (input)="actualizarObservacionTexto('fabricante', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+              rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('fabricante')"
+              [disabled]="estaGuardandoObservacion('fabricante')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('fabricante')) {
+              <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
         </div>
         }
         @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('fabricante').trim()) {
@@ -1031,28 +1051,18 @@
           <div class="observacion-container">
             <div class="observacion-header">
               <label>Observaciones de Validación - Información de Compra</label>
-              <div class="observacion-container">
-                <div class="observacion-header">
-                  <label>Observaciones de Validación - Información de Compra</label>
-                  <div class="observacion-header-actions">
-                    <button [disabled]="estaGuardandoObservacion('compra')">
-                    </button>
-                    @if (obtenerObservacionTexto('compra').trim()) {}
-                  </div>
-                </div>
-                <textarea [value]="obtenerObservacionTexto('compra')"
-                  (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
-                  placeholder="Agregar observaciones sobre información de compra..." rows="3"></textarea>
-                <div class="observacion-actions">
-                  <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
-                    [disabled]="estaGuardandoObservacion('compra')">
-                    Guardar
-                  </button>
-                  @if (estaGuardandoObservacion('compra')) {
-                  <span class="guardando-observacion">Guardando...</span>
-                  }
-                </div>
-              </div>
+            </div>
+            <textarea [value]="obtenerObservacionTexto('compra')"
+              (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
+              placeholder="Agregar observaciones sobre información de compra..." rows="3"></textarea>
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
+                 [disabled]="estaGuardandoObservacion('compra')">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('compra')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
             </div>
           </div>
           }
@@ -1112,12 +1122,17 @@
               }
             </div>
             <textarea [value]="obtenerObservacionTexto('compra')"
-              (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
-              (blur)="guardarObservacion('compra')" placeholder="Agregar observaciones sobre esta sección..."
+              (input)="actualizarObservacionTexto('compra', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
               rows="3"></textarea>
-            @if (estaGuardandoObservacion('compra')) {
-            <span class="guardando-observacion">Guardando...</span>
-            }
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
+                [disabled]="!obtenerObservacionTexto('compra').trim() || estaGuardandoObservacion('compra')">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('compra')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
+            </div>
           </div>
           }
           @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('compra').trim()) {
@@ -1187,7 +1202,7 @@
             <p class="secciones-titulo">Secciones observadas:</p>
             <ul>
               @for (seccion of obtenerSeccionesConObservacionesVisibles(); track seccion) {
-              <li>{{ seccion }}</li>
+                <li>{{ seccion }}</li>
               }
             </ul>
           </div>
@@ -1220,6 +1235,24 @@
           }
           @if (todasLasSeccionesCompletas() && esEditable()) {
             <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+          }
+          @if (esValidador() && esEstadoRevision()) {
+            @if (tieneObservaciones()) {
+              <button class="btn-devolver" (click)="abrirModalTransferencia()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 14 4 9 9 4"></polyline>
+                  <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                </svg>
+                Devolver Encuesta
+              </button>
+            } @else {
+              <button class="btn-aprobar" (click)="abrirModalTransferencia()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Aprobar Encuesta
+              </button>
+            }
           }
         </div>
 
