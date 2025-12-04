@@ -1,6 +1,3 @@
-
-
-
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +28,74 @@ import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados
   ]
 })
 export class EncuestaFormComponent implements OnInit {
+      /**
+       * Devuelve el Map de observacionesTexto para usar con ngModel en el template
+       */
+      obtenerObservacionesTexto(): Map<string, string> {
+        return this.observacionesTexto();
+      }
+    /**
+     * Retorna true si la encuesta está en estado 'En revisión' (id=ESTADOS_ENCUESTA.REVISION)
+     */
+      esEstadoRevision(): boolean {
+        const encuesta = this.encuesta?.();
+        console.log('[esEstadoRevision] encuesta.estado:', encuesta?.estado);
+        console.log('[esEstadoRevision] encuesta.estado?.estadoId:', encuesta?.estado?.estadoId);
+        console.log('[esEstadoRevision] ESTADOS_ENCUESTA.EN_REVISION:', this.ESTADOS_ENCUESTA.EN_REVISION);
+        return !!encuesta && encuesta.estado?.estadoId === this.ESTADOS_ENCUESTA.EN_REVISION;
+      }
+  // Estado para desestimar fabricante individual
+  mostrarModalDesestimarFabricante = signal(false);
+  encuestaFabricanteIdDesestimar = signal<number | null>(null);
+  guardandoDesestimarFabricante = signal<{[id: number]: boolean}>({});
+
+  // Constantes de estado para usar en el template
+  ESTADOS_ENCUESTA = ESTADOS_ENCUESTA;
+
+  /**
+   * Abrir modal para confirmar desestimar fabricante individual
+   */
+  abrirModalDesestimarFabricante(encuestaFabricanteId: number): void {
+    this.encuestaFabricanteIdDesestimar.set(encuestaFabricanteId);
+    this.mostrarModalDesestimarFabricante.set(true);
+  }
+
+  /**
+   * Verificar si se está guardando desestimación de fabricante
+   */
+  estaGuardandoDesestimarFabricante(encuestaFabricanteId: number): boolean {
+    return !!this.guardandoDesestimarFabricante()[encuestaFabricanteId];
+  }
+
+  /**
+   * Cerrar modal de desestimar fabricante
+   */
+  cerrarModalDesestimarFabricante(): void {
+    this.mostrarModalDesestimarFabricante.set(false);
+    this.encuestaFabricanteIdDesestimar.set(null);
+  }
+
+  /**
+   * Confirmar y eliminar fabricante individual
+   */
+  confirmarDesestimarFabricante(): void {
+    const id = this.encuestaFabricanteIdDesestimar();
+    if (!id) return;
+    this.guardandoDesestimarFabricante.set({ ...this.guardandoDesestimarFabricante(), [id]: true });
+    this.fabricantesService.eliminarMarcaFabricante(id).subscribe({
+      next: () => {
+        // Actualizar la UI, eliminar el elemento del array marcasSeleccionadas
+        const nuevasMarcas = this.marcasSeleccionadas().filter(m => m.encuestaFabricanteId !== id);
+        this.marcasSeleccionadas.set(nuevasMarcas);
+        this.guardandoDesestimarFabricante.set({ ...this.guardandoDesestimarFabricante(), [id]: false });
+        this.cerrarModalDesestimarFabricante();
+      },
+      error: () => {
+        this.guardandoDesestimarFabricante.set({ ...this.guardandoDesestimarFabricante(), [id]: false });
+        // Mostrar error si es necesario
+      }
+    });
+  }
 
 
   // --- Lógica clásica para cascada de marcas/tipoCemento/descFisica por fila ---
@@ -38,9 +103,9 @@ export class EncuestaFormComponent implements OnInit {
   tiposCementoPorFila: string[][] = [[]];
   descripcionesFisicasPorFila: string[][] = [[]];
 
-  // Modelo extendido: ahora incluye tipoCemento y descFisica (ambos string)
-  marcasSeleccionadas = signal<Array<{ marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string }>>([
-    { marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '' }
+  // Modelo extendido: ahora incluye encuestaFabricanteId, tipoCemento y descFisica (ambos string)
+  marcasSeleccionadas = signal<Array<{ encuestaFabricanteId: number; marcaFabricanteId: number; fabricanteId: 0; tipoCemento?: string; descFisica?: string; completo?: boolean }>>([
+    { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }
   ]);
 
   onFabricanteChange(index: number, event: Event) {
@@ -199,7 +264,7 @@ export class EncuestaFormComponent implements OnInit {
   agregarMarcaFabricante(): void {
     this.marcasSeleccionadas.set([
       ...this.marcasSeleccionadas(),
-      { marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '' }
+      { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }
     ]);
     this.marcasPorFila.push([]);
     this.tiposCementoPorFila.push([]);
@@ -523,7 +588,7 @@ export class EncuestaFormComponent implements OnInit {
     private encuestadosService: EncuestadosService,
     private authService: AuthService,
     private observacionService: EncuestaObservacionService,
-    private historialObservacionService: EncuestaObservacionHistorialService
+    private historialObservacionService: EncuestaObservacionHistorialService,
   ) {}
 
   ngOnInit(): void {
@@ -779,12 +844,19 @@ export class EncuestaFormComponent implements OnInit {
     if (Array.isArray(encuesta.marcas) && encuesta.marcas.length > 0) {
       console.log('LOG-2: Marcas recibidas en encuesta', encuesta.marcas);
       // Poblar marcasSeleccionadas con todos los campos relevantes
-      const marcasAdaptadas = encuesta.marcas.map((m: any) => ({
-        marcaFabricanteId: m.marcaFabricanteId || 0,
-        fabricanteId: m.fabricanteId || 0,
-        tipoCemento: m.marcaFabricante?.tipoCemento || '',
-        descFisica: m.marcaFabricante?.descFisica || ''
-      }));
+      const marcasAdaptadas = encuesta.marcas.map((m: any) => {
+        const tipoCemento = m.marcaFabricante?.tipoCemento || '';
+        const descFisica = m.marcaFabricante?.descFisica || '';
+        const completo = !!(m.encuestaFabricanteId || m.encuesta_fabricante_id) && !!(m.marcaFabricanteId) && !!(m.fabricanteId) && !!tipoCemento && !!descFisica;
+        return {
+          encuestaFabricanteId: m.encuestaFabricanteId || m.encuesta_fabricante_id || 0,
+          marcaFabricanteId: m.marcaFabricanteId || 0,
+          fabricanteId: m.fabricanteId || 0,
+          tipoCemento,
+          descFisica,
+          completo
+        };
+      });
       this.marcasSeleccionadas.set(marcasAdaptadas);
       console.log('LOG-3: marcasSeleccionadas adaptadas', marcasAdaptadas);
       // Inicializar marcasPorFila, tiposCementoPorFila y descripcionesFisicasPorFila con los valores del backend
@@ -821,7 +893,7 @@ export class EncuestaFormComponent implements OnInit {
       });
     } else {
       // Si no hay marcas, dejar al menos una fila vacía
-      this.marcasSeleccionadas.set([{ marcaFabricanteId: 0, fabricanteId: 0 }]);
+      this.marcasSeleccionadas.set([{ encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }]);
       console.log('LOG-4: marcasSeleccionadas vacío', this.marcasSeleccionadas());
       this.marcasPorFila = [[]];
     }
@@ -1284,8 +1356,9 @@ export class EncuestaFormComponent implements OnInit {
     const encuestaId = this.encuesta()?.encuestaId;
     if (!encuestaId) return;
 
-    const observacion = this.observacionesTexto().get(seccion) || '';
-    
+    // Obtener texto del Map (backend validará si está vacío)
+    const observacion = this.obtenerObservacionTexto(seccion);
+
     // Marcar como guardando
     const guardandoMap = new Map(this.guardandoObservacion());
     guardandoMap.set(seccion, true);
@@ -1296,7 +1369,6 @@ export class EncuestaFormComponent implements OnInit {
         // Actualizar estado de guardado
         guardandoMap.set(seccion, false);
         this.guardandoObservacion.set(guardandoMap);
-        
         // Recargar observaciones para obtener datos actualizados
         this.cargarObservaciones(encuestaId);
       },
@@ -1304,6 +1376,19 @@ export class EncuestaFormComponent implements OnInit {
         console.error('Error al guardar observación:', error);
         guardandoMap.set(seccion, false);
         this.guardandoObservacion.set(guardandoMap);
+        
+        // Mostrar error del backend en modal
+        let mensajeError = 'Error al guardar la observación';
+        if (error?.error?.errores && Array.isArray(error.error.errores) && error.error.errores.length > 0) {
+          // Si hay array de errores, mostrar el primero
+          mensajeError = error.error.errores[0];
+        } else if (error?.error?.message) {
+          mensajeError = error.error.message;
+        } else if (error?.message) {
+          mensajeError = error.message;
+        }
+        this.mensajeModal.set(mensajeError);
+        this.mostrarModalError.set(true);
       }
     });
   }
@@ -1335,8 +1420,8 @@ export class EncuestaFormComponent implements OnInit {
 
     this.procesandoDesestimar.set(true);
 
-    // Guardar con texto vacío para desactivar lógicamente
-    this.observacionService.guardarObservacion(encuestaId, seccion, '').subscribe({
+    // Usar el endpoint DELETE para eliminar la observación
+    this.observacionService.eliminarObservacion(encuestaId, seccion).subscribe({
       next: () => {
         // Limpiar el texto local
         const textoMap = new Map(this.observacionesTexto());
@@ -1386,7 +1471,10 @@ export class EncuestaFormComponent implements OnInit {
    * Solo puede editar cuando la encuesta está en estado EN_REVISION (2)
    */
   puedeEditarObservaciones(): boolean {
-    return this.esValidador() && this.encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REVISION;
+    const encuesta = this.encuesta?.();
+    const esValidador = this.esValidador();
+    const estadoId = encuesta?.estado?.estadoId;
+    return esValidador && estadoId === this.ESTADOS_ENCUESTA.EN_REVISION;
   }
 
 
@@ -1397,12 +1485,12 @@ export class EncuestaFormComponent implements OnInit {
    */
   puedeVerObservaciones(): boolean {
     const estadoId = this.encuesta()?.estadoId;
+    const esValidador = this.esValidador();
     const esAdmin = this.authService.getRolDescripcion() === ROLES.ADMINISTRADOR;
-    return (this.esValidador() || esAdmin) && (
-      estadoId === ESTADOS_ENCUESTA.OBSERVADA || 
-      estadoId === ESTADOS_ENCUESTA.APROBADO ||
-      estadoId === ESTADOS_ENCUESTA.EN_CORRECCION
-    );
+    const esObservada = estadoId === ESTADOS_ENCUESTA.OBSERVADA;
+    const esAprobado = estadoId === ESTADOS_ENCUESTA.APROBADO;
+    const esCorreccion = estadoId === ESTADOS_ENCUESTA.EN_CORRECCION;
+    return (esValidador || esAdmin) && (esObservada || esAprobado || esCorreccion);
   }
 
   /**
@@ -1411,11 +1499,13 @@ export class EncuestaFormComponent implements OnInit {
    */
   encuestadorPuedeVerObservaciones(): boolean {
     const estadoId = this.encuesta()?.estadoId;
-    return this.esEncuestador() && (
-      estadoId === ESTADOS_ENCUESTA.OBSERVADA ||
-      estadoId === ESTADOS_ENCUESTA.EN_CORRECCION
-    );
+    const esEncuestador = this.esEncuestador();
+    const esObservada = estadoId === ESTADOS_ENCUESTA.OBSERVADA;
+    const esCorreccion = estadoId === ESTADOS_ENCUESTA.EN_CORRECCION;
+    return esEncuestador && (esObservada || esCorreccion);
   }
+
+
 
   /**
    * Confirmar que el encuestador vio las observaciones y cambiar a EN_CORRECCION
