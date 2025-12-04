@@ -756,7 +756,7 @@ export class EncuestaFormComponent implements OnInit {
    * Procesa y muestra el detalle de la encuesta
    */
   procesarEncuesta(encuesta: Encuesta): void {
-    console.log('Encuesta cargada del backend:', encuesta);
+    console.log('LOG-1: Encuesta cargada del backend', encuesta);
     
     // Convertir fechaEncuesta de ISO a formato YYYY-MM-DD si existe
     if (encuesta.fechaEncuesta) {
@@ -777,31 +777,52 @@ export class EncuestaFormComponent implements OnInit {
 
     // --- NUEVO: Poblar marcasSeleccionadas y marcasPorFila desde la API si existen ---
     if (Array.isArray(encuesta.marcas) && encuesta.marcas.length > 0) {
-      // Asegurarse de que cada item tenga marcaFabricanteId y fabricanteId
+      console.log('LOG-2: Marcas recibidas en encuesta', encuesta.marcas);
+      // Poblar marcasSeleccionadas con todos los campos relevantes
       const marcasAdaptadas = encuesta.marcas.map((m: any) => ({
         marcaFabricanteId: m.marcaFabricanteId || 0,
-        fabricanteId: m.fabricanteId || 0
+        fabricanteId: m.fabricanteId || 0,
+        tipoCemento: m.marcaFabricante?.tipoCemento || '',
+        descFisica: m.marcaFabricante?.descFisica || ''
       }));
       this.marcasSeleccionadas.set(marcasAdaptadas);
-      // Inicializar marcasPorFila con la misma longitud y cargar marcas de cada fabricante
+      console.log('LOG-3: marcasSeleccionadas adaptadas', marcasAdaptadas);
+      // Inicializar marcasPorFila, tiposCementoPorFila y descripcionesFisicasPorFila con los valores del backend
       this.marcasPorFila = Array(marcasAdaptadas.length).fill([]);
+      this.tiposCementoPorFila = Array(marcasAdaptadas.length).fill([]);
+      this.descripcionesFisicasPorFila = Array(marcasAdaptadas.length).fill([]);
       marcasAdaptadas.forEach((item, idx) => {
         if (item.fabricanteId) {
           this.fabricantesService.obtenerMarcasPorFabricante(item.fabricanteId).subscribe({
             next: (marcas: any[]) => {
               this.marcasPorFila[idx] = marcas || [];
+              // Inicializar tiposCementoPorFila y descripcionesFisicasPorFila con los valores del backend si existen
+              const marcaObj = marcas.find(m => m.marcaFabricanteId === item.marcaFabricanteId);
+              if (marcaObj) {
+                // Tipos de cemento disponibles para la marca
+                const tiposCemento = Array.from(new Set(marcas.filter(m => m.nombreMarca === marcaObj.nombreMarca).map(m => m.tipoCemento).filter(Boolean)));
+                this.tiposCementoPorFila[idx] = tiposCemento;
+                // Descripciones físicas disponibles para la marca y tipoCemento
+                const descripcionesFisicas = Array.from(new Set(marcas.filter(m => m.nombreMarca === marcaObj.nombreMarca && m.tipoCemento === item.tipoCemento).map(m => m.descFisica).filter(Boolean)));
+                this.descripcionesFisicasPorFila[idx] = descripcionesFisicas;
+              }
             },
             error: () => {
               this.marcasPorFila[idx] = [];
+              this.tiposCementoPorFila[idx] = [];
+              this.descripcionesFisicasPorFila[idx] = [];
             }
           });
         } else {
           this.marcasPorFila[idx] = [];
+          this.tiposCementoPorFila[idx] = [];
+          this.descripcionesFisicasPorFila[idx] = [];
         }
       });
     } else {
       // Si no hay marcas, dejar al menos una fila vacía
       this.marcasSeleccionadas.set([{ marcaFabricanteId: 0, fabricanteId: 0 }]);
+      console.log('LOG-4: marcasSeleccionadas vacío', this.marcasSeleccionadas());
       this.marcasPorFila = [[]];
     }
 
@@ -836,6 +857,7 @@ export class EncuestaFormComponent implements OnInit {
 
     // Si la encuesta ya tiene empresa, cargar sus datos
     if (encuesta.empresaId) {
+      console.log('LOG-5: empresaId en encuesta', encuesta.empresaId);
       this.cargarEmpresaSeleccionada(encuesta.empresaId);
     }
 
