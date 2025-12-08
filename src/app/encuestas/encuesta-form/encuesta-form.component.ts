@@ -450,8 +450,7 @@ export class EncuestaFormComponent implements OnInit {
   mostrarModalEncuestaObservada = signal(false);
   procesandoCambioEstadoCorreccion = signal(false);
 
-  // Búsqueda de encuestados
-  tipoBusquedaEncuestado = signal<'numdoc' | 'nombres'>('numdoc');
+  // Búsqueda de encuestados (solo por nombres)
   terminoBusquedaEncuestado = signal('');
   encuestadosEncontrados = signal<Encuestado[]>([]);
   buscandoEncuestado = signal(false);
@@ -1771,11 +1770,8 @@ export class EncuestaFormComponent implements OnInit {
     this.mostrarFormularioRegistroEncuestado.set(true);
 
     const termino = this.terminoBusquedaEncuestado().trim();
-    if (this.tipoBusquedaEncuestado() === 'numdoc') {
-      this.nuevoEncuestado = { ...this.nuevoEncuestado, numdoc: termino };
-    } else {
-      this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
-    }
+    // Siempre pre-llenamos con el nombre buscado
+    this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
   }
 
   cerrarModalNoEncontrada(): void {
@@ -1965,11 +1961,8 @@ export class EncuestaFormComponent implements OnInit {
     this.buscandoEncuestado.set(true);
     this.mostrarResultadosEncuestado.set(true);
 
-    // Usar el tipo de búsqueda seleccionado y limitar a 5 resultados
-    const nombres = this.tipoBusquedaEncuestado() === 'nombres' ? termino : undefined;
-    const numdoc = this.tipoBusquedaEncuestado() === 'numdoc' ? termino : undefined;
-
-    this.encuestadosService.listar(1, 5, nombres, numdoc).subscribe({
+    // Buscar siempre por nombres, limitar a 5 resultados
+    this.encuestadosService.listar(1, 5, termino, undefined).subscribe({
       next: (response) => {
         console.log('Respuesta del servicio de encuestados:', response);
         this.encuestadosEncontrados.set(response.data);
@@ -1982,12 +1975,8 @@ export class EncuestaFormComponent implements OnInit {
           this.mostrarModalNoEncontradaEncuestado.set(true);
           this.mostrarResultadosEncuestado.set(false);
           
-          // Pre-llenar el campo según el tipo de búsqueda
-          if (this.tipoBusquedaEncuestado() === 'numdoc') {
-            this.nuevoEncuestado = { ...this.nuevoEncuestado, numdoc: termino };
-          } else {
-            this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
-          }
+          // Pre-llenar el campo nombres con el término buscado
+          this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
           console.log('Estado después de setear:', {
             mostrarFormulario: this.mostrarFormularioRegistroEncuestado(),
             mostrarResultados: this.mostrarResultadosEncuestado(),
@@ -2044,31 +2033,17 @@ export class EncuestaFormComponent implements OnInit {
       return false;
     }
 
-    // Si busca por número de documento DNI, validar que tenga exactamente 8 dígitos
-    if (this.tipoBusquedaEncuestado() === 'numdoc') {
-      const soloNumeros = /^\d+$/.test(termino);
-      if (!soloNumeros) {
-        this.errorBusquedaEncuestado.set('El número de documento debe contener solo números');
-        return false;
-      }
-      if (termino.length !== 8) {
-        this.errorBusquedaEncuestado.set(`El DNI debe tener exactamente 8 dígitos (actual: ${termino.length})`);
-        return false;
-      }
+    // Validar que tenga al menos 3 caracteres
+    if (termino.length < 3) {
+      this.errorBusquedaEncuestado.set('Debe ingresar al menos 3 caracteres');
+      return false;
     }
-
-    // Si busca por nombres, validar que tenga al menos 3 caracteres y solo letras
-    if (this.tipoBusquedaEncuestado() === 'nombres') {
-      if (termino.length < 3) {
-        this.errorBusquedaEncuestado.set('El nombre debe tener al menos 3 caracteres');
-        return false;
-      }
-      // Validar que solo contenga letras, espacios, tildes y ñ
-      const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(termino);
-      if (!soloLetras) {
-        this.errorBusquedaEncuestado.set('El nombre solo debe contener letras, espacios y tildes');
-        return false;
-      }
+    
+    // Validar que solo contenga letras, espacios, tildes y ñ
+    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(termino);
+    if (!soloLetras) {
+      this.errorBusquedaEncuestado.set('Solo debe contener letras, espacios y tildes');
+      return false;
     }
     
     this.errorBusquedaEncuestado.set('');

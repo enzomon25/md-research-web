@@ -475,13 +475,12 @@
         <div class="empresa-search-row">
           <div style="width: 100%;">
             <label style="margin-bottom: 0.5rem; display: block;">
-              {{ tipoBusquedaEncuestado() === 'numdoc' ? 'Buscar por Número de Documento' : 'Buscar por Nombres' }}
+              Buscar por Nombres y/o Apellidos
             </label>
             <div style="display: flex; gap: 0.5rem; align-items: stretch; width: 100%;">
               <div class="input-dropdown-container" style="flex: 1 1 0; min-width: 0;">
                 <input type="text" [(ngModel)]="terminoBusquedaEncuestado" (input)="validarBusquedaEncuestado()"
-                  [maxlength]="tipoBusquedaEncuestado() === 'numdoc' ? 8 : null"
-                  [placeholder]="tipoBusquedaEncuestado() === 'numdoc' ? 'Ingrese DNI (8 dígitos)' : 'Ingrese nombres'"
+                  placeholder="Ingrese nombres y/o apellidos"
                   class="search-input" style="width: 100%; min-width: 0; height: 44px; box-sizing: border-box;">
                 @if (mostrarResultadosEncuestado()) {
                 <div class="search-results search-results--input-width">
@@ -502,12 +501,9 @@
                 </div>
                 }
               </div>
-              <div class="search-type" style="min-width: 180px; display: flex; align-items: stretch;">
-                <select [(ngModel)]="tipoBusquedaEncuestado"
-                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box;">
-                  <option value="numdoc">Número de Documento</option>
-                  <option value="nombres">Nombres</option>
-                </select>
+              <div class="search-type" style="min-width: 220px; display: flex; align-items: stretch;">
+                <input type="text" value="Nombres y/o apellidos" readonly
+                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box; background-color: #e9ecef; cursor: not-allowed; padding: 0.75rem; border: 1px solid #d1d3e2; border-radius: 0.35rem; font-family: 'Nunito', sans-serif; font-size: 0.875rem; color: #5a5c69;">
               </div>
               <button class="btn-buscar-encuestado"
                 style="padding: 0.4rem 1.2rem; height: 44px; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin-bottom: 0; box-sizing: border-box;"
