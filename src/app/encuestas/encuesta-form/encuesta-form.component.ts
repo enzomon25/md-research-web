@@ -116,6 +116,7 @@ export class EncuestaFormComponent implements OnInit {
     this.actualizarMarcaFabricante(index, 'marcaFabricanteId', 0);
     this.actualizarMarcaFabricante(index, 'tipoCemento', '');
     this.actualizarMarcaFabricante(index, 'descFisica', '');
+    this.actualizarMarcaFabricante(index, 'completo', false);
     // Inicializar arrays dependientes para evitar render vacío
     this.marcasPorFila[index] = [];
     this.tiposCementoPorFila[index] = [];
@@ -151,56 +152,43 @@ export class EncuestaFormComponent implements OnInit {
     this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaFabricanteId);
     this.actualizarMarcaFabricante(index, 'tipoCemento', '');
     this.actualizarMarcaFabricante(index, 'descFisica', '');
+    this.actualizarMarcaFabricante(index, 'completo', false);
     this.tiposCementoPorFila[index] = [];
     this.descripcionesFisicasPorFila[index] = [];
     if (!marcaFabricanteId) {
       return;
     }
-    console.log('onMarcaChange index:', index);
-    console.log('marcasPorFila[index] (todas las marcas del fabricante):', JSON.stringify(this.marcasPorFila[index], null, 2));
     // Buscar todas las marcas de la marca seleccionada (por nombreMarca)
     const marcas = this.marcasPorFila[index] || [];
     const marcaObj = marcas.find(m => m.marcaFabricanteId === marcaFabricanteId);
     const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
-    console.log('marcaObj seleccionado:', JSON.stringify(marcaObj, null, 2));
-    console.log('nombreMarcaSeleccionada:', nombreMarcaSeleccionada);
     const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
-    console.log('marcasSeleccionadas (todas las variantes de la marca):', JSON.stringify(marcasSeleccionadas, null, 2));
     // Extraer todos los tipos de cemento únicos
     let tiposCemento = Array.from(new Set(marcasSeleccionadas.map(m => m.tipoCemento).filter(Boolean)));
-    console.log('tiposCemento posibles:', tiposCemento);
     // Extraer todas las descripciones físicas únicas (solo por nombreMarca y tipoCemento)
     let descripcionesFisicas: string[] = [];
     // Si ya hay tipoCemento seleccionado en la fila, filtrar por ese tipoCemento
     const tipoCementoSeleccionado = this.marcasSeleccionadas()[index]?.tipoCemento || '';
-    console.log('tipoCementoSeleccionado en la fila:', tipoCementoSeleccionado);
     if (tipoCementoSeleccionado) {
       const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCementoSeleccionado);
-      console.log('marcasFiltradasPorTipo (por nombreMarca y tipoCemento):', JSON.stringify(marcasFiltradasPorTipo, null, 2));
       descripcionesFisicas = Array.from(new Set(
         marcasFiltradasPorTipo
           .map(m => m.descFisica)
           .filter(Boolean)
       ));
-      console.log('descripcionesFisicas filtradas (por nombreMarca y tipoCemento):', descripcionesFisicas);
     } else {
       // Si no hay tipoCemento seleccionado, mostrar todas las descripciones físicas de la marca
       descripcionesFisicas = Array.from(new Set(marcasSeleccionadas.map(m => m.descFisica).filter(Boolean)));
-      console.log('descripcionesFisicas sin filtro de tipoCemento:', descripcionesFisicas);
     }
     // Lógica anti-duplicados para tipoCemento y descFisica
     // Excluir los tiposCemento ya seleccionados en otras filas
     const tiposSeleccionados = this.marcasSeleccionadas().map((m, i) => i !== index ? m.tipoCemento : '').filter(Boolean);
-    console.log('tiposSeleccionados en otras filas:', tiposSeleccionados);
     tiposCemento = tiposCemento.filter(tc => !tiposSeleccionados.includes(tc));
     // Excluir las descripciones físicas ya seleccionadas en otras filas
     const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
-    console.log('descsSeleccionadas en otras filas:', descsSeleccionadas);
     descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
     this.tiposCementoPorFila[index] = tiposCemento;
     this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
-    console.log('tiposCementoPorFila[index] FINAL:', this.tiposCementoPorFila[index]);
-    console.log('descripcionesFisicasPorFila[index] FINAL:', this.descripcionesFisicasPorFila[index]);
   }
 
   // Lógica anti-duplicados para marcas: solo mostrar marcas no seleccionadas en otras filas y sin duplicados por fabricanteId-nombre
@@ -220,45 +208,46 @@ export class EncuestaFormComponent implements OnInit {
 
   onTipoCementoChange(index: number, event: Event) {
     if (!event.target) return;
-        const tipoCemento = (event.target as HTMLSelectElement).value;
-        console.log('onTipoCementoChange index:', index);
-        console.log('tipoCemento seleccionado:', tipoCemento);
-        // Reiniciar dependientes al cambiar tipoCemento
-        this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
+    const tipoCemento = (event.target as HTMLSelectElement).value;
+    // Reiniciar dependientes al cambiar tipoCemento
+    this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
 
-        // Filtrar descripciones físicas por tipoCemento seleccionado
-        const marcas = this.marcasPorFila[index] || [];
-        const marcaObj = marcas.find(m => m.marcaFabricanteId === this.marcasSeleccionadas()[index].marcaFabricanteId);
-        const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
-        const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
-        const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCemento);
-        let descripcionesFisicas = Array.from(new Set(
-          marcasFiltradasPorTipo.map(m => m.descFisica).filter(Boolean)
-        ));
-        // Lógica anti-duplicados para descFisica
-        const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
-        descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
-        this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
-        console.log('descripcionesFisicasPorFila[index] filtradas por tipoCemento:', descripcionesFisicas);
+    // Filtrar descripciones físicas por tipoCemento seleccionado
+    const marcas = this.marcasPorFila[index] || [];
+    const marcaObj = marcas.find(m => m.marcaFabricanteId === this.marcasSeleccionadas()[index].marcaFabricanteId);
+    const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
+    const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
+    const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCemento);
+    let descripcionesFisicas = Array.from(new Set(
+      marcasFiltradasPorTipo.map(m => m.descFisica).filter(Boolean)
+    ));
+    // Lógica anti-duplicados para descFisica
+    const descsSeleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.descFisica : '').filter(Boolean);
+    descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
+    this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
 
-        // Verificar el estado de descripciones físicas antes de autoselección
-        if (descripcionesFisicas && descripcionesFisicas.length === 1 && tipoCemento) {
-          console.log('Autoseleccionando descFisica:', descripcionesFisicas[0]);
-          this.actualizarMarcaFabricante(index, 'descFisica', descripcionesFisicas[0]);
-        } else {
-          console.log('No se autoselecciona descFisica, se limpia.');
-          this.actualizarMarcaFabricante(index, 'descFisica', '');
-        }
-        // Mostrar el estado final de la fila seleccionada
-        console.log('marcasSeleccionadas()[index] después de tipoCemento:', this.marcasSeleccionadas()[index]);
-        console.log('tiposCementoPorFila[index]:', this.tiposCementoPorFila[index]);
-        console.log('descripcionesFisicasPorFila[index]:', this.descripcionesFisicasPorFila[index]);
+    // Verificar el estado de descripciones físicas antes de autoselección
+    if (descripcionesFisicas && descripcionesFisicas.length === 1 && tipoCemento) {
+      this.actualizarMarcaFabricante(index, 'descFisica', descripcionesFisicas[0]);
+      // Verificar si la fila está completa y actualizar flag
+      this.verificarYActualizarCompletoFabricante(index);
+    } else {
+      this.actualizarMarcaFabricante(index, 'descFisica', '');
+      this.actualizarMarcaFabricante(index, 'completo', false);
+    }
   }
 
   onDescFisicaChange(index: number, event: Event) {
     if (!event.target) return;
     const descFisica = (event.target as HTMLSelectElement).value;
     this.actualizarMarcaFabricante(index, 'descFisica', descFisica);
+    this.verificarYActualizarCompletoFabricante(index);
+  }
+
+  verificarYActualizarCompletoFabricante(index: number): void {
+    const marca = this.marcasSeleccionadas()[index];
+    const completo = !!(marca.fabricanteId && marca.marcaFabricanteId && marca.tipoCemento && marca.descFisica);
+    this.actualizarMarcaFabricante(index, 'completo', completo);
   }
 
   agregarMarcaFabricante(): void {
@@ -466,9 +455,6 @@ export class EncuestaFormComponent implements OnInit {
   nuevoEncuestado: Partial<Encuestado> = {
     nombres: '',
     apepat: '',
-    apemat: '',
-    numdoc: '',
-    tipodoc: '',
     cargo: '',
     tipoContacto: '',
     contacto: ''
@@ -478,9 +464,6 @@ export class EncuestaFormComponent implements OnInit {
   datosEncuestado = signal<Partial<Encuestado>>({
     nombres: '',
     apepat: '',
-    apemat: '',
-    numdoc: '',
-    tipodoc: '',
     cargo: ''
   });
 
@@ -490,7 +473,7 @@ export class EncuestaFormComponent implements OnInit {
 
   actualizarMarcaFabricante(
     index: number,
-    campo: keyof { marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string },
+    campo: keyof { marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string; completo?: boolean },
     valor: any
   ): void {
     const nuevas = [...this.marcasSeleccionadas()];
@@ -995,14 +978,11 @@ export class EncuestaFormComponent implements OnInit {
       ...(encuestaActual.tipoEncuestaValor && { tipoEncuestaValor: encuestaActual.tipoEncuestaValor }),
       ...(encuestaActual.fechaEncuesta && { fechaEncuesta: encuestaActual.fechaEncuesta }),
       // Incluir datos del encuestado si están completos
-      ...(encuestadoData.nombres && encuestadoData.apepat && encuestadoData.apemat && {
+      ...(encuestadoData.nombres && encuestadoData.apepat && {
         encuestado: {
           ...(encuestadoData.encuestadoId && { encuestadoId: encuestadoData.encuestadoId }),
           nombres: encuestadoData.nombres,
           apepat: encuestadoData.apepat,
-          apemat: encuestadoData.apemat,
-          numdoc: encuestadoData.numdoc,
-          tipodoc: encuestadoData.tipodoc,
           cargo: encuestadoData.cargo
         }
       }),
@@ -1950,9 +1930,6 @@ export class EncuestaFormComponent implements OnInit {
     this.nuevoEncuestado = {
       nombres: '',
       apepat: '',
-      apemat: '',
-      numdoc: '',
-      tipodoc: '',
       cargo: '',
       tipoContacto: '',
       contacto: ''
@@ -2056,9 +2033,6 @@ export class EncuestaFormComponent implements OnInit {
     this.nuevoEncuestado = {
       nombres: '',
       apepat: '',
-      apemat: '',
-      numdoc: '',
-      tipodoc: '',
       cargo: '',
       tipoContacto: '',
       contacto: ''
@@ -2124,9 +2098,9 @@ export class EncuestaFormComponent implements OnInit {
   guardarNuevoEncuestado(): void {
     const encuestado = this.nuevoEncuestado;
     
-    // Validar que solo los campos obligatorios estén completos (nombres, apepat, cargo)
-    if (!encuestado.nombres || !encuestado.apepat || !encuestado.cargo) {
-      this.mensajeModal.set('Los campos Nombre, Apellido Paterno y Cargo son obligatorios');
+    // Validar que solo los campos obligatorios estén completos (nombres, cargo)
+    if (!encuestado.nombres || !encuestado.cargo) {
+      this.mensajeModal.set('Los campos Nombre y Cargo son obligatorios');
       this.mostrarModalError.set(true);
       return;
     }
@@ -2163,9 +2137,6 @@ export class EncuestaFormComponent implements OnInit {
               this.nuevoEncuestado = {
                 nombres: '',
                 apepat: '',
-                apemat: '',
-                numdoc: '',
-                tipodoc: '',
                 cargo: '',
                 tipoContacto: '',
                 contacto: ''
@@ -2209,11 +2180,17 @@ export class EncuestaFormComponent implements OnInit {
       case 'productos':
         return !!(
           (this.encuesta()?.concretoPremezclado === 1 || this.encuesta()?.articulosConcreto === 1) &&
-          this.encuesta()?.tipoLugarCompra
+          this.encuesta()?.tipoLugarCompra &&
+          this.encuesta()?.usoCemento
         );
       case 'fabricante':
-        // Ahora requiere al menos una marca/fabricante válida en el array
-        return this.marcasSeleccionadas().some(m => m.marcaFabricanteId && m.fabricanteId);
+        // Requiere al menos una marca/fabricante válida con todos los campos obligatorios
+        return this.marcasSeleccionadas().some(m => 
+          m.marcaFabricanteId && 
+          m.fabricanteId && 
+          m.tipoCemento && 
+          m.descFisica
+        );
       case 'compra':
         const enc = this.encuesta();
         if (!enc?.tipoCompra || !enc?.descCompra || enc?.precio == null) {
@@ -2229,7 +2206,6 @@ export class EncuestaFormComponent implements OnInit {
         return true;
       case 'uso':
         return !!(
-          this.encuesta()?.usoCemento &&
           this.encuesta()?.motivoCompra &&
           this.encuesta()?.deseoRegalo != null
         );

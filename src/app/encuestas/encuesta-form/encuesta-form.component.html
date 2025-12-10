@@ -450,16 +450,7 @@
           <div class="empresa-datos">
             <div class="dato-empresa">
               <label>Nombres Completos</label>
-              <span>{{ encuestadoSeleccionado()?.nombres }} {{ encuestadoSeleccionado()?.apepat }} {{
-                encuestadoSeleccionado()?.apemat }}</span>
-            </div>
-            <div class="dato-empresa">
-              <label>Tipo de Documento</label>
-              <span>{{ encuestadoSeleccionado()?.tipodoc || 'N/A' }}</span>
-            </div>
-            <div class="dato-empresa">
-              <label>Número de Documento</label>
-              <span>{{ encuestadoSeleccionado()?.numdoc || 'N/A' }}</span>
+              <span>{{ encuestadoSeleccionado()?.nombres }} {{ encuestadoSeleccionado()?.apepat }}</span>
             </div>
             <div class="dato-empresa">
               <label>Cargo</label>
@@ -490,8 +481,7 @@
                   @for (enc of encuestadosEncontrados(); track enc.encuestadoId) {
                   <div class="search-result-item" (click)="seleccionarEncuestado(enc)">
                     <div class="empresa-info">
-                      <strong>{{ enc.nombres }} {{ enc.apepat }} {{ enc.apemat }}</strong>
-                      <span class="empresa-ruc">{{ enc.tipodoc }}: {{ enc.numdoc }}</span>
+                      <strong>{{ enc.nombres }} {{ enc.apepat }}</strong>
                     </div>
                   </div>
                   }
@@ -537,25 +527,8 @@
                 <input type="text" [(ngModel)]="nuevoEncuestado.nombres" placeholder="Ingrese nombres" required>
               </div>
               <div class="registro-form-group">
-                <label>Apellido Paterno *</label>
-                <input type="text" [(ngModel)]="nuevoEncuestado.apepat" placeholder="Ingrese apellido paterno" required>
-              </div>
-              <div class="registro-form-group">
-                <label>Apellido Materno</label>
-                <input type="text" [(ngModel)]="nuevoEncuestado.apemat" placeholder="Ingrese apellido materno">
-              </div>
-              <div class="registro-form-group">
-                <label>Tipo de Documento</label>
-                <select [(ngModel)]="nuevoEncuestado.tipodoc">
-                  <option value="" disabled>Seleccione un tipo</option>
-                  <option value="DNI">DNI</option>
-                  <option value="CE">Carnet de Extranjería</option>
-                  <option value="PASAPORTE">Pasaporte</option>
-                </select>
-              </div>
-              <div class="registro-form-group">
-                <label>Número de Documento</label>
-                <input type="text" [(ngModel)]="nuevoEncuestado.numdoc" placeholder="Ingrese número de documento">
+                <label>Apellido Paterno</label>
+                <input type="text" [(ngModel)]="nuevoEncuestado.apepat" placeholder="Ingrese apellido paterno">
               </div>
               <div class="registro-form-group">
                 <label>Cargo *</label>
@@ -711,6 +684,11 @@
               }
             </select>
           </div>
+          <div class="form-group full-width">
+            <label>Uso del Cemento</label>
+            <textarea rows="3" [value]="encuesta()?.usoCemento || ''"
+              (input)="actualizarUsoCemento($any($event.target).value)"></textarea>
+          </div>
         </div>
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
@@ -803,22 +781,32 @@
               @for (marcaSeleccionada of marcasSeleccionadas(); track $index) {
                 <div style="margin-bottom: 1.5rem;">
                   <!-- Fabricante -->
-                  <div style="width: 100%; margin-bottom: 0.5rem;">
-                    <select class="form-control-bootstrap" style="width: 100%;"
-                      [(ngModel)]="marcaSeleccionada.fabricanteId"
-                      (change)="onFabricanteChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
-                      <option [value]="0">Seleccione un fabricante</option>
-                      @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
-                        <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
-                      }
-                    </select>
+                  <div class="fabricante-row-controls">
+                    <div class="fabricante-select-container">
+                      <select class="form-control-bootstrap" style="width: 100%;"
+                        [(ngModel)]="marcaSeleccionada.fabricanteId"
+                        (change)="onFabricanteChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                        <option [value]="0">Seleccione un fabricante</option>
+                        @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
+                          <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
+                        }
+                      </select>
+                    </div>
+                    @if (!marcaSeleccionada.completo && marcasSeleccionadas().length > 1) {
+                      <button type="button" class="btn-eliminar-fila-fabricante" (click)="eliminarMarcaFabricante($index)" title="Eliminar fila">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    }
                   </div>
 
                   <!-- Marca: solo si fabricante seleccionado -->
                   @if (marcaSeleccionada.fabricanteId) {
-                  <div style="width: 100%; margin-bottom: 0.5rem;">
-                    <select class="form-control-bootstrap" style="width: 100%;"
+                  <div class="fabricante-field-container">
+                    <select class="form-control-bootstrap"
                       [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
                       (change)="onMarcaChange($index, $event)"
                       [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
@@ -832,8 +820,8 @@
 
                   <!-- Tipo de Cemento: solo si marca seleccionada -->
                   @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId) {
-                  <div style="width: 100%; margin-bottom: 0.5rem;">
-                    <select class="form-control-bootstrap" style="width: 100%;"
+                  <div class="fabricante-field-container">
+                    <select class="form-control-bootstrap"
                       [(ngModel)]="marcaSeleccionada.tipoCemento"
                       (change)="onTipoCementoChange($index, $event)"
                       [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
@@ -848,12 +836,12 @@
                   <!-- Descripción física: solo si tipoCemento seleccionado -->
                   @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId && marcaSeleccionada.tipoCemento) {
                     @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
-                      <div style="width: 100%; margin-bottom: 0.5rem;">
-                        <input class="form-control-bootstrap" style="width: 100%;" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
+                      <div class="fabricante-field-container">
+                        <input class="form-control-bootstrap" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
                       </div>
                     } @else {
-                      <div style="width: 100%; margin-bottom: 0.5rem;">
-                        <select class="form-control-bootstrap" style="width: 100%;"
+                      <div class="fabricante-field-container">
+                        <select class="form-control-bootstrap"
                           [(ngModel)]="marcaSeleccionada.descFisica"
                           (change)="onDescFisicaChange($index, $event)"
                           [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
@@ -868,11 +856,10 @@
 
                   <!-- Botón Desestimar para cada elemento completo y con encuestaFabricanteId -->
                   @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {
-                    <button type="button" class="btn-eliminar-observacion"
+                    <button type="button" class="btn-eliminar-observacion btn-desestimar-fabricante"
                       (click)="abrirModalDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
                       [disabled]="estaGuardandoDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
-                      title="Desestimar observación de fabricante"
-                      style="margin-top: 0.5rem;">
+                      title="Desestimar observación de fabricante">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -888,7 +875,7 @@
               Agregar otra marca/fabricante
             </button>
           </div>
-                  </div>
+        </div>
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
         <div class="observacion-container">
@@ -1031,7 +1018,7 @@
             }
             <div class="form-group full-width">
               <label>Descripción de la Compra</label>
-              <textarea rows="4" placeholder="Describa la compra realizada (frecuencia, cantidad, etc.)"
+              <textarea rows="4" placeholder="¿Cuánto cemento ha comprado en los últimos tres meses?"
                 [value]="encuesta()?.descCompra || ''"
                 (input)="actualizarDescCompra($any($event.target).value)"></textarea>
             </div>
@@ -1065,10 +1052,10 @@
         </div>
       }
 
-      <!-- Sección 7: Uso y Motivación -->
+      <!-- Sección 7: Motivación de Compra -->
       <div class="seccion-card">
         <div class="seccion-header" (click)="toggleSeccion('uso')" [class.expandida]="esSeccionExpandida('uso')">
-          <h2>Uso y Motivación
+          <h2>Motivación de Compra
             <span class="seccion-tag"
               [ngStyle]="{ 'background': seccionCompleta('uso') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
               {{ seccionCompleta('uso') ? 'Completado' : 'Pendiente' }}
@@ -1079,11 +1066,6 @@
         @if (esSeccionExpandida('uso')) {
         <div class="seccion-body">
           <div class="form-grid">
-            <div class="form-group full-width">
-              <label>Uso del Cemento</label>
-              <textarea rows="3" [value]="encuesta()?.usoCemento || ''"
-                (input)="actualizarUsoCemento($any($event.target).value)"></textarea>
-            </div>
             <div class="form-group full-width">
               <label>Motivo de Compra</label>
               <textarea rows="3" [value]="encuesta()?.motivoCompra || ''"
@@ -1134,7 +1116,7 @@
           @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('compra').trim()) {
           <div class="observacion-container observacion-readonly">
             <div class="observacion-header">
-              <label>⚠️ Observaciones del Validador - Uso y Compra</label>
+              <label>⚠️ Observaciones del Validador - Motivación de Compra</label>
             </div>
             <textarea [value]="obtenerObservacionTexto('compra')" readonly rows="3"></textarea>
           </div>
@@ -1433,6 +1415,32 @@
             </button>
             <button class="btn-modal-devolver" (click)="confirmarDesestimar()" [disabled]="procesandoDesestimar()">
               {{ procesandoDesestimar() ? 'Procesando...' : 'Sí, Desestimar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Desestimar Fabricante -->
+      @if (mostrarModalDesestimarFabricante()) {
+      <div class="modal-overlay" (click)="cerrarModalDesestimarFabricante()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>⚠️ Confirmar Desestimar Fabricante</h3>
+            <button class="modal-close" (click)="cerrarModalDesestimarFabricante()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>¿Está seguro que desea desestimar este fabricante/marca?</p>
+            <p style="font-size: 0.875rem; color: #858796; margin-top: 0.5rem;">
+              El fabricante será eliminado de forma permanente y no se podrá recuperar.
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalDesestimarFabricante()" [disabled]="estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0)">
+              Cancelar
+            </button>
+            <button class="btn-modal-devolver" (click)="confirmarDesestimarFabricante()" [disabled]="estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0)">
+              {{ estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0) ? 'Procesando...' : 'Sí, Desestimar' }}
             </button>
           </div>
         </div>

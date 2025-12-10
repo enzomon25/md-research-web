@@ -1614,3 +1614,58 @@
 .historial-body::-webkit-scrollbar-thumb:hover {
   background: #5568d3;
 }
+
+/* Estilos para fila de fabricantes con botón de eliminar */
+.fabricante-row-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.fabricante-select-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-eliminar-fila-fabricante {
+  background: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-eliminar-fila-fabricante:hover {
+  background: #c9302c;
+}
+
+.btn-eliminar-fila-fabricante:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-eliminar-fila-fabricante svg {
+  display: block;
+}
+
+/* Contenedor para campos de fabricante (marca, tipo, desc física) */
+.fabricante-field-container {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.fabricante-field-container .form-control-bootstrap {
+  width: 100%;
+}
+
+/* Botón desestimar fabricante sin estilo inline */
+.btn-desestimar-fabricante {
+  margin-top: 0.5rem;
+}

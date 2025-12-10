@@ -30,9 +30,6 @@ export interface Encuestado {
   encuestadoId?: number;
   nombres?: string;
   apepat?: string;
-  apemat?: string;
-  numdoc?: string;
-  tipodoc?: string;
   cargo?: string;
   tipoContacto?: string;
   contacto?: string;
