@@ -52,6 +52,20 @@
             <input type="date" [value]="encuesta()?.fechaEncuesta" (change)="actualizarFechaEncuesta($event)"
               [max]="fechaMaxima" [disabled]="camposDeshabilitados()">
           </div>
+          <div class="form-group full-width">
+            <label>URL del Audio</label>
+            <textarea rows="2" placeholder="Ingrese la URL del audio de la encuesta" 
+              [value]="encuesta()?.audioUrl || ''"
+              (input)="actualizarAudioUrl($any($event.target).value)"
+              [disabled]="camposDeshabilitados()"></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Comentario cuantitativo</label>
+            <textarea rows="3" placeholder="Ingrese el comentario cuantitativo" 
+              [value]="encuesta()?.comentarioCuantitativo || ''"
+              (input)="actualizarComentarioCuantitativo($any($event.target).value)"
+              [disabled]="camposDeshabilitados()"></textarea>
+          </div>
         </div>
 
         <!-- Observación del Validador -->

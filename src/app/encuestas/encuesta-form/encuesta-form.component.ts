@@ -997,6 +997,8 @@ export class EncuestaFormComponent implements OnInit {
       ...(encuestaActual.usoCemento && { usoCemento: encuestaActual.usoCemento }),
       ...(encuestaActual.motivoCompra && { motivoCompra: encuestaActual.motivoCompra }),
       ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo }),
+      ...(encuestaActual.audioUrl && encuestaActual.audioUrl.trim() !== '' && { audioUrl: encuestaActual.audioUrl }),
+      ...(encuestaActual.comentarioCuantitativo && encuestaActual.comentarioCuantitativo.trim() !== '' && { comentarioCuantitativo: encuestaActual.comentarioCuantitativo }),
       marcas: marcasValidas
     };
 
@@ -1043,6 +1045,28 @@ export class EncuestaFormComponent implements OnInit {
         ...encuestaActual,
         fechaEncuesta: fechaSeleccionada
       });
+    }
+  }
+
+  actualizarAudioUrl(valor: string): void {
+    const encuestaActual = this.encuesta();
+    if (encuestaActual) {
+      this.encuesta.set({
+        ...encuestaActual,
+        audioUrl: valor
+      });
+      this.detectarCambios();
+    }
+  }
+
+  actualizarComentarioCuantitativo(valor: string): void {
+    const encuestaActual = this.encuesta();
+    if (encuestaActual) {
+      this.encuesta.set({
+        ...encuestaActual,
+        comentarioCuantitativo: valor
+      });
+      this.detectarCambios();
     }
   }
 
@@ -2248,6 +2272,8 @@ export class EncuestaFormComponent implements OnInit {
       original.cantidadPresentacionCompra !== actual.cantidadPresentacionCompra ||
       original.concretoPremezclado !== actual.concretoPremezclado ||
       original.articulosConcreto !== actual.articulosConcreto ||
+      original.audioUrl !== actual.audioUrl ||
+      original.comentarioCuantitativo !== actual.comentarioCuantitativo ||
       original.precio !== actual.precio ||
       original.usoCemento !== actual.usoCemento ||
       original.motivoCompra !== actual.motivoCompra ||

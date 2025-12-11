@@ -71,6 +71,8 @@ export interface Encuesta {
   deseoRegalo?: number;
   fechaEncuesta?: string;
   precio?: string;
+  comentarioCuantitativo?: string;
+  audioUrl?: string;
   fechaCreacion?: string;
   usuarioCreacion?: string;
   fechaModificacion?: string;
