@@ -15,7 +15,11 @@ export const routes: Routes = [
     loadComponent: () => import('./encuestas/encuestas-list/encuestas-list.component').then(m => m.EncuestasListComponent)
   },
   {
-    path: 'encuestas/:id',
+    path: 'encuesta/:id/industrias',
     loadComponent: () => import('./encuestas/encuesta-form/encuesta-form.component').then(m => m.EncuestaFormComponent)
+  },
+  {
+    path: 'encuesta/:id/obras',
+    loadComponent: () => import('./encuestas/encuesta-obras-form/encuesta-obras-form.component').then(m => m.EncuestaObrasFormComponent)
   }
 ];
