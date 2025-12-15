@@ -1,0 +1,2 @@
+// PARTE 1: Este archivo es temporal para dividir el código grande
+// Se eliminará después de completar la implementación

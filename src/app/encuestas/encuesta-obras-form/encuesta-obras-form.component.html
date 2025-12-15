@@ -1,0 +1,1502 @@
+<div class="encuesta-form-container" [class.formulario-deshabilitado]="!esEditable()">
+  @if (cargando()) {
+  <div class="loading">
+    <p>Cargando encuesta...</p>
+  </div>
+  } @else if (encuesta()) {
+  <div class="form-header">
+    <div class="header-content">
+      <button class="btn-volver" (click)="volver()">
+        ← Volver
+      </button>
+      <h1>Encuesta: {{ encuesta()?.tipoEncuestaValor || encuesta()?.tipoEncuesta }}</h1>
+      <span class="encuesta-id">ID: {{ encuesta()?.encuestaId }}</span>
+    </div>
+    @if (!esEditable()) {
+      <div class="alerta-solo-lectura">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Esta encuesta no se puede modificar.</span>
+      </div>
+    }
+
+    </div>
+  }
+
+  <div class="form-sections">
+    <!-- Sección 1: Datos Generales -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('datosGenerales')"
+        [class.expandida]="esSeccionExpandida('datosGenerales')">
+        <h2>Datos Generales
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('datosGenerales') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('datosGenerales') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('datosGenerales') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('datosGenerales')) {
+      <div class="seccion-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tipo de Encuesta</label>
+            <input type="text" [value]="encuesta()?.tipoEncuestaValor || encuesta()?.tipoEncuesta" readonly>
+          </div>
+          <div class="form-group">
+            <label>Fecha de Encuesta</label>
+            <input type="date" [value]="encuesta()?.fechaEncuesta" (change)="actualizarFechaEncuesta($event)"
+              [max]="fechaMaxima" [disabled]="camposDeshabilitados()">
+          </div>
+          <div class="form-group full-width">
+            <label>URL del Audio</label>
+            <textarea rows="2" placeholder="Ingrese la URL del audio de la encuesta" 
+              [value]="encuesta()?.audioUrl || ''"
+              (input)="actualizarAudioUrl($any($event.target).value)"
+              [disabled]="camposDeshabilitados()"></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label>Comentario cuantitativo</label>
+            <textarea rows="3" placeholder="Ingrese el comentario cuantitativo" 
+              [value]="encuesta()?.comentarioCuantitativo || ''"
+              (input)="actualizarComentarioCuantitativo($any($event.target).value)"
+              [disabled]="camposDeshabilitados()"></textarea>
+          </div>
+        </div>
+
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación - Datos Generales</label>
+            <div class="observacion-header-actions">
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('datos_encuesta')"
+                [disabled]="estaGuardandoObservacion('datos_encuesta') || !obtenerObservacionTexto('datos_encuesta').trim()"
+                *ngIf="obtenerObservacionTexto('datos_encuesta').trim()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+                Desestimar
+              </button>
+            </div>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_encuesta')"
+            (input)="actualizarObservacionTexto('datos_encuesta', $any($event.target).value)"
+            placeholder="Agregar observaciones sobre datos generales y empresa..." rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('datos_encuesta')"
+              [disabled]="estaGuardandoObservacion('datos_encuesta')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('datos_encuesta')) {
+            <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (puedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>Observaciones de Validación - Datos Generales</label>
+            <span class="badge-readonly">Solo lectura</span>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_encuesta')" readonly rows="3"></textarea>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Datos Generales</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_encuesta')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones -->
+        @if (tieneHistorial('datos_encuesta')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('datos_encuesta')"
+            [class.expandido]="esHistorialExpandido('datos_encuesta')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('datos_encuesta') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('datos_encuesta')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('datos_encuesta'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Sección 2: Empresa -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('empresa')" [class.expandida]="esSeccionExpandida('empresa')">
+        <h2>Empresa
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('empresa') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('empresa') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('empresa') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('empresa')) {
+      <div class="seccion-body">
+        @if (empresaSeleccionada()) {
+        <!-- Empresa ya seleccionada - Solo lectura -->
+        <div class="empresa-seleccionada">
+          <div class="empresa-datos">
+            <div class="dato-empresa">
+              <label>RUC</label>
+              <span>{{ empresaSeleccionada()?.ruc }}</span>
+            </div>
+            <div class="dato-empresa">
+              <label>Razón Social</label>
+              <span>{{ empresaSeleccionada()?.razonSocial }}</span>
+            </div>
+            <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
+          </div>
+          <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()" [disabled]="camposDeshabilitados()">
+            Cambiar Empresa
+          </button>
+        </div>
+        } @else {
+        <!-- Búsqueda de empresa -->
+        <div class="empresa-search-row" style="width: 100%;">
+          <div style="width: 100%;">
+            <label style="margin-bottom: 0.5rem; display: block;">{{ tipoBusquedaEmpresa() === 'ruc' ? 'Buscar por RUC'
+              : 'Buscar por Razón Social' }}</label>
+            <div style="display: flex; gap: 0.5rem; align-items: stretch; width: 100%;">
+              <div class="input-dropdown-container" #empresaInputDropdown>
+                <input type="text" [(ngModel)]="terminoBusqueda" (input)="validarBusquedaRuc()"
+                  [maxlength]="tipoBusquedaEmpresa() === 'ruc' ? 11 : null"
+                  [placeholder]="tipoBusquedaEmpresa() === 'ruc' ? 'Ingrese RUC' : 'Ingrese Razón Social'"
+                  class="search-input" style="width: 100%; min-width: 0; height: 44px; box-sizing: border-box;">
+                @if (mostrarResultadosEmpresa()) {
+                <div class="search-results search-results--input-width">
+                  @if (buscandoEmpresa()) {
+                  <div class="search-loading">Buscando...</div>
+                  } @else if (empresasEncontradas().length > 0) {
+                    @for (empresa of empresasEncontradas(); track empresa.empresaId) {
+                    <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
+                      <div class="empresa-info">
+                        <strong>{{ empresa.razonSocial }}</strong>
+                        <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
+                      </div>
+                    </div>
+                    }
+                  } @else {
+                  <div class="search-no-results">No se encontraron empresas</div>
+                  }
+                </div>
+                }
+              </div>
+              <div class="search-type" style="min-width: 180px; display: flex; align-items: stretch;">
+                <select [(ngModel)]="tipoBusquedaEmpresa"
+                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box;">
+                  <option value="ruc">RUC</option>
+                  <option value="razonSocial">Razón Social</option>
+                </select>
+              </div>
+              <button class="btn-guardar-empresa"
+                style="padding: 0.4rem 1.2rem; height: 44px; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin-bottom: 0; box-sizing: border-box;"
+                (click)="buscarEmpresa()" [disabled]="camposDeshabilitados()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                Buscar
+              </button>
+            </div>
+            @if (errorBusquedaRuc()) {
+            <div class="error-message">
+              @if (tieneLetrasEnRuc()) {
+              ⚠️ El RUC debe contener solo números
+              } @else if (rucLongitudIncorrecta()) {
+              ⚠️ El RUC debe tener exactamente 11 dígitos (actual: {{ terminoBusqueda().trim().length }})
+              }
+            </div>
+            }
+            @if (mostrarResultadosEmpresa()) {
+            <div class="search-results">
+              @if (buscandoEmpresa()) {
+              <div class="search-loading">Buscando...</div>
+              } @else if (empresasEncontradas().length > 0) {
+                @for (empresa of empresasEncontradas(); track empresa.empresaId) {
+                <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
+                  <div class="empresa-info">
+                    <strong>{{ empresa.razonSocial }}</strong>
+                    <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
+                  </div>
+                </div>
+                }
+              } @else {
+              <div class="search-no-results">No se encontraron empresas</div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Formulario de registro de nueva empresa -->
+        @if (mostrarFormularioRegistro()) {
+        <div class="registro-empresa-container">
+          <div class="registro-empresa-header">
+            <h3>Registrar Nueva Empresa</h3>
+            <button class="btn-cancelar-registro" (click)="cancelarRegistroEmpresa()">Cancelar</button>
+          </div>
+          <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>RUC *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().ruc" (input)="validarRucRegistro()" maxlength="11"
+                placeholder="Ingrese RUC (11 dígitos)">
+              @if (errorRucRegistro()) {
+              <div class="error-message">
+                ⚠️ {{ errorRucRegistro() }}
+              </div>
+              }
+            </div>
+            <div class="registro-form-group">
+              <label>Razón Social *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().razonSocial" placeholder="Ingrese Razón Social" required>
+            </div>
+            <div class="registro-form-group">
+              <label>Tipo de Empresa *</label>
+              <select [(ngModel)]="nuevaEmpresa().tipoEmpresaId" required>
+                <option [value]="0" disabled>Seleccione un tipo</option>
+                @for (tipo of tiposEmpresa(); track tipo.tipoEmpresaId) {
+                <option [value]="tipo.tipoEmpresaId">{{ tipo.descripcionTipoEmpresa }}</option>
+                }
+              </select>
+            </div>
+            <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
+            <div class="registro-form-group">
+              <label>Actividad Económica *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().actividadEconomica" placeholder="Actividad" required>
+            </div>
+          </div>
+        <!-- Dirección de planta al mismo nivel -->
+          <div style="margin-top:25px;">
+            <div class="registro-empresa-header">
+              <h3>Dirección de la planta</h3>
+            </div>
+          </div>
+          <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>País *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codPais" (change)="onPaisChange()" required>
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (pais of paises; track pais.codPais) {
+                  <option [ngValue]="pais.codPais">{{ pais.descPais }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Departamento *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDepartamento" (change)="onDepartamentoChange()" required [disabled]="!direccionNuevaEmpresa.codPais">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dep of departamentos; track [dep.codDepartamento, dep.codPais]) {
+                  <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Provincia *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codProvincia" (change)="onProvinciaChange()" required [disabled]="!direccionNuevaEmpresa.codDepartamento">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (prov of provincias; track prov.codProvincia) {
+                  <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Distrito *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDistrito" required [disabled]="!direccionNuevaEmpresa.codProvincia">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dist of distritos; track [dist.codDistrito, dist.codProvincia, dist.codDepartamento, dist.codPais]) {
+                  <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Tipo de Vía *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.tipoVia" required>
+                <option [ngValue]="null" disabled selected>Elige una opción</option>
+                @for (via of tiposVia; track via) {
+                  <option [ngValue]="via">{{ via }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Nombre de la Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.nombreVia" placeholder="Nombre de la vía" required>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Nº de Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.numeroVia" placeholder="Número de la vía" required>
+            </div>
+            <div class="registro-form-group">
+              <label>Referencia *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.referencia" placeholder="Referencia">
+            </div>
+
+            <div class="registro-form-actions mt-3">
+              <button class="btn-guardar-empresa" (click)="guardarNuevaEmpresa()" [disabled]="guardandoEmpresa()">
+                {{ guardandoEmpresa() ? 'Guardando...' : 'Guardar Empresa' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+        }
+
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación</label>
+            <div class="observacion-header-actions">
+              <!-- Botón Guardar duplicado eliminado -->
+              @if (obtenerObservacionTexto('empresa').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('empresa')"
+                title="Desestimar observación">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Desestimar
+              </button>
+              }
+            </div>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('empresa')"
+            (input)="actualizarObservacionTexto('empresa', $any($event.target).value)"
+            placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('empresa')"
+              [disabled]="estaGuardandoObservacion('empresa')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('empresa')) {
+            <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('empresa').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Empresa</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('empresa')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones (solo VALIDADOR y ADMINISTRADOR) -->
+        @if (tieneHistorial('empresa')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('empresa')"
+            [class.expandido]="esHistorialExpandido('empresa')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('empresa') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('empresa')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('empresa'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Sección 3: Encuestado -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('encuestado')"
+        [class.expandida]="esSeccionExpandida('encuestado')">
+        <h2>Datos del Encuestado
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('encuestado') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('encuestado') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('encuestado') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('encuestado')) {
+      <div class="seccion-body">
+        @if (encuestadoSeleccionado()) {
+        <!-- Encuestado ya seleccionado - Solo lectura -->
+        <div class="empresa-seleccionada">
+          <div class="empresa-datos">
+            <div class="dato-empresa">
+              <label>Nombres Completos</label>
+              <span>{{ encuestadoSeleccionado()?.nombres }} {{ encuestadoSeleccionado()?.apepat }}</span>
+            </div>
+            <div class="dato-empresa">
+              <label>Cargo</label>
+              <span>{{ encuestadoSeleccionado()?.cargo || 'N/A' }}</span>
+            </div>
+          </div>
+          <button class="btn-cambiar-empresa" (click)="cambiarEncuestado()">
+            Cambiar Encuestado
+          </button>
+        </div>
+        } @else {
+        <!-- Búsqueda de encuestado -->
+        <div class="empresa-search-row">
+          <div style="width: 100%;">
+            <label style="margin-bottom: 0.5rem; display: block;">
+              Buscar por Nombres y/o Apellidos
+            </label>
+            <div style="display: flex; gap: 0.5rem; align-items: stretch; width: 100%;">
+              <div class="input-dropdown-container" style="flex: 1 1 0; min-width: 0;">
+                <input type="text" [(ngModel)]="terminoBusquedaEncuestado" (input)="validarBusquedaEncuestado()"
+                  placeholder="Ingrese nombres y/o apellidos"
+                  class="search-input" style="width: 100%; min-width: 0; height: 44px; box-sizing: border-box;">
+                @if (mostrarResultadosEncuestado()) {
+                <div class="search-results search-results--input-width">
+                  @if (buscandoEncuestado()) {
+                  <div class="search-loading">Buscando...</div>
+                  } @else if (encuestadosEncontrados().length > 0) {
+                  @for (enc of encuestadosEncontrados(); track enc.encuestadoId) {
+                  <div class="search-result-item" (click)="seleccionarEncuestado(enc)">
+                    <div class="empresa-info">
+                      <strong>{{ enc.nombres }} {{ enc.apepat }}</strong>
+                    </div>
+                  </div>
+                  }
+                  } @else {
+                  <div class="search-no-results">No se encontraron encuestados</div>
+                  }
+                </div>
+                }
+              </div>
+              <div class="search-type" style="min-width: 220px; display: flex; align-items: stretch;">
+                <input type="text" value="Nombres y/o apellidos" readonly
+                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box; background-color: #e9ecef; cursor: not-allowed; padding: 0.75rem; border: 1px solid #d1d3e2; border-radius: 0.35rem; font-family: 'Nunito', sans-serif; font-size: 0.875rem; color: #5a5c69;">
+              </div>
+              <button class="btn-buscar-encuestado"
+                style="padding: 0.4rem 1.2rem; height: 44px; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin-bottom: 0; box-sizing: border-box;"
+                (click)="buscarEncuestado()" [disabled]="camposDeshabilitados()">
+                Buscar
+              </button>
+            </div>
+            @if (errorBusquedaEncuestado()) {
+            <div class="error-message">
+              ⚠️ {{ errorBusquedaEncuestado() }}
+            </div>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Formulario de registro de nuevo encuestado -->
+        @if (mostrarFormularioRegistroEncuestado()) {
+        <div class="registro-empresa-container">
+          <div class="registro-empresa-header">
+            <h3>Nuevo Encuestado</h3>
+            <button class="btn-cancelar-registro" (click)="cancelarRegistroEncuestado()">Cancelar</button>
+          </div>
+
+          <!-- Subsección: Datos del encuestado -->
+          <div class="subseccion-encuestado">
+            <h4 class="subseccion-titulo">Datos del encuestado</h4>
+            <div class="registro-empresa-form">
+              <div class="registro-form-group">
+                <label>Nombres *</label>
+                <input type="text" [(ngModel)]="nuevoEncuestado.nombres" placeholder="Ingrese nombres" required>
+              </div>
+              <div class="registro-form-group">
+                <label>Apellido Paterno</label>
+                <input type="text" [(ngModel)]="nuevoEncuestado.apepat" placeholder="Ingrese apellido paterno">
+              </div>
+              <div class="registro-form-group">
+                <label>Cargo *</label>
+                <input type="text" [(ngModel)]="nuevoEncuestado.cargo" placeholder="Ingrese cargo" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subsección: Medio de contacto -->
+          <div class="subseccion-encuestado">
+            <h4 class="subseccion-titulo">Medio de contacto (opcional)</h4>
+            <div class="registro-empresa-form">
+              <div class="registro-form-group">
+                <label>Tipo de Contacto</label>
+                <select [(ngModel)]="nuevoEncuestado.tipoContacto">
+                  <option value="" disabled>Seleccione un tipo</option>
+                  @for (medio of mediosContacto(); track medio.llave) {
+                  <option [value]="medio.llave">{{ medio.valor }}</option>
+                  }
+                </select>
+              </div>
+              <div class="registro-form-group">
+                <label>Contacto</label>
+                <input type="text" [(ngModel)]="nuevoEncuestado.contacto" (input)="validarContactoEncuestado()"
+                  [placeholder]="obtenerPlaceholderContacto()"
+                  [maxlength]="nuevoEncuestado.tipoContacto === 'EMAIL' ? 100 : (nuevoEncuestado.tipoContacto ? 9 : null)">
+                @if (errorContactoEncuestado()) {
+                <div class="error-message">
+                  ⚠️ {{ errorContactoEncuestado() }}
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="registro-form-actions">
+            <button class="btn-guardar-empresa" (click)="guardarNuevoEncuestado()" [disabled]="guardandoEncuestado()">
+              {{ guardandoEncuestado() ? 'Guardando...' : 'Guardar Encuestado' }}
+            </button>
+          </div>
+        </div>
+        }
+
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación</label>
+            <div class="observacion-header-actions">
+              <!-- Botón Guardar duplicado eliminado -->
+              @if (obtenerObservacionTexto('encuestado').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('encuestado')"
+                title="Desestimar observación">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Desestimar
+              </button>
+              }
+            </div>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('encuestado')"
+            (input)="actualizarObservacionTexto('encuestado', $any($event.target).value)"
+            placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion"
+              [disabled]="estaGuardandoObservacion('encuestado')"
+              (click)="guardarObservacion('encuestado')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('encuestado')) {
+            <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('encuestado').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Encuestado</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('encuestado')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones -->
+        @if (tieneHistorial('encuestado')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('encuestado')"
+            [class.expandido]="esHistorialExpandido('encuestado')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('encuestado') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('encuestado')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('encuestado'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+
+    <!-- Sección 4: Productos -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('productos')"
+        [class.expandida]="esSeccionExpandida('productos')">
+        <h2>Productos
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('productos') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('productos') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('productos') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('productos')) {
+      <div class="seccion-body">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>¿Fabrica concreto premezclado o artículos de concreto?</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="tipoProducto" value="premezclado"
+                  [checked]="encuesta()?.concretoPremezclado === 1" (change)="seleccionarTipoProducto('premezclado')">
+                <span>Concreto Premezclado</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="tipoProducto" value="articulos"
+                  [checked]="encuesta()?.articulosConcreto === 1" (change)="seleccionarTipoProducto('articulos')">
+                <span>Artículos de Concreto</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>¿Cuál es el lugar de compra?</label>
+            <select [(ngModel)]="encuesta()!.tipoLugarCompra"
+              (change)="seleccionarLugarCompra($any($event.target).value)">
+              <option value="" disabled>Seleccione un lugar</option>
+              @for (lugar of lugaresCompra(); track lugar.llave) {
+              <option [value]="lugar.llave">{{ lugar.valor }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>Uso del Cemento</label>
+            <textarea rows="3" [value]="encuesta()?.usoCemento || ''"
+              (input)="actualizarUsoCemento($any($event.target).value)"></textarea>
+          </div>
+        </div>
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación</label>
+            @if (obtenerObservacionTexto('productos').trim()) {
+            <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('productos')"
+              title="Desestimar observación">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Desestimar
+            </button>
+            }
+          </div>
+            <textarea [value]="obtenerObservacionTexto('productos')"
+              (input)="actualizarObservacionTexto('productos', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+              rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('productos')"
+              [disabled]="estaGuardandoObservacion('productos')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('productos')) {
+              <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('productos').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Productos</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('productos')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones -->
+        @if (tieneHistorial('productos')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('productos')"
+            [class.expandido]="esHistorialExpandido('productos')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('productos') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('productos')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('productos'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Sección 5: Fabricante -->
+
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('fabricante')"
+        [class.expandida]="esSeccionExpandida('fabricante')">
+        <h2>Fabricante
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('fabricante') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('fabricante') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('fabricante') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('fabricante')) {
+      <div class="seccion-body">
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Fabricantes y Marcas</label>
+            <div class="marcas-multiline-container">
+              @for (marcaSeleccionada of marcasSeleccionadas(); track $index) {
+                <div style="margin-bottom: 1.5rem;">
+                  <!-- Fabricante -->
+                  <div class="fabricante-row-controls">
+                    <div class="fabricante-select-container">
+                      <select class="form-control-bootstrap" style="width: 100%;"
+                        [(ngModel)]="marcaSeleccionada.fabricanteId"
+                        (change)="onFabricanteChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                        <option [value]="0">Seleccione un fabricante</option>
+                        @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
+                          <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
+                        }
+                      </select>
+                    </div>
+                    @if (!marcaSeleccionada.completo && marcasSeleccionadas().length > 1) {
+                      <button type="button" class="btn-eliminar-fila-fabricante" (click)="eliminarMarcaFabricante($index)" title="Eliminar fila">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    }
+                  </div>
+
+                  <!-- Marca: solo si fabricante seleccionado -->
+                  @if (marcaSeleccionada.fabricanteId) {
+                  <div class="fabricante-field-container">
+                    <select class="form-control-bootstrap"
+                      [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
+                      (change)="onMarcaChange($index, $event)"
+                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                      <option [value]="0">Seleccione una marca</option>
+                      @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
+                        <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
+                      }
+                    </select>
+                  </div>
+                  }
+
+                  <!-- Tipo de Cemento: solo si marca seleccionada -->
+                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId) {
+                  <div class="fabricante-field-container">
+                    <select class="form-control-bootstrap"
+                      [(ngModel)]="marcaSeleccionada.tipoCemento"
+                      (change)="onTipoCementoChange($index, $event)"
+                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                      <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
+                      @for (tipo of tiposCementoPorFila[$index]; track tipo) {
+                        <option [value]="tipo">{{ tipo }}</option>
+                      }
+                    </select>
+                  </div>
+                  }
+
+                  <!-- Descripción física: solo si tipoCemento seleccionado -->
+                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId && marcaSeleccionada.tipoCemento) {
+                    @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
+                      <div class="fabricante-field-container">
+                        <input class="form-control-bootstrap" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
+                      </div>
+                    } @else {
+                      <div class="fabricante-field-container">
+                        <select class="form-control-bootstrap"
+                          [(ngModel)]="marcaSeleccionada.descFisica"
+                          (change)="onDescFisicaChange($index, $event)"
+                          [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                          <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
+                          @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
+                            <option [ngValue]="desc">{{ desc }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
+                  }
+
+                  <!-- Botón Desestimar para cada elemento completo y con encuestaFabricanteId -->
+                  @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {
+                    <button type="button" class="btn-eliminar-observacion btn-desestimar-fabricante"
+                      (click)="abrirModalDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
+                      [disabled]="estaGuardandoDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
+                      title="Desestimar observación de fabricante">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Desestimar
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <button type="button" class="btn-guardar-empresa btn-add-marca mt-2" (click)="agregarMarcaFabricante()">
+              Agregar otra marca/fabricante
+            </button>
+          </div>
+        </div>
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación</label>
+            @if (obtenerObservacionTexto('fabricante').trim()) {
+            <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('fabricante')"
+              title="Desestimar observación">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Desestimar
+            </button>
+            }
+          </div>
+            <textarea [value]="obtenerObservacionTexto('fabricante')"
+              (input)="actualizarObservacionTexto('fabricante', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+              rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('fabricante')"
+              [disabled]="estaGuardandoObservacion('fabricante')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('fabricante')) {
+              <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('fabricante').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Fabricante</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('fabricante')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones -->
+        @if (tieneHistorial('fabricante')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('fabricante')"
+            [class.expandido]="esHistorialExpandido('fabricante')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('fabricante') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('fabricante')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('fabricante'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Sección 6: Compra -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('compra')" [class.expandida]="esSeccionExpandida('compra')">
+        <h2>Información de Compra
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('compra') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('compra') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('compra') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('compra')) {
+        <div class="seccion-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Tipo de Compra</label>
+              <select [value]="encuesta()?.tipoCompra || ''"
+                (change)="seleccionarTipoCompraCemento($any($event.target).value)">
+                <option value="" disabled>Seleccione un tipo de compra</option>
+                @for (tipo of tiposCompraCemento(); track tipo.llave) {
+                <option [value]="tipo.llave">{{ tipo.valor }}</option>
+                }
+              </select>
+            </div>
+
+            @if (encuesta()?.tipoCompra === 'GRANEL') {
+            <div class="form-group full-width">
+              <label>Presentación de Compra</label>
+              <select [value]="encuesta()?.presentacionCompra || ''"
+                (change)="seleccionarPresentacionCompra($any($event.target).value)">
+                <option value="" disabled>Seleccione una presentación</option>
+                @for (presentacion of tiposPresentacionGranel(); track presentacion.llave) {
+                <option [value]="presentacion.llave">{{ presentacion.valor }}</option>
+                }
+              </select>
+            </div>
+            }
+
+            @if (encuesta()?.tipoCompra === 'BOLSAS') {
+            <div class="form-group full-width">
+              <label>Cantidad de Cemento por Presentación</label>
+              <select [value]="encuesta()?.cantidadPresentacionCompra || ''"
+                (change)="seleccionarCantidadPresentacion($any($event.target).value)">
+                <option value="" disabled>Seleccione una cantidad</option>
+                @for (cantidad of cantidadPresentacionBolsa(); track cantidad.llave) {
+                <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                }
+              </select>
+            </div>
+            }
+
+            @if (encuesta()?.tipoCompra === 'GRANEL' && encuesta()?.presentacionCompra) {
+              <div class="form-group full-width">
+                <label>Cantidad de Cemento por Presentación</label>
+                <select [value]="encuesta()?.cantidadPresentacionCompra || ''"
+                  (change)="seleccionarCantidadPresentacion($any($event.target).value)">
+                  <option value="" disabled>Seleccione una cantidad</option>
+                  @if (encuesta()?.presentacionCompra?.includes('BOMBON') ||
+                  encuesta()?.presentacionCompra?.includes('Bombona')) {
+                  @for (cantidad of cantidadPresentacionBombona(); track cantidad.llave) {
+                  <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                  }
+                  }
+                  @if (encuesta()?.presentacionCompra?.includes('BIGBAG') || encuesta()?.presentacionCompra?.includes('BIG_BAG') || encuesta()?.presentacionCompra?.includes('Big Bag')) {
+                    @for (cantidad of cantidadPresentacionBigbag(); track cantidad.llave) {
+                      <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                    }
+                  }
+                </select>
+              </div>
+            }
+            <div class="form-group full-width">
+              <label>Descripción de la Compra</label>
+              <textarea rows="4" placeholder="¿Cuánto cemento ha comprado en los últimos tres meses?"
+                [value]="encuesta()?.descCompra || ''"
+                (input)="actualizarDescCompra($any($event.target).value)"></textarea>
+            </div>
+            <div class="form-group full-width">
+              <label>Precio</label>
+              <input type="text" maxlength="1000" [value]="encuesta()?.precio || ''"
+                (input)="actualizarPrecio($any($event.target).value)">
+            </div>
+          </div>
+
+          <!-- Observación del Validador -->
+          @if (puedeEditarObservaciones()) {
+          <div class="observacion-container">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Información de Compra</label>
+            </div>
+            <textarea [value]="obtenerObservacionTexto('compra')"
+              (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
+              placeholder="Agregar observaciones sobre información de compra..." rows="3"></textarea>
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
+                 [disabled]="estaGuardandoObservacion('compra')">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('compra')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+      }
+
+      <!-- Sección 7: Motivación de Compra -->
+      <div class="seccion-card">
+        <div class="seccion-header" (click)="toggleSeccion('uso')" [class.expandida]="esSeccionExpandida('uso')">
+          <h2>Motivación de Compra
+            <span class="seccion-tag"
+              [ngStyle]="{ 'background': seccionCompleta('uso') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('uso') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('uso') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('uso')) {
+        <div class="seccion-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Motivo de Compra</label>
+              <textarea rows="3" [value]="encuesta()?.motivoCompra || ''"
+                (input)="actualizarMotivoCompra($any($event.target).value)"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Deseo de Regalo</label>
+              <select [value]="encuesta()?.deseoRegalo ?? ''"
+                (change)="actualizarDeseoRegalo($any($event.target).value)">
+                <option value="" disabled>Seleccione una opción</option>
+                <option value="0">No</option>
+                <option value="1">Sí</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Observación del Validador -->
+          @if (puedeEditarObservaciones()) {
+          <div class="observacion-container">
+            <div class="observacion-header">
+              <label>Observaciones de Validación</label>
+              @if (obtenerObservacionTexto('compra').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('compra')"
+                title="Desestimar observación">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Desestimar
+              </button>
+              }
+            </div>
+            <textarea [value]="obtenerObservacionTexto('compra')"
+              (input)="actualizarObservacionTexto('compra', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+              rows="3"></textarea>
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
+                [disabled]="!obtenerObservacionTexto('compra').trim() || estaGuardandoObservacion('compra')">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('compra')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
+            </div>
+          </div>
+          }
+          @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('compra').trim()) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>⚠️ Observaciones del Validador - Motivación de Compra</label>
+            </div>
+            <textarea [value]="obtenerObservacionTexto('compra')" readonly rows="3"></textarea>
+          </div>
+          }
+
+          <!-- Historial de Observaciones -->
+          @if (tieneHistorial('compra')) {
+          <div class="historial-observaciones-container">
+            <div class="historial-header" (click)="toggleHistorialSeccion('compra')"
+              [class.expandido]="esHistorialExpandido('compra')">
+              <span class="historial-icono">📜</span>
+              <label>Historial de Observaciones Anteriores</label>
+              <span class="historial-toggle">{{ esHistorialExpandido('compra') ? '−' : '+' }}</span>
+            </div>
+            @if (esHistorialExpandido('compra')) {
+            <div class="historial-body">
+              @for (item of obtenerHistorialSeccion('compra'); track item.historialId) {
+              <div class="historial-item">
+                <div class="historial-meta">
+                  <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                  <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                  <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="historial-texto">{{ item.texto }}</div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+
+      <!-- Panel de Resumen de Revisión (visible para todos los usuarios) -->
+      @if (contarObservaciones() > 0 || obtenerHistorialTotal() > 0) {
+      <div class="resumen-revision">
+        <div class="resumen-header">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <h3>Resumen de Revisión</h3>
+        </div>
+        <div class="resumen-body">
+          <div class="resumen-estadistica">
+            <span class="estadistica-label">Observaciones activas:</span>
+            <span class="estadistica-valor">{{ contarObservaciones() }}</span>
+          </div>
+          <div class="resumen-estadistica">
+            <span class="estadistica-label">Observaciones archivadas:</span>
+            <span class="estadistica-valor">{{ obtenerHistorialTotal() }}</span>
+          </div>
+          @if (obtenerSeccionesConObservacionesVisibles().length > 0) {
+          <div class="resumen-secciones">
+            <p class="secciones-titulo">Secciones observadas:</p>
+            <ul>
+              @for (seccion of obtenerSeccionesConObservacionesVisibles(); track seccion) {
+                <li>{{ seccion }}</li>
+              }
+            </ul>
+          </div>
+          }
+          @if (obtenerHistorialTotal() === 0 && contarObservaciones() === 0) {
+          <div class="resumen-sin-observaciones">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>No hay observaciones registradas</span>
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- Historial de Estados -->
+      @if (encuesta()?.estados && encuesta()!.estados!.length > 0) {
+      <app-encuesta-historial-estados [estadosInput]="encuesta()!.estados!" />
+      }
+
+
+        <div class="form-actions">
+          <button class="btn-cancelar" (click)="volver()">Cancelar</button>
+          @if (!esValidador()) {
+            <button class="btn-guardar-empresa" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados()">
+              {{ camposDeshabilitados() ? 'Guardando...' : 'Guardar Encuesta' }}
+            </button>
+          }
+          @if (todasLasSeccionesCompletas() && esEditable()) {
+            <button class="btn-completar" (click)="completarEncuesta()">Completar Encuesta</button>
+          }
+          @if (esValidador() && esEstadoRevision()) {
+            @if (tieneObservaciones()) {
+              <button class="btn-devolver" (click)="abrirModalTransferencia()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 14 4 9 9 4"></polyline>
+                  <path d="M20 20v-7a4 4 0 0 0-4-4H4"></path>
+                </svg>
+                Devolver Encuesta
+              </button>
+            } @else {
+              <button class="btn-aprobar" (click)="abrirModalTransferencia()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Aprobar Encuesta
+              </button>
+            }
+          }
+        </div>
+
+
+    <!-- Modal: encuestado no encontrada -->
+    @if (mostrarModalNoEncontradaEncuestado()) {
+      <div class="modal-overlay" (click)="cerrarModalNoEncontradaEncuestado()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Encuestado no encontrado</h3>
+            <button class="modal-close" (click)="cerrarModalNoEncontradaEncuestado()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>El encuestado que está buscando no se encuentra registrado en el sistema.</p>
+            <p><strong>¿Desea registrar este encuestado ahora?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontradaEncuestado()">No, cancelar</button>
+            <button class="btn-modal-confirmar" (click)="confirmarRegistroEncuestado()">Sí, registrar encuestado</button>
+          </div>
+        </div>
+      </div>
+
+    }
+
+    <!-- Modal: empresa no encontrada -->
+    @if (mostrarModalNoEncontrada()) {
+      <div class="modal-overlay" (click)="cerrarModalNoEncontrada()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Empresa no encontrada</h3>
+            <button class="modal-close" (click)="cerrarModalNoEncontrada()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>La empresa que está buscando no se encuentra registrada en el sistema.</p>
+            <p><strong>¿Desea registrar esta empresa ahora?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontrada()">No, cancelar</button>
+            <button class="btn-modal-confirmar" (click)="confirmarRegistroEmpresa()">Sí, registrar empresa</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal: RUC duplicado -->
+    @if (mostrarModalRucDuplicado()) {
+      <div class="modal-overlay" (click)="cerrarModalRucDuplicado()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>⚠️ RUC ya registrado</h3>
+            <button class="modal-close" (click)="cerrarModalRucDuplicado()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>El RUC de la empresa ya fue registrado.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-confirmar" (click)="cerrarModalRucDuplicado()">
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Confirmación de Revisión (Validador) -->
+      @if (mostrarModalConfirmacionRevision()) {
+      <div class="modal-overlay">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>📋 Revisión de Encuesta</h3>
+          </div>
+          <div class="modal-body">
+            <p><strong>Esta encuesta ha sido transferida para su revisión.</strong></p>
+            <p>Al aceptar, la encuesta cambiará a estado "En revisión" y podrá visualizar y editar su contenido.</p>
+            <p>¿Desea revisar esta encuesta?</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cancelarRevision()" [disabled]="procesandoCambioEstado()">
+              Cancelar
+            </button>
+            <button class="btn-modal-confirmar" (click)="aceptarRevision()" [disabled]="procesandoCambioEstado()">
+              {{ procesandoCambioEstado() ? 'Procesando...' : 'Aceptar revisión' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Encuesta Observada (Encuestador) -->
+      @if (mostrarModalEncuestaObservada()) {
+      <div class="modal-overlay">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>⚠️ Encuesta con Observaciones</h3>
+          </div>
+          <div class="modal-body">
+            <p><strong>Esta encuesta tiene observaciones del validador.</strong></p>
+            <p>Al aceptar, podrá visualizar las observaciones y la encuesta cambiará a estado "En corrección".</p>
+            <p>Podrá editar los campos observados para corregirlos.</p>
+            <p><strong>¿Desea continuar?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cancelarVisualizacionObservaciones()"
+              [disabled]="procesandoCambioEstadoCorreccion()">
+              Cancelar
+            </button>
+            <button class="btn-modal-confirmar" (click)="confirmarVisualizacionObservaciones()"
+              [disabled]="procesandoCambioEstadoCorreccion()">
+              {{ procesandoCambioEstadoCorreccion() ? 'Procesando...' : 'Ver observaciones' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Transferencia/Aprobación -->
+      @if (mostrarModalTransferencia()) {
+      <div class="modal-overlay">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            @if (tieneObservaciones()) {
+            <h3>⚠️ Devolver Encuesta</h3>
+            } @else {
+            <h3>✓ Aprobar Encuesta</h3>
+            }
+          </div>
+          <div class="modal-body">
+            @if (tieneObservaciones()) {
+            <p><strong>¿Devolver encuesta al encuestador?</strong></p>
+            <p>Se encontraron <strong>{{ contarObservaciones() }}</strong> observaciones en:</p>
+            <ul class="modal-lista-observaciones">
+              @for (seccion of obtenerSeccionesConObservaciones(); track seccion) {
+              <li>{{ seccion }}</li>
+              }
+            </ul>
+            <p>El encuestador deberá corregir estos puntos antes de volver a transferir la encuesta.</p>
+            } @else {
+            <p><strong>¿Aprobar esta encuesta?</strong></p>
+            <p>No se encontraron observaciones.</p>
+            <p>La encuesta será marcada como <strong>APROBADA</strong> y completada.</p>
+            }
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalTransferencia()"
+              [disabled]="procesandoTransferencia()">
+              Cancelar
+            </button>
+            @if (tieneObservaciones()) {
+            <button class="btn-modal-devolver" (click)="confirmarTransferencia()"
+              [disabled]="procesandoTransferencia()">
+              {{ procesandoTransferencia() ? 'Procesando...' : 'Devolver Encuesta' }}
+            </button>
+            } @else {
+            <button class="btn-modal-confirmar" (click)="confirmarTransferencia()"
+              [disabled]="procesandoTransferencia()">
+              {{ procesandoTransferencia() ? 'Procesando...' : '✓ Aprobar' }}
+            </button>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Desestimar Observación -->
+      @if (mostrarModalDesestimar()) {
+      <div class="modal-overlay" (click)="cerrarModalDesestimar()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>⚠️ Confirmar Desestimar</h3>
+            <button class="modal-close" (click)="cerrarModalDesestimar()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>¿Está seguro que desea desestimar esta observación?</p>
+            <p style="font-size: 0.875rem; color: #858796; margin-top: 0.5rem;">
+              La observación será eliminada de forma permanente y no se podrá recuperar.
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalDesestimar()" [disabled]="procesandoDesestimar()">
+              Cancelar
+            </button>
+            <button class="btn-modal-devolver" (click)="confirmarDesestimar()" [disabled]="procesandoDesestimar()">
+              {{ procesandoDesestimar() ? 'Procesando...' : 'Sí, Desestimar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Desestimar Fabricante -->
+      @if (mostrarModalDesestimarFabricante()) {
+      <div class="modal-overlay" (click)="cerrarModalDesestimarFabricante()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>⚠️ Confirmar Desestimar Fabricante</h3>
+            <button class="modal-close" (click)="cerrarModalDesestimarFabricante()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>¿Está seguro que desea desestimar este fabricante/marca?</p>
+            <p style="font-size: 0.875rem; color: #858796; margin-top: 0.5rem;">
+              El fabricante será eliminado de forma permanente y no se podrá recuperar.
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalDesestimarFabricante()" [disabled]="estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0)">
+              Cancelar
+            </button>
+            <button class="btn-modal-devolver" (click)="confirmarDesestimarFabricante()" [disabled]="estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0)">
+              {{ estaGuardandoDesestimarFabricante(encuestaFabricanteIdDesestimar() || 0) ? 'Procesando...' : 'Sí, Desestimar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Éxito -->
+      @if (mostrarModalExito()) {
+      <div class="modal-overlay" (click)="cerrarModalExito()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>✅ Operación exitosa</h3>
+            <button class="modal-close" (click)="cerrarModalExito()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>{{ mensajeModal() }}</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-confirmar" (click)="cerrarModalExito()">
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Modal: Error -->
+      @if (mostrarModalError()) {
+      <div class="modal-overlay" (click)="cerrarModalError()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>❌ Error</h3>
+            <button class="modal-close" (click)="cerrarModalError()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>{{ mensajeModal() }}</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-confirmar" (click)="cerrarModalError()">
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+      }
