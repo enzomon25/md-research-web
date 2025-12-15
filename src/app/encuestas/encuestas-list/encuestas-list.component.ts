@@ -231,8 +231,9 @@ export class EncuestasListComponent implements OnInit {
         console.log('Encuesta creada:', encuestaCreada);
         this.cerrarModal();
         this.creandoEncuesta.set(false);
-        // Navegar al formulario con el ID de la encuesta creada
-        this.router.navigate(['/encuestas', encuestaCreada.encuestaId]);
+        // Navegar al formulario correspondiente según el tipo de encuesta
+        const ruta = this.obtenerRutaCompleta(encuestaCreada.encuestaId!, tipo.llave);
+        this.router.navigate(ruta);
       },
       error: (error) => {
         console.error('Error al crear encuesta:', error);
@@ -240,6 +241,26 @@ export class EncuestasListComponent implements OnInit {
         alert('Error al crear la encuesta. Por favor, intente nuevamente.');
       }
     });
+  }
+
+  /**
+   * Obtiene la ruta completa con el sufijo según el tipo de encuesta
+   */
+  obtenerRutaCompleta(encuestaId: number, tipoEncuesta?: string): string[] {
+    if (!tipoEncuesta) {
+      // Si no se proporciona tipo, intentar obtenerlo de la encuesta
+      const encuesta = this.encuestas().find(e => e.encuestaId === encuestaId);
+      tipoEncuesta = encuesta?.tipoEncuesta;
+    }
+
+    switch (tipoEncuesta) {
+      case 'INDUSTRIA':
+        return ['/encuesta', encuestaId.toString(), 'industrias'];
+      case 'CONSTRUCTORA':
+        return ['/encuesta', encuestaId.toString(), 'obras'];
+      default:
+        return ['/encuesta', encuestaId.toString(), 'industrias'];
+    }
   }
 
   cambiarPagina(pagina: number): void {
@@ -342,18 +363,26 @@ export class EncuestasListComponent implements OnInit {
   }
 
   reanudarEncuesta(encuestaId: number): void {
-    this.router.navigate(['/encuestas', encuestaId]);
+    const encuesta = this.encuestas().find(e => e.encuestaId === encuestaId);
+    const ruta = this.obtenerRutaCompleta(encuestaId, encuesta?.tipoEncuesta);
+    this.router.navigate(ruta);
   }
 
   verEncuesta(encuestaId: number): void {
-    this.router.navigate(['/encuestas', encuestaId]);
+    const encuesta = this.encuestas().find(e => e.encuestaId === encuestaId);
+    const ruta = this.obtenerRutaCompleta(encuestaId, encuesta?.tipoEncuesta);
+    this.router.navigate(ruta);
   }
 
   revisarEncuesta(encuestaId: number): void {
-    this.router.navigate(['/encuestas', encuestaId]);
+    const encuesta = this.encuestas().find(e => e.encuestaId === encuestaId);
+    const ruta = this.obtenerRutaCompleta(encuestaId, encuesta?.tipoEncuesta);
+    this.router.navigate(ruta);
   }
 
   editarEncuesta(encuestaId: number): void {
-    this.router.navigate(['/encuestas', encuestaId]);
+    const encuesta = this.encuestas().find(e => e.encuestaId === encuestaId);
+    const ruta = this.obtenerRutaCompleta(encuestaId, encuesta?.tipoEncuesta);
+    this.router.navigate(ruta);
   }
 }

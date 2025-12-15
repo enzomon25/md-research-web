@@ -1,0 +1,1671 @@
+/* Simulación de grid tipo bootstrap para filas de selects de marcas/fabricantes */
+.row-bootstrap {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -8px;
+  margin-left: -8px;
+}
+.col-bootstrap {
+  flex: 1 1 0;
+  padding-right: 8px;
+  padding-left: 8px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.col-select-bootstrap {
+  min-width: 220px;
+  max-width: 350px;
+}
+.col-btn-bootstrap {
+  flex: 0 0 40px;
+  max-width: 40px;
+  min-width: 40px;
+  justify-content: center;
+}
+.align-center {
+  align-items: center;
+}
+.form-control-bootstrap {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  background: #fff;
+  transition: border 0.2s;
+}
+.form-control-bootstrap:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+.marca-fabricante-row-bootstrap {
+  margin-bottom: 0.5rem;
+}
+.btn-add-marca.mt-2 {
+  margin-top: 1rem;
+}
+.fila-dropdown {
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.dropdown-row-container {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+}
+.btn-add-marca {
+  margin-top: 1rem;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  display: block;
+}
+/* Mejoras para la sección de Fabricantes y Marcas */
+.marcas-multiline-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.marca-fabricante-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+.marca-select {
+  min-width: 220px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  background: #fff;
+  transition: border 0.2s;
+}
+.marca-select:focus {
+  border-color: #4e73df;
+  outline: none;
+}
+.btn-remove-marca {
+  background: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 0.2rem;
+}
+.btn-remove-marca:disabled {
+  background: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+.btn-remove-marca:hover:not(:disabled) {
+  background: #be2617;
+}
+.btn-add-marca {
+  margin-top: 0.5rem;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+/* Botón guardar observación */
+.btn-guardar-observacion {
+  margin-top: 0.75rem;
+  float: right;
+  background-color: #4e73df;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.08);
+  transition: background 0.2s;
+  display: inline-block;
+}
+.btn-guardar-observacion:hover:not(:disabled) {
+  background-color: #2e59d9;
+}
+.btn-guardar-observacion:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+
+.observacion-actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.25rem;
+  gap: 1rem;
+}
+/* Contenedor relativo para toda la fila de búsqueda */
+.dropdown-row-container {
+  position: relative;
+  width: 100%;
+}
+.search-results--row-width {
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+/* El dropdown solo del ancho del input */
+.search-results--input-width {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  left: 0;
+  right: auto;
+}
+/* Contenedor relativo para input y dropdown */
+.input-dropdown-container {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.input-dropdown-container .search-results {
+  left: 0;
+  right: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+/* Botón buscar encuestado, igual a btn-guardar-empresa pero azul */
+.btn-buscar-encuestado {
+  padding: 0.4rem 1.2rem;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  background-color: #4e73df;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-buscar-encuestado:hover:not(:disabled) {
+  background-color: #2e59d9;
+}
+.btn-buscar-encuestado:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+.encuesta-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Deshabilitar todos los campos cuando el formulario no es editable */
+.formulario-deshabilitado input:not([readonly]),
+.formulario-deshabilitado select,
+.formulario-deshabilitado textarea:not(.observacion-container textarea) {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background-color: #f8f9fc !important;
+}
+
+/* Los textarea de observaciones siempre están habilitados */
+.observacion-container textarea {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  cursor: text !important;
+}
+
+/* Estilo específico para botones deshabilitados en formulario-deshabilitado */
+.formulario-deshabilitado button:not(.btn-volver):not(.btn-cancelar):not(.btn-cancelar-registro):not(.btn-devolver):not(.btn-aprobar):not(.btn-modal-devolver):not(.btn-modal-cancelar):not(.btn-modal-confirmar):not(.btn-eliminar-observacion):not(.btn-guardar-observacion):not(.seccion-header) {
+  pointer-events: none;
+  cursor: not-allowed !important;
+  background-color: #e3e6f0 !important;
+  color: #858796 !important;
+  border-color: #d1d3e2 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #858796;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+}
+
+.alerta-solo-lectura {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  border-radius: 0.35rem;
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.alerta-solo-lectura svg {
+  flex-shrink: 0;
+}
+
+.alerta-solo-lectura span {
+  font-weight: 500;
+}
+
+.btn-volver {
+  padding: 0.375rem 0.75rem;
+  background-color: #858796;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-volver:hover {
+  background-color: #6c757d;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.header-content h1 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: #5a5c69;
+  margin: 0;
+  flex: 1;
+  line-height: 1.2;
+}
+
+.encuesta-id {
+  color: #858796;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.seccion-card {
+  background: white;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+  overflow: visible;
+}
+
+.seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: #f8f9fc;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.seccion-header:hover {
+  background-color: #eaecf4;
+}
+
+.seccion-header.expandida {
+  background-color: #4e73df;
+}
+
+.seccion-header.expandida h2 {
+  color: white;
+}
+
+.seccion-header.expandida .toggle-icon {
+  color: white;
+}
+
+.seccion-header h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #5a5c69;
+  margin: 0;
+}
+
+.toggle-icon {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #858796;
+  user-select: none;
+}
+
+.seccion-body {
+  padding: 1.5rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.875rem;
+  color: #5a5c69;
+  transition: all 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.form-group input[readonly],
+.form-group input:disabled {
+  background-color: #f8f9fc;
+  color: #858796;
+  cursor: not-allowed;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #5a5c69;
+}
+
+.radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4e73df;
+}
+
+.radio-option span {
+  user-select: none;
+}
+
+.radio-option:hover {
+  color: #4e73df;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+}
+
+.btn-cancelar {
+  padding: 0.5rem 1rem;
+  background-color: #858796;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-cancelar:hover {
+  background-color: #6c757d;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-guardar {
+  padding: 0.5rem 1rem;
+  background-color: #1cc88a;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-guardar:hover:not(:disabled) {
+  background-color: #17a673;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-guardar:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-completar {
+  padding: 0.5rem 1rem;
+  background-color: #4e73df;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-completar:hover {
+  background-color: #2e59d9;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Estilos para el buscador de empresas */
+.empresa-seleccionada {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.empresa-datos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 4px;
+}
+
+.dato-empresa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dato-empresa label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #858796;
+  text-transform: uppercase;
+}
+
+.dato-empresa span {
+  font-size: 0.95rem;
+  color: #5a5c69;
+  font-weight: 500;
+}
+
+.btn-cambiar-empresa {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  background-color: #4e73df;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-cambiar-empresa:hover:not(:disabled) {
+  background-color: #2e59d9;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-cambiar-empresa:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.empresa-search-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.search-field {
+  flex: 0 0 70%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.search-type {
+  flex: 0 0 calc(30% - 1rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.search-field label,
+.search-type label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.search-type select {
+  padding: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.875rem;
+  color: #5a5c69;
+  transition: all 0.15s ease-in-out;
+  background-color: white;
+  height: 45px;
+}
+
+.search-type select:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.search-container {
+  position: relative;
+  z-index: 100;
+}
+
+.search-input {
+  width: 100%;
+  height: 45px;
+  padding: 0.75rem;
+  box-sizing: border-box;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.875rem;
+  color: #5a5c69;
+  transition: all 0.15s ease-in-out;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.error-message {
+  color: #e74a3b;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  background: white;
+  border: 1px solid #d1d3e2;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  margin-top: 0.25rem;
+}
+
+.search-loading,
+.search-no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #858796;
+  font-size: 0.9rem;
+}
+
+.search-result-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: #f8f9fc;
+}
+
+.empresa-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.empresa-info strong {
+  color: #5a5c69;
+  font-size: 0.95rem;
+}
+
+.empresa-ruc {
+  color: #858796;
+  font-size: 0.85rem;
+}
+
+/* Formulario de registro de empresa */
+.registro-empresa-container {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: #f8f9fc;
+  border: 1px solid #e3e6f0;
+  border-radius: 4px;
+}
+
+.registro-empresa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.registro-empresa-header h3 {
+  font-family: 'Roboto Slab', serif;
+  font-size: 1.1rem;
+  color: #5a5c69;
+  margin: 0;
+}
+
+.subseccion-encuestado {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 4px;
+}
+
+.subseccion-titulo {
+  font-family: 'Roboto Slab', serif;
+  font-size: 0.95rem;
+  color: #4e73df;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e3e6f0;
+}
+
+.btn-cancelar-registro {
+  padding: 0.4rem 0.8rem;
+  background-color: #858796;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+
+.btn-cancelar-registro:hover {
+  background-color: #6c757d;
+}
+
+.registro-empresa-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.registro-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.registro-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.registro-form-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5a5c69;
+  margin-bottom: 0.4rem;
+}
+
+.registro-form-group input,
+.registro-form-group select {
+  padding: 0.6rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  color: #5a5c69;
+  background-color: white;
+}
+
+.registro-form-group input:focus,
+.registro-form-group select:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.registro-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-guardar-empresa {
+  padding: 0.6rem 1.2rem;
+  background-color: #1cc88a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.btn-guardar-empresa:hover {
+  background-color: #17a673;
+}
+
+.btn-guardar-empresa:disabled {
+  background-color: #d1d3e2;
+  cursor: not-allowed;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.modal-header h3 {
+  font-family: 'Roboto Slab', serif;
+  font-size: 1.25rem;
+  color: #5a5c69;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #858796;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #5a5c69;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: #5a5c69;
+  line-height: 1.6;
+}
+
+.modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e3e6f0;
+  background-color: #f8f9fc;
+}
+
+.btn-modal-cancelar {
+  padding: 0.6rem 1.2rem;
+  background-color: #858796;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+.btn-modal-cancelar:hover {
+  background-color: #6c757d;
+}
+
+.btn-modal-confirmar {
+  padding: 0.6rem 1.2rem;
+  background-color: #1cc88a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+/* Precio e IGV en la misma fila */
+.precio-igv-container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: start;
+  grid-column: 1 / -1;
+}
+
+.precio-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.precio-input-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #5a5c69;
+  margin-bottom: 0.5rem;
+}
+
+.precio-input-group input {
+  padding: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 4px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: #5a5c69;
+  transition: border-color 0.2s;
+}
+
+.precio-input-group input:focus {
+  outline: none;
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.igv-toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.igv-toggle-group > label:first-child {
+  font-weight: 500;
+  color: #5a5c69;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  min-height: 1.2em;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #1cc88a;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 1px #1cc88a;
+}
+
+.btn-modal-confirmar:hover {
+  background-color: #17a673;
+}
+
+/* Contenedor de observaciones del validador */
+.observacion-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #4e73df;
+  background-color: #f8f9fc;
+  padding: 1.5rem;
+  border-radius: 0.35rem;
+}
+
+.observacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.observacion-container label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4e73df;
+  margin: 0;
+  font-family: 'Nunito', sans-serif;
+}
+
+.btn-eliminar-observacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background-color: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.btn-eliminar-observacion:hover {
+  background-color: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.btn-eliminar-observacion svg {
+  flex-shrink: 0;
+}
+
+.observacion-readonly {
+  background-color: #e9ecef !important;
+  border-top-color: #858796 !important;
+}
+
+.observacion-readonly label {
+  color: #858796 !important;
+}
+
+.observacion-readonly textarea {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  border-color: #ced4da !important;
+}
+
+.badge-readonly {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: #858796;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.observacion-container textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-radius: 0.35rem;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.15s ease-in-out;
+}
+
+.observacion-container textarea:focus {
+  border-color: #4e73df;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.observacion-container textarea::placeholder {
+  color: #858796;
+  font-style: italic;
+}
+
+.guardando-observacion {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #858796;
+  font-style: italic;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Resumen de revisión para validador */
+.resumen-revision {
+  background: white;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  border: 1px solid #e3e6f0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.resumen-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  color: white;
+}
+
+.resumen-header svg {
+  flex-shrink: 0;
+}
+
+.resumen-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-body {
+  padding: 1.5rem;
+}
+
+.resumen-estadistica {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fc;
+  border-radius: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.estadistica-label {
+  font-size: 0.875rem;
+  color: #5a5c69;
+  font-family: 'Nunito', sans-serif;
+}
+
+.estadistica-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4e73df;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-secciones {
+  padding: 1rem;
+  background: #fff3cd;
+  border-left: 4px solid #f6c23e;
+  border-radius: 0.35rem;
+}
+
+.secciones-titulo {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #856404;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-secciones ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.resumen-secciones li {
+  font-size: 0.875rem;
+  color: #856404;
+  margin-bottom: 0.25rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-sin-observaciones {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #d4edda;
+  border-left: 4px solid #1cc88a;
+  border-radius: 0.35rem;
+  color: #155724;
+  font-size: 0.875rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.resumen-sin-observaciones svg {
+  flex-shrink: 0;
+  stroke: #1cc88a;
+}
+
+/* Botones de acción del validador */
+.btn-devolver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #f6c23e;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-devolver:hover {
+  background-color: #f4b30d;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-devolver svg {
+  flex-shrink: 0;
+}
+
+.btn-aprobar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #1cc88a;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-aprobar:hover {
+  background-color: #17a673;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-aprobar svg {
+  flex-shrink: 0;
+}
+
+/* Estilos para el modal de transferencia */
+.modal-lista-observaciones {
+  background: #fff3cd;
+  border-left: 4px solid #f6c23e;
+  border-radius: 0.35rem;
+  padding: 1rem 1rem 1rem 2rem;
+  margin: 1rem 0;
+  list-style: disc;
+}
+
+.modal-lista-observaciones li {
+  color: #856404;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+.btn-modal-devolver {
+  padding: 0.75rem 1.5rem;
+  background-color: #f6c23e;
+  color: #fff;
+  border: none;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-modal-devolver:hover {
+  background-color: #f4b30d;
+}
+
+.btn-modal-devolver:disabled {
+  background-color: #d1d3e2;
+  color: #858796;
+  cursor: not-allowed;
+}
+
+/* ===================================
+   HISTORIAL DE OBSERVACIONES
+   =================================== */
+
+.historial-observaciones-container {
+  margin-top: 1rem;
+  border: 2px solid #a8b1c7;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f8f9fc;
+}
+
+.historial-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.historial-header:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a4190 100%);
+}
+
+.historial-header.expandido {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.historial-icono {
+  font-size: 1.25rem;
+  filter: brightness(0) invert(1);
+}
+
+.historial-header label {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+  margin: 0;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+}
+
+.historial-toggle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.historial-body {
+  padding: 1rem;
+  background-color: #ffffff;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.historial-item {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #d1d3e2;
+  border-left: 4px solid #667eea;
+  border-radius: 0.35rem;
+  background-color: #f8f9fc;
+  transition: all 0.2s ease;
+}
+
+.historial-item:hover {
+  border-left-color: #764ba2;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.historial-item:last-child {
+  margin-bottom: 0;
+}
+
+.historial-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+.historial-ciclo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.historial-usuario {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background-color: #4e73df;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+}
+
+.historial-usuario::before {
+  content: '👤 ';
+  margin-right: 0.25rem;
+}
+
+.historial-fecha {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background-color: #858796;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+}
+
+.historial-fecha::before {
+  content: '🕐 ';
+  margin-right: 0.25rem;
+}
+
+.historial-texto {
+  padding: 0.75rem;
+  background-color: #ffffff;
+  border-radius: 0.25rem;
+  color: #5a5c69;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid #e3e6f0;
+}
+
+.historial-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.historial-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.historial-body::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.historial-body::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}
+
+/* Estilos para fila de fabricantes con botón de eliminar */
+.fabricante-row-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.fabricante-select-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-eliminar-fila-fabricante {
+  background: #e74a3b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-eliminar-fila-fabricante:hover {
+  background: #c9302c;
+}
+
+.btn-eliminar-fila-fabricante:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-eliminar-fila-fabricante svg {
+  display: block;
+}
+
+/* Contenedor para campos de fabricante (marca, tipo, desc física) */
+.fabricante-field-container {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.fabricante-field-container .form-control-bootstrap {
+  width: 100%;
+}
+
+/* Botón desestimar fabricante sin estilo inline */
+.btn-desestimar-fabricante {
+  margin-top: 0.5rem;
+}
