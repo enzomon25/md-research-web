@@ -348,6 +348,12 @@ export class EncuestaObrasFormComponent implements OnInit {
     cargo: ''
   });
 
+  // Datos de la obra
+  datosObra = signal<{ etapaObra: string; fechaFinalizacionObra: string }>({
+    etapaObra: '',
+    fechaFinalizacionObra: ''
+  });
+
   // (Eliminado: declaración duplicada de marcasSeleccionadas)
 
   // (Las versiones de agregarMarcaFabricante y eliminarMarcaFabricante que usan marcasPorFila ya están definidas arriba)
