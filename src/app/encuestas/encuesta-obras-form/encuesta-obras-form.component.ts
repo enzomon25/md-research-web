@@ -12,9 +12,10 @@ import { EncuestadosService } from '../../core/services/encuestados.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EncuestaObservacionService } from '../../core/services/encuesta-observacion.service';
 import { EncuestaObservacionHistorialService } from '../../core/services/encuesta-observacion-historial.service';
+import { ObraEncuestaService } from '../../core/services/obra-encuesta.service';
 import { ESTADOS_ENCUESTA } from '../../core/constants/estados-encuesta.constants';
 import { ROLES } from '../../core/constants/roles.constants';
-import { CATEGORIAS_PARAMETROS } from '../../core/constants';
+import { CATEGORIAS_PARAMETROS, TIPO_REFERENCIA } from '../../core/constants';
 import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados/encuesta-historial-estados.component';
 
 @Component({
@@ -272,9 +273,9 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   obtenerSeccionesConObservacionesVisibles(): string[] {
       const seccionesNombres: { [key: string]: string } = {
-        empresa: 'Empresa',
+        datos_encuesta: 'Datos Generales',
+        datos_obra: 'Datos de la Obra',
         encuestado: 'Encuestado',
-        productos: 'Productos',
         fabricante: 'Fabricante',
         compra: 'Compra',
       };
@@ -353,6 +354,43 @@ export class EncuestaObrasFormComponent implements OnInit {
     etapaObra: '',
     fechaFinalizacionObra: ''
   });
+
+  // Dirección de la obra
+  direccionObra: {
+    codPais: string;
+    codDepartamento: string;
+    codProvincia: string;
+    codDistrito: string;
+    tipoVia: string;
+    nombreVia: string;
+    numeroVia: string;
+    referencia: string;
+  } = {
+    codPais: '',
+    codDepartamento: '',
+    codProvincia: '',
+    codDistrito: '',
+    tipoVia: '',
+    nombreVia: '',
+    numeroVia: '',
+    referencia: ''
+  };
+
+  // Catálogos para Dirección de la obra
+  paises: { paisId: number; descPais: string; codPais: string }[] = [];
+  departamentosObra: { departamentoId: number; descDepartamento: string; codPais: string; codDepartamento: string }[] = [];
+  provinciasObra: { provinciaId: number; descProvincia: string; codPais: string; codDepartamento: string; codProvincia: string }[] = [];
+  distritosObra: { distritoId: number; descDistrito: string; codPais: string; codDepartamento: string; codProvincia: string; codDistrito: string }[] = [];
+  tiposVia: string[] = [
+    'Avenida',
+    'Calle',
+    'Jirón',
+    'Pasaje',
+    'Carretera',
+    'Prolongación',
+    'Alameda',
+    'Otro'
+  ];
 
   // (Eliminado: declaración duplicada de marcasSeleccionadas)
 
@@ -458,6 +496,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     private authService: AuthService,
     private observacionService: EncuestaObservacionService,
     private historialObservacionService: EncuestaObservacionHistorialService,
+    private obraEncuestaService: ObraEncuestaService,
   ) {}
 
   ngOnInit(): void {
@@ -492,6 +531,9 @@ export class EncuestaObrasFormComponent implements OnInit {
 
     // Cargar medios de contacto
     this.cargarMediosContacto();
+
+    // Cargar ubicaciones para la dirección de la obra
+    this.cargarPaises();
   }
 
   cargarTiposEmpresa(): void {
@@ -613,6 +655,90 @@ export class EncuestaObrasFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al cargar medios de contacto:', error);
+      }
+    });
+  }
+
+  // ===== MÉTODOS PARA DIRECCIÓN DE OBRA =====
+
+  cargarPaises(): void {
+    this.ubicacionService.listarPaises().subscribe({
+      next: (data: any[]) => {
+        this.paises = data;
+      },
+      error: () => {
+        this.paises = [];
+      }
+    });
+  }
+
+  onPaisChangeObra(): void {
+    this.direccionObra.codDepartamento = '';
+    this.direccionObra.codProvincia = '';
+    this.direccionObra.codDistrito = '';
+    this.departamentosObra = [];
+    this.provinciasObra = [];
+    this.distritosObra = [];
+
+    if (this.direccionObra.codPais) {
+      this.cargarDepartamentosObra(this.direccionObra.codPais);
+    }
+  }
+
+  cargarDepartamentosObra(codPais: string): void {
+    this.ubicacionService.listarDepartamentos(codPais).subscribe({
+      next: (data: any[]) => {
+        this.departamentosObra = data;
+      },
+      error: () => {
+        this.departamentosObra = [];
+      }
+    });
+  }
+
+  onDepartamentoChangeObra(): void {
+    this.direccionObra.codProvincia = '';
+    this.direccionObra.codDistrito = '';
+    this.provinciasObra = [];
+    this.distritosObra = [];
+
+    if (this.direccionObra.codDepartamento && this.direccionObra.codPais) {
+      this.cargarProvinciasObra(this.direccionObra.codDepartamento, this.direccionObra.codPais);
+    }
+  }
+
+  cargarProvinciasObra(codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
+      next: (data: any[]) => {
+        this.provinciasObra = data;
+      },
+      error: () => {
+        this.provinciasObra = [];
+      }
+    });
+  }
+
+  onProvinciaChangeObra(): void {
+    this.direccionObra.codDistrito = '';
+    this.distritosObra = [];
+
+    if (this.direccionObra.codProvincia && this.direccionObra.codDepartamento && this.direccionObra.codPais) {
+      this.cargarDistritosObra(
+        this.direccionObra.codDistrito,
+        this.direccionObra.codProvincia,
+        this.direccionObra.codDepartamento,
+        this.direccionObra.codPais
+      );
+    }
+  }
+
+  cargarDistritosObra(codDistrito: string, codProvincia: string, codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
+      next: (data: any[]) => {
+        this.distritosObra = data;
+      },
+      error: () => {
+        this.distritosObra = [];
       }
     });
   }
@@ -794,18 +920,53 @@ export class EncuestaObrasFormComponent implements OnInit {
 
     this.cargando.set(false);
 
-    // Si la encuesta ya tiene empresa, cargar sus datos
-    if (encuesta.empresaId) {
-      console.log('LOG-5: empresaId en encuesta', encuesta.empresaId);
-      this.cargarEmpresaSeleccionada(encuesta.empresaId);
-    }
-
     // Si la encuesta tiene datos del encuestado, cargarlos
     if (encuesta.encuestado) {
       this.encuestadoSeleccionado.set(encuesta.encuestado);
     }
 
     // Limpieza: ya no se usa fabricanteId ni carga de marcas por fabricante legacy
+
+    // Si la encuesta tiene datos de obra (tipo OBRA), cargarlos
+    if (encuesta.obra) {
+      console.log('LOG-6: Datos de obra encontrados', encuesta.obra);
+      // Poblar datosObra signal
+      this.datosObra.set({
+        etapaObra: encuesta.obra.etapaObra || '',
+        fechaFinalizacionObra: encuesta.obra.fechaFinalizacionObra || ''
+      });
+      
+      // Si la obra tiene dirección, cargarla
+      if (encuesta.obra.direccion) {
+        console.log('LOG-7: Dirección de obra encontrada', encuesta.obra.direccion);
+        this.direccionObra = {
+          codPais: encuesta.obra.direccion.codPais || '',
+          codDepartamento: encuesta.obra.direccion.codDepartamento || '',
+          codProvincia: encuesta.obra.direccion.codProvincia || '',
+          codDistrito: encuesta.obra.direccion.codDistrito || '',
+          tipoVia: encuesta.obra.direccion.tipoVia || '',
+          nombreVia: encuesta.obra.direccion.nombreVia || '',
+          numeroVia: encuesta.obra.direccion.numeroVia || '',
+          referencia: encuesta.obra.direccion.referencia || ''
+        };
+        
+        // Cargar catálogos en cascada para los selects
+        if (this.direccionObra.codPais) {
+          this.cargarDepartamentosObra(this.direccionObra.codPais);
+        }
+        if (this.direccionObra.codDepartamento && this.direccionObra.codPais) {
+          this.cargarProvinciasObra(this.direccionObra.codDepartamento, this.direccionObra.codPais);
+        }
+        if (this.direccionObra.codProvincia && this.direccionObra.codDepartamento && this.direccionObra.codPais) {
+          this.cargarDistritosObra(
+            this.direccionObra.codDistrito,
+            this.direccionObra.codProvincia,
+            this.direccionObra.codDepartamento,
+            this.direccionObra.codPais
+          );
+        }
+      }
+    }
 
     // Cargar observaciones si es VALIDADOR o ENCUESTADOR con encuesta observada/en corrección
     if ((esValidador || esEncuestador) && encuesta.encuestaId) {
@@ -839,13 +1000,6 @@ export class EncuestaObrasFormComponent implements OnInit {
       return;
     }
 
-    // Validar que tenga empresa asignada
-    if (!encuestaActual.empresaId) {
-      this.mensajeModal.set('Debe seleccionar o registrar una empresa antes de guardar');
-      this.mostrarModalError.set(true);
-      return;
-    }
-
     // Validar que al menos una marca/fabricante esté seleccionada
     const marcasValidas = this.marcasSeleccionadas().filter(m => m.marcaFabricanteId && m.fabricanteId);
     if (marcasValidas.length === 0) {
@@ -854,11 +1008,22 @@ export class EncuestaObrasFormComponent implements OnInit {
       return;
     }
 
+    // VALIDACIÓN PREVIA: Verificar datos de obra ANTES de guardar la encuesta
+    const datosObra = this.datosObra();
+    if (datosObra.etapaObra && datosObra.fechaFinalizacionObra) {
+      // Si hay datos de obra, validar que la dirección esté completa
+      if (!this.direccionObra.codPais || !this.direccionObra.codDepartamento || 
+          !this.direccionObra.codProvincia || !this.direccionObra.codDistrito) {
+        this.mensajeModal.set('Debe completar los datos de dirección (País, Departamento, Provincia, Distrito) antes de guardar la encuesta');
+        this.mostrarModalError.set(true);
+        return;
+      }
+    }
+
     // Preparar payload solo con campos que tienen valor (no undefined, no null, no strings vacíos)
     const encuestadoData = this.datosEncuestado();
     const encuestaParaGuardar: Partial<Encuesta> = {
       encuestaId: encuestaActual.encuestaId,
-      ...(encuestaActual.empresaId && { empresaId: encuestaActual.empresaId }),
       ...(encuestaActual.tipoEncuesta && { tipoEncuesta: encuestaActual.tipoEncuesta }),
       ...(encuestaActual.tipoEncuestaValor && { tipoEncuestaValor: encuestaActual.tipoEncuestaValor }),
       ...(encuestaActual.fechaEncuesta && { fechaEncuesta: encuestaActual.fechaEncuesta }),
@@ -893,8 +1058,43 @@ export class EncuestaObrasFormComponent implements OnInit {
         // Actualizar la copia original y limpiar la bandera de cambios sin guardar
         this.encuestaOriginal.set(JSON.parse(JSON.stringify(encuestaGuardada)));
         this.tieneCambiosSinGuardar.set(false);
-        this.mensajeModal.set('Encuesta guardada exitosamente');
-        this.mostrarModalExito.set(true);
+        
+        // Ahora guardar los datos de la obra si están completos
+        const datosObra = this.datosObra();
+        if (datosObra.etapaObra && datosObra.fechaFinalizacionObra && encuestaGuardada.encuestaId) {
+          const obraDto: any = {
+            encuestaId: encuestaGuardada.encuestaId!,
+            etapaObra: datosObra.etapaObra,
+            fechaFinalizacionObra: datosObra.fechaFinalizacionObra,
+            tipoReferencia: TIPO_REFERENCIA.OBRA,
+            // Datos de dirección (ya validados antes de guardar la encuesta)
+            codPais: this.direccionObra.codPais,
+            codDepartamento: this.direccionObra.codDepartamento,
+            codProvincia: this.direccionObra.codProvincia,
+            codDistrito: this.direccionObra.codDistrito,
+            tipoVia: this.direccionObra.tipoVia,
+            nombreVia: this.direccionObra.nombreVia,
+            numeroVia: this.direccionObra.numeroVia,
+            referencia: this.direccionObra.referencia,
+          };
+          
+          this.obraEncuestaService.crear(obraDto).subscribe({
+            next: (obraCreada) => {
+              console.log('Obra encuesta guardada exitosamente:', obraCreada);
+              this.mensajeModal.set('Encuesta y datos de la obra guardados exitosamente');
+              this.mostrarModalExito.set(true);
+            },
+            error: (errorObra) => {
+              console.error('Error al guardar datos de la obra:', errorObra);
+              // La encuesta se guardó pero hubo error en la obra
+              this.mensajeModal.set('Encuesta guardada, pero hubo un error al guardar los datos de la obra. Por favor, intente nuevamente.');
+              this.mostrarModalExito.set(true);
+            }
+          });
+        } else {
+          this.mensajeModal.set('Encuesta guardada exitosamente');
+          this.mostrarModalExito.set(true);
+        }
       },
       error: (error) => {
         console.error('Error al guardar encuesta:', error);
@@ -953,6 +1153,15 @@ export class EncuestaObrasFormComponent implements OnInit {
       });
       this.detectarCambios();
     }
+  }
+
+  actualizarDatosObra(campo: 'etapaObra' | 'fechaFinalizacionObra', valor: string): void {
+    const datosActuales = this.datosObra();
+    this.datosObra.set({
+      ...datosActuales,
+      [campo]: valor
+    });
+    this.detectarCambios();
   }
 
   seleccionarTipoProducto(tipo: 'premezclado' | 'articulos'): void {
@@ -1466,9 +1675,9 @@ export class EncuestaObrasFormComponent implements OnInit {
   obtenerSeccionesConObservaciones(): string[] {
     const secciones: string[] = [];
     const seccionesNombres: { [key: string]: string } = {
-      empresa: 'Empresa',
+      datos_encuesta: 'Datos Generales',
+      datos_obra: 'Datos de la Obra',
       encuestado: 'Encuestado',
-      productos: 'Productos',
       fabricante: 'Fabricante',
       compra: 'Compra',
     };
@@ -2082,16 +2291,11 @@ export class EncuestaObrasFormComponent implements OnInit {
       case 'datosGenerales':
         // Considera completa si tipoEncuesta y fechaEncuesta existen
         return !!(this.encuesta()?.tipoEncuesta && this.encuesta()?.fechaEncuesta);
-      case 'empresa':
-        return !!this.encuesta()?.empresaId;
+      case 'datosObra':
+        // Requiere etapaObra y fechaFinalizacionObra
+        return !!(this.datosObra()?.etapaObra && this.datosObra()?.fechaFinalizacionObra);
       case 'encuestado':
         return !!this.encuestadoSeleccionado();
-      case 'productos':
-        return !!(
-          (this.encuesta()?.concretoPremezclado === 1 || this.encuesta()?.articulosConcreto === 1) &&
-          this.encuesta()?.tipoLugarCompra &&
-          this.encuesta()?.usoCemento
-        );
       case 'fabricante':
         // Requiere al menos una marca/fabricante válida con todos los campos obligatorios
         return this.marcasSeleccionadas().some(m => 
@@ -2125,7 +2329,7 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   // Determina si todas las secciones están completas
   todasLasSeccionesCompletas(): boolean {
-    const secciones = ['datosGenerales', 'empresa', 'encuestado', 'productos', 'fabricante', 'compra', 'uso'];
+    const secciones = ['datosGenerales', 'datosObra', 'encuestado', 'fabricante', 'compra'];
     return secciones.every(seccion => this.seccionCompleta(seccion));
   }
 
@@ -2149,7 +2353,6 @@ export class EncuestaObrasFormComponent implements OnInit {
     // Comparar campos relevantes (sin fabricanteId ni marcaFabricante)
     const hayCambios = 
       original.fechaEncuesta !== actual.fechaEncuesta ||
-      original.empresaId !== actual.empresaId ||
       original.encuestadoId !== actual.encuestadoId ||
       original.tipoLugarCompra !== actual.tipoLugarCompra ||
       original.tipoCompra !== actual.tipoCompra ||

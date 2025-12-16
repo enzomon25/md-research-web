@@ -147,7 +147,185 @@
       }
     </div>
 
-    <!-- Sección 2: Encuestado -->
+    <!-- Sección 2: Datos de la Obra -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('datosObra')"
+        [class.expandida]="esSeccionExpandida('datosObra')">
+        <h2>Datos de la Obra
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('datosObra') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('datosObra') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('datosObra') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('datosObra')) {
+      <div class="seccion-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Etapa de la Obra *</label>
+            <input type="text" placeholder="Ingrese la etapa de la obra"
+              [(ngModel)]="datosObra().etapaObra"
+              (input)="actualizarDatosObra('etapaObra', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label>Fecha de Finalización de la Obra *</label>
+            <input type="date" [value]="datosObra().fechaFinalizacionObra"
+              (change)="actualizarDatosObra('fechaFinalizacionObra', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()">
+          </div>
+        </div>
+
+        <!-- Dirección de la Obra -->
+        <div style="margin-top:25px;">
+          <div class="registro-empresa-header">
+            <h3>Dirección de la Obra *</h3>
+          </div>
+        </div>
+        <div class="registro-empresa-form">
+          <div class="registro-form-group">
+            <label>País *</label>
+            <select class="form-control" [(ngModel)]="direccionObra.codPais" (change)="onPaisChangeObra()" required [disabled]="camposDeshabilitados()">
+              <option [ngValue]="''" disabled selected>Seleccione</option>
+              @for (pais of paises; track pais.codPais) {
+                <option [ngValue]="pais.codPais">{{ pais.descPais }}</option>
+              }
+            </select>
+          </div>
+          <div class="registro-form-group">
+            <label>Departamento *</label>
+            <select class="form-control" [(ngModel)]="direccionObra.codDepartamento" (change)="onDepartamentoChangeObra()" required [disabled]="!direccionObra.codPais || camposDeshabilitados()">
+              <option [ngValue]="''" disabled selected>Seleccione</option>
+              @for (dep of departamentosObra; track [dep.codDepartamento, dep.codPais]) {
+                <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="registro-form-group">
+            <label>Provincia *</label>
+            <select class="form-control" [(ngModel)]="direccionObra.codProvincia" (change)="onProvinciaChangeObra()" required [disabled]="!direccionObra.codDepartamento || camposDeshabilitados()">
+              <option [ngValue]="''" disabled selected>Seleccione</option>
+              @for (prov of provinciasObra; track prov.codProvincia) {
+                <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
+              }
+            </select>
+          </div>
+          <div class="registro-form-group">
+            <label>Distrito *</label>
+            <select class="form-control" [(ngModel)]="direccionObra.codDistrito" required [disabled]="!direccionObra.codProvincia || camposDeshabilitados()">
+              <option [ngValue]="''" disabled selected>Seleccione</option>
+              @for (dist of distritosObra; track [dist.codDistrito, dist.codProvincia, dist.codDepartamento, dist.codPais]) {
+                <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="registro-form-group">
+            <label>Tipo de Vía *</label>
+            <select class="form-control" [(ngModel)]="direccionObra.tipoVia" required [disabled]="camposDeshabilitados()">
+              <option [ngValue]="''" disabled selected>Elige una opción</option>
+              @for (via of tiposVia; track via) {
+                <option [ngValue]="via">{{ via }}</option>
+              }
+            </select>
+          </div>
+          <div class="registro-form-group">
+            <label>Nombre de la Vía *</label>
+            <input type="text" class="form-control" [(ngModel)]="direccionObra.nombreVia" placeholder="Nombre de la vía" required [disabled]="camposDeshabilitados()">
+          </div>
+
+          <div class="registro-form-group">
+            <label>Nº de Vía *</label>
+            <input type="text" class="form-control" [(ngModel)]="direccionObra.numeroVia" placeholder="Número de la vía" required [disabled]="camposDeshabilitados()">
+          </div>
+          <div class="registro-form-group">
+            <label>Referencia *</label>
+            <input type="text" class="form-control" [(ngModel)]="direccionObra.referencia" placeholder="Referencia" [disabled]="camposDeshabilitados()">
+          </div>
+        </div>
+
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación - Datos de la Obra</label>
+            <div class="observacion-header-actions">
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('datos_obra')"
+                [disabled]="estaGuardandoObservacion('datos_obra') || !obtenerObservacionTexto('datos_obra').trim()"
+                *ngIf="obtenerObservacionTexto('datos_obra').trim()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+                Desestimar
+              </button>
+            </div>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_obra')"
+            (input)="actualizarObservacionTexto('datos_obra', $any($event.target).value)"
+            placeholder="Agregar observaciones sobre datos de la obra..." rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('datos_obra')"
+              [disabled]="estaGuardandoObservacion('datos_obra')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('datos_obra')) {
+            <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (puedeVerObservaciones() && obtenerObservacionTexto('datos_obra').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>Observaciones de Validación - Datos de la Obra</label>
+            <span class="badge-readonly">Solo lectura</span>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_obra')" readonly rows="3"></textarea>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('datos_obra').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Datos de la Obra</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('datos_obra')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones -->
+        @if (tieneHistorial('datos_obra')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('datos_obra')"
+            [class.expandido]="esHistorialExpandido('datos_obra')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('datos_obra') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('datos_obra')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('datos_obra'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Sección 4: Encuestado -->
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('encuestado')"
         [class.expandida]="esSeccionExpandida('encuestado')">
@@ -361,122 +539,7 @@
       </div>
       }
 
-    <!-- Sección 3: Productos -->
-    <div class="seccion-card">
-      <div class="seccion-header" (click)="toggleSeccion('productos')"
-        [class.expandida]="esSeccionExpandida('productos')">
-        <h2>Productos
-          <span class="seccion-tag"
-            [ngStyle]="{ 'background': seccionCompleta('productos') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
-            {{ seccionCompleta('productos') ? 'Completado' : 'Pendiente' }}
-          </span>
-        </h2>
-        <span class="toggle-icon">{{ esSeccionExpandida('productos') ? '−' : '+' }}</span>
-      </div>
-      @if (esSeccionExpandida('productos')) {
-      <div class="seccion-body">
-        <div class="form-grid">
-          <div class="form-group full-width">
-            <label>¿Fabrica concreto premezclado o artículos de concreto?</label>
-            <div class="radio-group">
-              <label class="radio-option">
-                <input type="radio" name="tipoProducto" value="premezclado"
-                  [checked]="encuesta()?.concretoPremezclado === 1" (change)="seleccionarTipoProducto('premezclado')">
-                <span>Concreto Premezclado</span>
-              </label>
-              <label class="radio-option">
-                <input type="radio" name="tipoProducto" value="articulos"
-                  [checked]="encuesta()?.articulosConcreto === 1" (change)="seleccionarTipoProducto('articulos')">
-                <span>Artículos de Concreto</span>
-              </label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>¿Cuál es el lugar de compra?</label>
-            <select [(ngModel)]="encuesta()!.tipoLugarCompra"
-              (change)="seleccionarLugarCompra($any($event.target).value)">
-              <option value="" disabled>Seleccione un lugar</option>
-              @for (lugar of lugaresCompra(); track lugar.llave) {
-              <option [value]="lugar.llave">{{ lugar.valor }}</option>
-              }
-            </select>
-          </div>
-          <div class="form-group full-width">
-            <label>Uso del Cemento</label>
-            <textarea rows="3" [value]="encuesta()?.usoCemento || ''"
-              (input)="actualizarUsoCemento($any($event.target).value)"></textarea>
-          </div>
-        </div>
-        <!-- Observación del Validador -->
-        @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
-          <div class="observacion-header">
-            <label>Observaciones de Validación</label>
-            @if (obtenerObservacionTexto('productos').trim()) {
-            <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('productos')"
-              title="Desestimar observación">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-              Desestimar
-            </button>
-            }
-          </div>
-            <textarea [value]="obtenerObservacionTexto('productos')"
-              (input)="actualizarObservacionTexto('productos', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
-              rows="3"></textarea>
-          <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('productos')"
-              [disabled]="estaGuardandoObservacion('productos')">
-              Guardar
-            </button>
-            @if (estaGuardandoObservacion('productos')) {
-              <span class="guardando-observacion">Guardando...</span>
-            }
-          </div>
-        </div>
-        }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('productos').trim()) {
-        <div class="observacion-container observacion-readonly">
-          <div class="observacion-header">
-            <label>⚠️ Observaciones del Validador - Productos</label>
-          </div>
-          <textarea [value]="obtenerObservacionTexto('productos')" readonly rows="3"></textarea>
-        </div>
-        }
-
-        <!-- Historial de Observaciones -->
-        @if (tieneHistorial('productos')) {
-        <div class="historial-observaciones-container">
-          <div class="historial-header" (click)="toggleHistorialSeccion('productos')"
-            [class.expandido]="esHistorialExpandido('productos')">
-            <span class="historial-icono">📜</span>
-            <label>Historial de Observaciones Anteriores</label>
-            <span class="historial-toggle">{{ esHistorialExpandido('productos') ? '−' : '+' }}</span>
-          </div>
-          @if (esHistorialExpandido('productos')) {
-          <div class="historial-body">
-            @for (item of obtenerHistorialSeccion('productos'); track item.historialId) {
-            <div class="historial-item">
-              <div class="historial-meta">
-                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
-                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
-                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-              <div class="historial-texto">{{ item.texto }}</div>
-            </div>
-            }
-          </div>
-          }
-        </div>
-        }
-      </div>
-      }
-    </div>
-
-    <!-- Sección 4: Fabricante -->
+    <!-- Sección 6: Fabricante -->
 
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('fabricante')"
@@ -662,7 +725,7 @@
       }
     </div>
 
-    <!-- Sección 5: Compra -->
+    <!-- Sección 7: Compra -->
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('compra')" [class.expandida]="esSeccionExpandida('compra')">
         <h2>Información de Compra

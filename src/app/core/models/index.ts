@@ -79,6 +79,7 @@ export interface Encuesta {
   usuarioModificacion?: string;
   indActivo?: number;
   empresa?: Empresa | null;
+  obra?: ObraEncuesta | null;
   estado?: Estado;
   estados?: Array<{
     encuestaEstadoId: number;
@@ -104,6 +105,19 @@ export interface Direccion {
   nombreVia: string;
   numeroVia: string;
   referencia: string;
+}
+
+export interface ObraEncuesta {
+  obraEncuestaId?: number;
+  encuestaId?: number;
+  etapaObra: string;
+  fechaFinalizacionObra: string;
+  direccion?: Direccion;
+  fechaCreacion?: string;
+  usuarioCreacion?: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
+  indActivo?: number;
 }
 
 export interface Empresa {
