@@ -175,6 +175,27 @@
               (change)="actualizarDatosObra('fechaFinalizacionObra', $any($event.target).value)"
               [disabled]="camposDeshabilitados()">
           </div>
+          <div class="form-group">
+            <label>Mixer (Opcional)</label>
+            <input type="text" placeholder="Ingrese mixer"
+              [(ngModel)]="datosObra().mixer"
+              (input)="actualizarDatosObra('mixer', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()" maxlength="200">
+          </div>
+          <div class="form-group">
+            <label>Metraje (Opcional)</label>
+            <input type="text" placeholder="Ingrese metraje"
+              [(ngModel)]="datosObra().metraje"
+              (input)="actualizarDatosObra('metraje', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label>Resistencia (Opcional)</label>
+            <input type="text" placeholder="Ingrese resistencia"
+              [(ngModel)]="datosObra().resistencia"
+              (input)="actualizarDatosObra('resistencia', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()" maxlength="200">
+          </div>
         </div>
 
         <!-- Dirección de la Obra -->

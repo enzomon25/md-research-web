@@ -24,6 +24,9 @@ export interface ObraEncuesta {
   encuestaId: number;
   etapaObra: string;
   fechaFinalizacionObra: string;
+  mixer?: string | null;
+  metraje?: string | null;
+  resistencia?: string | null;
   fechaCreacion?: string;
   usuarioCreacion?: string;
   fechaModificacion?: string;

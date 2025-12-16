@@ -350,9 +350,12 @@ export class EncuestaObrasFormComponent implements OnInit {
   });
 
   // Datos de la obra
-  datosObra = signal<{ etapaObra: string; fechaFinalizacionObra: string }>({
+  datosObra = signal<{ etapaObra: string; fechaFinalizacionObra: string; mixer?: string; metraje?: string; resistencia?: string }>({
     etapaObra: '',
-    fechaFinalizacionObra: ''
+    fechaFinalizacionObra: '',
+    mixer: '',
+    metraje: '',
+    resistencia: ''
   });
 
   // Dirección de la obra
@@ -932,8 +935,11 @@ export class EncuestaObrasFormComponent implements OnInit {
       console.log('LOG-6: Datos de obra encontrados', encuesta.obra);
       // Poblar datosObra signal
       this.datosObra.set({
-        etapaObra: encuesta.obra.etapaObra || '',
-        fechaFinalizacionObra: encuesta.obra.fechaFinalizacionObra || ''
+        etapaObra: encuesta.obra.etapaObra ?? '',
+        fechaFinalizacionObra: encuesta.obra.fechaFinalizacionObra ?? '',
+        mixer: encuesta.obra.mixer ?? '',
+        metraje: encuesta.obra.metraje ?? '',
+        resistencia: encuesta.obra.resistencia ?? ''
       });
       
       // Si la obra tiene dirección, cargarla
@@ -1066,6 +1072,9 @@ export class EncuestaObrasFormComponent implements OnInit {
             encuestaId: encuestaGuardada.encuestaId!,
             etapaObra: datosObra.etapaObra,
             fechaFinalizacionObra: datosObra.fechaFinalizacionObra,
+            ...(datosObra.mixer && { mixer: datosObra.mixer }),
+            ...(datosObra.metraje && { metraje: datosObra.metraje }),
+            ...(datosObra.resistencia && { resistencia: datosObra.resistencia }),
             tipoReferencia: TIPO_REFERENCIA.OBRA,
             // Datos de dirección (ya validados antes de guardar la encuesta)
             codPais: this.direccionObra.codPais,
@@ -1155,7 +1164,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     }
   }
 
-  actualizarDatosObra(campo: 'etapaObra' | 'fechaFinalizacionObra', valor: string): void {
+  actualizarDatosObra(campo: 'etapaObra' | 'fechaFinalizacionObra' | 'mixer' | 'metraje' | 'resistencia', valor: string): void {
     const datosActuales = this.datosObra();
     this.datosObra.set({
       ...datosActuales,

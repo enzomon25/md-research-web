@@ -112,6 +112,9 @@ export interface ObraEncuesta {
   encuestaId?: number;
   etapaObra: string;
   fechaFinalizacionObra: string;
+  mixer?: string | null;
+  metraje?: string | null;
+  resistencia?: string | null;
   direccion?: Direccion;
   fechaCreacion?: string;
   usuarioCreacion?: string;
