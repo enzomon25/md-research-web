@@ -369,7 +369,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     numeroVia: string;
     referencia: string;
   } = {
-    codPais: '',
+    codPais: 'PE', // Perú por defecto
     codDepartamento: '',
     codProvincia: '',
     codDistrito: '',
@@ -668,6 +668,10 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.ubicacionService.listarPaises().subscribe({
       next: (data: any[]) => {
         this.paises = data;
+        // Cargar automáticamente los departamentos de Perú
+        if (this.direccionObra.codPais === 'PE') {
+          this.cargarDepartamentosObra('PE');
+        }
       },
       error: () => {
         this.paises = [];

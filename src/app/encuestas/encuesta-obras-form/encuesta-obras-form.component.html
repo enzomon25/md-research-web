@@ -171,9 +171,10 @@
           </div>
           <div class="form-group">
             <label>Fecha de Finalización de la Obra *</label>
-            <input type="date" [value]="datosObra().fechaFinalizacionObra"
-              (change)="actualizarDatosObra('fechaFinalizacionObra', $any($event.target).value)"
-              [disabled]="camposDeshabilitados()">
+            <input type="text" placeholder="Ingrese fecha de finalización"
+              [(ngModel)]="datosObra().fechaFinalizacionObra"
+              (input)="actualizarDatosObra('fechaFinalizacionObra', $any($event.target).value)"
+              [disabled]="camposDeshabilitados()" maxlength="300">
           </div>
           <div class="form-group">
             <label>Mixer (Opcional)</label>
@@ -183,8 +184,8 @@
               [disabled]="camposDeshabilitados()" maxlength="200">
           </div>
           <div class="form-group">
-            <label>Metraje (Opcional)</label>
-            <input type="text" placeholder="Ingrese metraje"
+            <label>Metros cúbicos (Opcional)</label>
+            <input type="text" placeholder="Ingrese metros cúbicos"
               [(ngModel)]="datosObra().metraje"
               (input)="actualizarDatosObra('metraje', $any($event.target).value)"
               [disabled]="camposDeshabilitados()" maxlength="100">
@@ -207,8 +208,8 @@
         <div class="registro-empresa-form">
           <div class="registro-form-group">
             <label>País *</label>
-            <select class="form-control" [(ngModel)]="direccionObra.codPais" (change)="onPaisChangeObra()" required [disabled]="camposDeshabilitados()">
-              <option [ngValue]="''" disabled selected>Seleccione</option>
+            <select class="form-control" [(ngModel)]="direccionObra.codPais" (change)="onPaisChangeObra()" required disabled>
+              <option [ngValue]="''" disabled>Seleccione</option>
               @for (pais of paises; track pais.codPais) {
                 <option [ngValue]="pais.codPais">{{ pais.descPais }}</option>
               }
@@ -587,7 +588,7 @@
                       <select class="form-control-bootstrap" style="width: 100%;"
                         [(ngModel)]="marcaSeleccionada.fabricanteId"
                         (change)="onFabricanteChange($index, $event)"
-                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                        [disabled]="camposDeshabilitados()">
                         <option [value]="0">Seleccione un fabricante</option>
                         @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
                           <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
@@ -610,7 +611,7 @@
                     <select class="form-control-bootstrap"
                       [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
                       (change)="onMarcaChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                      [disabled]="camposDeshabilitados()">
                       <option [value]="0">Seleccione una marca</option>
                       @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
                         <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
@@ -625,7 +626,7 @@
                     <select class="form-control-bootstrap"
                       [(ngModel)]="marcaSeleccionada.tipoCemento"
                       (change)="onTipoCementoChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                      [disabled]="camposDeshabilitados()">
                       <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
                       @for (tipo of tiposCementoPorFila[$index]; track tipo) {
                         <option [value]="tipo">{{ tipo }}</option>
@@ -645,7 +646,7 @@
                         <select class="form-control-bootstrap"
                           [(ngModel)]="marcaSeleccionada.descFisica"
                           (change)="onDescFisicaChange($index, $event)"
-                          [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
+                          [disabled]="camposDeshabilitados()">
                           <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
                           @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
                             <option [ngValue]="desc">{{ desc }}</option>

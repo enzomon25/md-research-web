@@ -305,7 +305,7 @@
                   <select 
                     [value]="marca.fabricanteId"
                     (change)="onFabricanteChange(i, $event)"
-                    [disabled]="camposDeshabilitados() || marca.completo">
+                    [disabled]="camposDeshabilitados()">
                     <option value="0">Seleccionar...</option>
                     @for (fab of fabricantes(); track fab.fabricanteId) {
                       <option [value]="fab.fabricanteId">{{ fab.nombre }}</option>
@@ -318,7 +318,7 @@
                   <select 
                     [value]="marca.marcaFabricanteId"
                     (change)="onMarcaChange(i, $event)"
-                    [disabled]="camposDeshabilitados() || marca.completo || !marca.fabricanteId">
+                    [disabled]="camposDeshabilitados() || !marca.fabricanteId">
                     <option value="0">Seleccionar...</option>
                     @for (m of marcasPorFila[i]; track m.marcaFabricanteId) {
                       <option [value]="m.marcaFabricanteId">{{ m.nombreMarca }}</option>
@@ -331,7 +331,7 @@
                   <select 
                     [value]="marca.tipoCemento || ''"
                     (change)="onTipoCementoChange(i, $event)"
-                    [disabled]="camposDeshabilitados() || marca.completo || !marca.marcaFabricanteId">
+                    [disabled]="camposDeshabilitados() || !marca.marcaFabricanteId">
                     <option value="">Seleccionar...</option>
                     @for (tipo of tiposCementoPorFila[i]; track tipo) {
                       <option [value]="tipo">{{ tipo }}</option>
@@ -344,7 +344,7 @@
                   <select 
                     [value]="marca.descFisica || ''"
                     (change)="onDescripcionFisicaChange(i, $event)"
-                    [disabled]="camposDeshabilitados() || marca.completo || !marca.tipoCemento">
+                    [disabled]="camposDeshabilitados() || !marca.tipoCemento">
                     <option value="">Seleccionar...</option>
                     @for (desc of descripcionesFisicasPorFila[i]; track desc) {
                       <option [value]="desc">{{ desc }}</option>
