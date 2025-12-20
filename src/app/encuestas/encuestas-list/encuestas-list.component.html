@@ -38,67 +38,69 @@
       <div class="header">
         <h1>Gestión de Encuestas</h1>
         <div class="header-actions">
-          <div class="export-menu-container">
-            <button class="btn-exportar" (click)="toggleMenuExportar()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              Exportar
-            </button>
-            
-            @if (mostrarMenuExportar()) {
-              <div class="export-dropdown">
-                <!-- Excel con submenú -->
-                <div class="export-dropdown-section">
-                  <div class="export-dropdown-label">
+          @if (!esEncuestador()) {
+            <div class="export-menu-container">
+              <button class="btn-exportar" (click)="toggleMenuExportar()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Exportar
+              </button>
+              
+              @if (mostrarMenuExportar()) {
+                <div class="export-dropdown">
+                  <!-- Excel con submenú -->
+                  <div class="export-dropdown-section">
+                    <div class="export-dropdown-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                      </svg>
+                      Excel
+                    </div>
+                    <button class="export-dropdown-subitem" (click)="exportar('excel', 'INDUSTRIA')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
+                      </svg>
+                      Encuestas Industrias
+                    </button>
+                    <button class="export-dropdown-subitem" (click)="exportar('excel', 'CONSTRUCTORA')">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                        <path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M8 10h.01M8 14h.01M16 14h.01"></path>
+                      </svg>
+                      Encuestas Constructoras
+                    </button>
+                  </div>
+                  
+                  <!-- Separador -->
+                  <div class="export-dropdown-divider"></div>
+                  
+                  <!-- PDF y CSV -->
+                  <button class="export-dropdown-item" (click)="exportar('pdf')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                       <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
                     </svg>
-                    Excel
-                  </div>
-                  <button class="export-dropdown-subitem" (click)="exportar('excel', 'INDUSTRIA')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="3"></circle>
-                      <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
-                    </svg>
-                    Encuestas Industrias
+                    Listado completo (PDF)
                   </button>
-                  <button class="export-dropdown-subitem" (click)="exportar('excel', 'CONSTRUCTORA')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
-                      <path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M8 10h.01M8 14h.01M16 14h.01"></path>
+                  <button class="export-dropdown-item" (click)="exportar('csv')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
                     </svg>
-                    Encuestas Constructoras
+                    Listado completo (CSV)
                   </button>
                 </div>
-                
-                <!-- Separador -->
-                <div class="export-dropdown-divider"></div>
-                
-                <!-- PDF y CSV -->
-                <button class="export-dropdown-item" (click)="exportar('pdf')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                  </svg>
-                  Listado completo (PDF)
-                </button>
-                <button class="export-dropdown-item" (click)="exportar('csv')">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                  </svg>
-                  Listado completo (CSV)
-                </button>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
           
           <button class="btn-nueva-encuesta" (click)="nuevaEncuesta()">
             + Nueva Encuesta
@@ -188,13 +190,15 @@
               </select>
             </div>
             
-            <div class="filtro-group">
-              <label>Usuario Creador</label>
-              <input 
-                type="text" 
-                [(ngModel)]="filtroUsuarioCreacion"
-                placeholder="Ingrese usuario">
-            </div>
+            @if (!esEncuestador()) {
+              <div class="filtro-group">
+                <label>Usuario Creador</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="filtroUsuarioCreacion"
+                  placeholder="Ingrese usuario">
+              </div>
+            }
             
             <div class="filtro-group-buttons">
               <button class="btn-filtrar" (click)="aplicarFiltros()">

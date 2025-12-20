@@ -384,6 +384,12 @@ export class EncuestaObrasFormComponent implements OnInit {
   departamentosObra: { departamentoId: number; descDepartamento: string; codPais: string; codDepartamento: string }[] = [];
   provinciasObra: { provinciaId: number; descProvincia: string; codPais: string; codDepartamento: string; codProvincia: string }[] = [];
   distritosObra: { distritoId: number; descDistrito: string; codPais: string; codDepartamento: string; codProvincia: string; codDistrito: string }[] = [];
+  
+  // Catálogos para Dirección de la empresa/constructora
+  departamentos: { departamentoId: number; descDepartamento: string; codPais: string; codDepartamento: string }[] = [];
+  provincias: { provinciaId: number; descProvincia: string; codPais: string; codDepartamento: string; codProvincia: string }[] = [];
+  distritos: { distritoId: number; descDistrito: string; codPais: string; codDepartamento: string; codProvincia: string; codDistrito: string }[] = [];
+  
   tiposVia: string[] = [
     'Avenida',
     'Calle',
@@ -394,6 +400,27 @@ export class EncuestaObrasFormComponent implements OnInit {
     'Alameda',
     'Otro'
   ];
+
+  // Getter para direccionNuevaEmpresa (siempre devuelve un objeto válido para binding en template)
+  get direccionNuevaEmpresa() {
+    if (!this.nuevaEmpresa().direccion) {
+      this.nuevaEmpresa().direccion = this.direccionDefault();
+    }
+    return this.nuevaEmpresa().direccion!;
+  }
+
+  private direccionDefault(): Direccion {
+    return {
+      codPais: '',
+      codDepartamento: '',
+      codProvincia: '',
+      codDistrito: '',
+      tipoVia: '',
+      nombreVia: '',
+      numeroVia: '',
+      referencia: ''
+    };
+  }
 
   // (Eliminado: declaración duplicada de marcasSeleccionadas)
 
@@ -454,7 +481,7 @@ export class EncuestaObrasFormComponent implements OnInit {
         tipoEmpresaId: 1,
         actividadEconomica: '',
         direccion: {
-          codPais: '',
+          codPais: '428', // Perú por defecto
           codDepartamento: '',
           codProvincia: '',
           codDistrito: '',
@@ -543,6 +570,17 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.empresasService.listarTipos().subscribe({
       next: (tipos) => {
         this.tiposEmpresa.set(tipos);
+        // Buscar y autoseleccionar "CONSTRUCTORA" (búsqueda exacta case-insensitive)
+        const constructora = tipos.find(t => 
+          t.descripcionTipoEmpresa?.toUpperCase().trim() === 'CONSTRUCTORA' ||
+          t.descripcionTipoEmpresa?.toUpperCase().trim() === 'CONSTRUCTORAS'
+        );
+        if (constructora) {
+          this.nuevaEmpresa.update(empresa => ({
+            ...empresa,
+            tipoEmpresaId: constructora.tipoEmpresaId
+          }));
+        }
       },
       error: (error) => {
         console.error('Error al cargar tipos de empresa:', error);
@@ -668,9 +706,13 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.ubicacionService.listarPaises().subscribe({
       next: (data: any[]) => {
         this.paises = data;
-        // Cargar automáticamente los departamentos de Perú
+        // Cargar automáticamente los departamentos de Perú para la obra
         if (this.direccionObra.codPais === '428') {
           this.cargarDepartamentosObra('428');
+        }
+        // Cargar automáticamente los departamentos de Perú para la empresa (nuevaEmpresa tiene 428 por defecto)
+        if (this.nuevaEmpresa().direccion?.codPais === '428') {
+          this.cargarDepartamentos('428');
         }
       },
       error: () => {
@@ -748,6 +790,93 @@ export class EncuestaObrasFormComponent implements OnInit {
         this.distritosObra = [];
       }
     });
+  }
+
+  // ===== MÉTODOS PARA DIRECCIÓN DE EMPRESA/CONSTRUCTORA =====
+
+  cargarDepartamentos(codPais: string): void {
+    this.ubicacionService.listarDepartamentos(codPais).subscribe({
+      next: (data: any[]) => {
+        this.departamentos = data;
+      },
+      error: () => {
+        this.departamentos = [];
+      }
+    });
+  }
+
+  cargarProvincias(codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
+      next: (data: any[]) => {
+        this.provincias = data;
+      },
+      error: () => {
+        this.provincias = [];
+      }
+    });
+  }
+
+  cargarDistritos(codProvincia: string, codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
+      next: (data: any[]) => {
+        this.distritos = data;
+      },
+      error: () => {
+        this.distritos = [];
+      }
+    });
+  }
+
+  onPaisChange(): void {
+    if (!this.nuevaEmpresa().direccion) {
+      this.nuevaEmpresa().direccion = this.direccionDefault();
+    }
+    const direccion = this.nuevaEmpresa().direccion;
+    if (!direccion) return;
+    const codPais = direccion.codPais;
+    if (codPais) {
+      this.cargarDepartamentos(codPais);
+      this.departamentos = [];
+      this.provincias = [];
+      this.distritos = [];
+      direccion.codDepartamento = '';
+      direccion.codProvincia = '';
+      direccion.codDistrito = '';
+    }
+  }
+
+  onDepartamentoChange(): void {
+    if (!this.nuevaEmpresa().direccion) {
+      this.nuevaEmpresa().direccion = this.direccionDefault();
+    }
+    const direccion = this.nuevaEmpresa().direccion;
+    if (!direccion) return;
+    const codDepartamento = direccion.codDepartamento;
+    const codPais = direccion.codPais;
+    if (codDepartamento) {
+      this.cargarProvincias(codDepartamento, codPais);
+      this.provincias = [];
+      this.distritos = [];
+      direccion.codProvincia = '';
+      direccion.codDistrito = '';
+    }
+  }
+
+  onProvinciaChange(): void {
+    if (!this.nuevaEmpresa().direccion) {
+      this.nuevaEmpresa().direccion = this.direccionDefault();
+    }
+    const direccion = this.nuevaEmpresa().direccion;
+    if (!direccion) return;
+    const codProvincia = direccion.codProvincia;
+    const codDepartamento = direccion.codDepartamento;
+    const codPais = direccion.codPais;
+
+    if (codProvincia) {
+      this.cargarDistritos(codProvincia, codDepartamento, codPais);
+      this.distritos = [];
+      direccion.codDistrito = '';
+    }
   }
 
   /**
@@ -930,6 +1059,12 @@ export class EncuestaObrasFormComponent implements OnInit {
     // Si la encuesta tiene datos del encuestado, cargarlos
     if (encuesta.encuestado) {
       this.encuestadoSeleccionado.set(encuesta.encuestado);
+    }
+
+    // Si la encuesta tiene empresa asignada, cargarla
+    if (encuesta.empresaId) {
+      console.log('LOG-5: Cargando empresa con ID', encuesta.empresaId);
+      this.cargarEmpresaSeleccionada(encuesta.empresaId);
     }
 
     // Limpieza: ya no se usa fabricanteId ni carga de marcas por fabricante legacy
@@ -1801,7 +1936,17 @@ export class EncuestaObrasFormComponent implements OnInit {
       razonSocial: '',
       ruc: '',
       tipoEmpresaId: 1,
-      actividadEconomica: ''
+      actividadEconomica: '',
+      direccion: {
+        codPais: '428',
+        codDepartamento: '',
+        codProvincia: '',
+        codDistrito: '',
+        tipoVia: '',
+        nombreVia: '',
+        numeroVia: '',
+        referencia: ''
+      }
     });
 
     this.buscandoEmpresa.set(true);
@@ -1900,8 +2045,20 @@ export class EncuestaObrasFormComponent implements OnInit {
       razonSocial: '',
       ruc: '',
       tipoEmpresaId: 1,
-      actividadEconomica: ''
+      actividadEconomica: '',
+      direccion: {
+        codPais: '428',
+        codDepartamento: '',
+        codProvincia: '',
+        codDistrito: '',
+        tipoVia: '',
+        nombreVia: '',
+        numeroVia: '',
+        referencia: ''
+      }
     });
+    // Recargar departamentos para Perú
+    this.cargarDepartamentos('428');
   }
 
   validarRucRegistro(): void {
@@ -1960,6 +2117,11 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.errorRucRegistro.set('');
     this.guardandoEmpresa.set(true);
 
+    // Establecer tipo de referencia como CONSTRUCTORA para la dirección
+    if (empresa.direccion) {
+      (empresa.direccion as any).tipoReferencia = TIPO_REFERENCIA.CONSTRUCTORA;
+    }
+
     // Paso 1: Crear la empresa
     this.empresasService.crear(empresa).subscribe({
       next: (empresaCreada) => {
@@ -1989,7 +2151,17 @@ export class EncuestaObrasFormComponent implements OnInit {
                 razonSocial: '',
                 ruc: '',
                 tipoEmpresaId: 1,
-                actividadEconomica: ''
+                actividadEconomica: '',
+                direccion: {
+                  codPais: '428',
+                  codDepartamento: '',
+                  codProvincia: '',
+                  codDistrito: '',
+                  tipoVia: '',
+                  nombreVia: '',
+                  numeroVia: '',
+                  referencia: ''
+                }
               });
               
               this.mensajeModal.set('Empresa registrada y asignada correctamente');
@@ -2304,6 +2476,9 @@ export class EncuestaObrasFormComponent implements OnInit {
       case 'datosGenerales':
         // Considera completa si tipoEncuesta y fechaEncuesta existen
         return !!(this.encuesta()?.tipoEncuesta && this.encuesta()?.fechaEncuesta);
+      case 'empresa':
+        // Sección de empresa completa si hay una empresa seleccionada
+        return !!this.empresaSeleccionada();
       case 'datosObra':
         // Requiere etapaObra y fechaFinalizacionObra
         return !!(this.datosObra()?.etapaObra && this.datosObra()?.fechaFinalizacionObra);

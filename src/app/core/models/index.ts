@@ -105,6 +105,7 @@ export interface Direccion {
   nombreVia: string;
   numeroVia: string;
   referencia: string;
+  tipoReferencia?: string; // EMPRESA, CONSTRUCTORA, OBRA
 }
 
 export interface ObraEncuesta {

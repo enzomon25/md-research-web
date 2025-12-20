@@ -244,6 +244,11 @@ export class EncuestasListComponent implements OnInit {
     return this.authService.getRolDescripcion();
   }
 
+  esEncuestador(): boolean {
+    const rol = this.authService.obtenerRol();
+    return rol === 'ENCUESTADOR';
+  }
+
   obtenerInicialesUsuario(): string {
     const userData = this.authService.getUserData();
     if (!userData) return 'U';

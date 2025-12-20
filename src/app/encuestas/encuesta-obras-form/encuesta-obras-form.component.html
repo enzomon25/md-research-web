@@ -347,6 +347,303 @@
       }
     </div>
 
+    <!-- Sección 3: Datos de la Constructora -->
+    <div class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('empresa')" [class.expandida]="esSeccionExpandida('empresa')">
+        <h2>Datos de la Constructora
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': seccionCompleta('empresa') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ seccionCompleta('empresa') ? 'Completado' : 'Pendiente' }}
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('empresa') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('empresa')) {
+      <div class="seccion-body">
+        @if (empresaSeleccionada()) {
+        <!-- Empresa ya seleccionada - Solo lectura -->
+        <div class="empresa-seleccionada">
+          <div class="empresa-datos">
+            <div class="dato-empresa">
+              <label>RUC</label>
+              <span>{{ empresaSeleccionada()?.ruc }}</span>
+            </div>
+            <div class="dato-empresa">
+              <label>Razón Social</label>
+              <span>{{ empresaSeleccionada()?.razonSocial }}</span>
+            </div>
+            <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
+          </div>
+          <button class="btn-cambiar-empresa" (click)="cambiarEmpresa()" [disabled]="camposDeshabilitados()">
+            Cambiar Empresa
+          </button>
+        </div>
+        } @else {
+        <!-- Búsqueda de empresa -->
+        <div class="empresa-search-row" style="width: 100%;">
+          <div style="width: 100%;">
+            <label style="margin-bottom: 0.5rem; display: block;">{{ tipoBusquedaEmpresa() === 'ruc' ? 'Buscar por RUC'
+              : 'Buscar por Razón Social' }}</label>
+            <div style="display: flex; gap: 0.5rem; align-items: stretch; width: 100%;">
+              <div class="input-dropdown-container" #empresaInputDropdown>
+                <input type="text" [(ngModel)]="terminoBusqueda" (input)="validarBusquedaRuc()"
+                  [maxlength]="tipoBusquedaEmpresa() === 'ruc' ? 11 : null"
+                  [placeholder]="tipoBusquedaEmpresa() === 'ruc' ? 'Ingrese RUC' : 'Ingrese Razón Social'"
+                  class="search-input" style="width: 100%; min-width: 0; height: 44px; box-sizing: border-box;">
+                @if (mostrarResultadosEmpresa()) {
+                <div class="search-results search-results--input-width">
+                  @if (buscandoEmpresa()) {
+                  <div class="search-loading">Buscando...</div>
+                  } @else if (empresasEncontradas().length > 0) {
+                    @for (empresa of empresasEncontradas(); track empresa.empresaId) {
+                    <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
+                      <div class="empresa-info">
+                        <strong>{{ empresa.razonSocial }}</strong>
+                        <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
+                      </div>
+                    </div>
+                    }
+                  } @else {
+                  <div class="search-no-results">No se encontraron empresas</div>
+                  }
+                </div>
+                }
+              </div>
+              <div class="search-type" style="min-width: 180px; display: flex; align-items: stretch;">
+                <select [(ngModel)]="tipoBusquedaEmpresa"
+                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box;">
+                  <option value="ruc">RUC</option>
+                  <option value="razonSocial">Razón Social</option>
+                </select>
+              </div>
+              <button class="btn-guardar-empresa"
+                style="padding: 0.4rem 1.2rem; height: 44px; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin-bottom: 0; box-sizing: border-box;"
+                (click)="buscarEmpresa()" [disabled]="camposDeshabilitados()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                Buscar
+              </button>
+            </div>
+            @if (errorBusquedaRuc()) {
+            <div class="error-message">
+              @if (tieneLetrasEnRuc()) {
+              ⚠️ El RUC debe contener solo números
+              } @else if (rucLongitudIncorrecta()) {
+              ⚠️ El RUC debe tener exactamente 11 dígitos (actual: {{ terminoBusqueda().trim().length }})
+              }
+            </div>
+            }
+            @if (mostrarResultadosEmpresa()) {
+            <div class="search-results">
+              @if (buscandoEmpresa()) {
+              <div class="search-loading">Buscando...</div>
+              } @else if (empresasEncontradas().length > 0) {
+                @for (empresa of empresasEncontradas(); track empresa.empresaId) {
+                <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
+                  <div class="empresa-info">
+                    <strong>{{ empresa.razonSocial }}</strong>
+                    <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
+                  </div>
+                </div>
+                }
+              } @else {
+              <div class="search-no-results">No se encontraron empresas</div>
+              }
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Formulario de registro de nueva empresa -->
+        @if (mostrarFormularioRegistro()) {
+        <div class="registro-empresa-container">
+          <div class="registro-empresa-header">
+            <h3>Registrar Nueva Empresa</h3>
+            <button class="btn-cancelar-registro" (click)="cancelarRegistroEmpresa()">Cancelar</button>
+          </div>
+          <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>RUC *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().ruc" (input)="validarRucRegistro()" maxlength="11"
+                placeholder="Ingrese RUC (11 dígitos)">
+              @if (errorRucRegistro()) {
+              <div class="error-message">
+                ⚠️ {{ errorRucRegistro() }}
+              </div>
+              }
+            </div>
+            <div class="registro-form-group">
+              <label>Razón Social *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().razonSocial" placeholder="Ingrese Razón Social" required>
+            </div>
+            <div class="registro-form-group">
+              <label>Tipo de Empresa *</label>
+              <select [(ngModel)]="nuevaEmpresa().tipoEmpresaId" required disabled>
+                <option [value]="0" disabled>Seleccione un tipo</option>
+                @for (tipo of tiposEmpresa(); track tipo.tipoEmpresaId) {
+                <option [value]="tipo.tipoEmpresaId">{{ tipo.descripcionTipoEmpresa }}</option>
+                }
+              </select>
+            </div>
+            <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
+            <div class="registro-form-group">
+              <label>Actividad Económica *</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().actividadEconomica" placeholder="Actividad" required>
+            </div>
+          </div>
+        <!-- Dirección de planta al mismo nivel -->
+          <div style="margin-top:25px;">
+            <div class="registro-empresa-header">
+              <h3>Domicilio Fiscal</h3>
+            </div>
+          </div>
+          <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>País *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codPais" (change)="onPaisChange()" required disabled>
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (pais of paises; track pais.codPais) {
+                  <option [ngValue]="pais.codPais">{{ pais.descPais }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Departamento *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDepartamento" (change)="onDepartamentoChange()" required [disabled]="!direccionNuevaEmpresa.codPais">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dep of departamentos; track [dep.codDepartamento, dep.codPais]) {
+                  <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Provincia *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codProvincia" (change)="onProvinciaChange()" required [disabled]="!direccionNuevaEmpresa.codDepartamento">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (prov of provincias; track prov.codProvincia) {
+                  <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Distrito *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDistrito" required [disabled]="!direccionNuevaEmpresa.codProvincia">
+                <option [ngValue]="0" disabled selected>Seleccione</option>
+                @for (dist of distritos; track [dist.codDistrito, dist.codProvincia, dist.codDepartamento, dist.codPais]) {
+                  <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Tipo de Vía *</label>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.tipoVia" required>
+                <option [ngValue]="null" disabled selected>Elige una opción</option>
+                @for (via of tiposVia; track via) {
+                  <option [ngValue]="via">{{ via }}</option>
+                }
+              </select>
+            </div>
+            <div class="registro-form-group">
+              <label>Nombre de la Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.nombreVia" placeholder="Nombre de la vía" required>
+            </div>
+
+            <div class="registro-form-group">
+              <label>Nº de Vía *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.numeroVia" placeholder="Número de la vía" required>
+            </div>
+            <div class="registro-form-group">
+              <label>Referencia *</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.referencia" placeholder="Referencia">
+            </div>
+
+            <div class="registro-form-actions mt-3">
+              <button class="btn-guardar-empresa" (click)="guardarNuevaEmpresa()" [disabled]="guardandoEmpresa()">
+                {{ guardandoEmpresa() ? 'Guardando...' : 'Guardar Empresa' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        }
+        }
+
+        <!-- Observación del Validador -->
+        @if (puedeEditarObservaciones()) {
+        <div class="observacion-container">
+          <div class="observacion-header">
+            <label>Observaciones de Validación</label>
+            <div class="observacion-header-actions">
+              <!-- Botón Guardar duplicado eliminado -->
+              @if (obtenerObservacionTexto('empresa').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('empresa')"
+                title="Desestimar observación">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Desestimar
+              </button>
+              }
+            </div>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('empresa')"
+            (input)="actualizarObservacionTexto('empresa', $any($event.target).value)"
+            placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
+          <div class="observacion-actions">
+            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('empresa')"
+              [disabled]="estaGuardandoObservacion('empresa')">
+              Guardar
+            </button>
+            @if (estaGuardandoObservacion('empresa')) {
+            <span class="guardando-observacion">Guardando...</span>
+            }
+          </div>
+        </div>
+        }
+        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('empresa').trim()) {
+        <div class="observacion-container observacion-readonly">
+          <div class="observacion-header">
+            <label>⚠️ Observaciones del Validador - Datos de la Constructora</label>
+          </div>
+          <textarea [value]="obtenerObservacionTexto('empresa')" readonly rows="3"></textarea>
+        </div>
+        }
+
+        <!-- Historial de Observaciones (solo VALIDADOR y ADMINISTRADOR) -->
+        @if (tieneHistorial('empresa')) {
+        <div class="historial-observaciones-container">
+          <div class="historial-header" (click)="toggleHistorialSeccion('empresa')"
+            [class.expandido]="esHistorialExpandido('empresa')">
+            <span class="historial-icono">📜</span>
+            <label>Historial de Observaciones Anteriores</label>
+            <span class="historial-toggle">{{ esHistorialExpandido('empresa') ? '−' : '+' }}</span>
+          </div>
+          @if (esHistorialExpandido('empresa')) {
+          <div class="historial-body">
+            @for (item of obtenerHistorialSeccion('empresa'); track item.historialId) {
+            <div class="historial-item">
+              <div class="historial-meta">
+                <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <div class="historial-texto">{{ item.texto }}</div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
     <!-- Sección 4: Encuestado -->
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('encuestado')"
@@ -937,6 +1234,26 @@
           }
         </div>
 
+
+    <!-- Modal: empresa no encontrada -->
+    @if (mostrarModalNoEncontrada()) {
+      <div class="modal-overlay" (click)="cerrarModalNoEncontrada()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Empresa no encontrada</h3>
+            <button class="modal-close" (click)="cerrarModalNoEncontrada()">×</button>
+          </div>
+          <div class="modal-body">
+            <p>La empresa que está buscando no se encuentra registrada en el sistema.</p>
+            <p><strong>¿Desea registrar esta empresa ahora?</strong></p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-modal-cancelar" (click)="cerrarModalNoEncontrada()">No, cancelar</button>
+            <button class="btn-modal-confirmar" (click)="confirmarRegistroEmpresa()">Sí, registrar empresa</button>
+          </div>
+        </div>
+      </div>
+    }
 
     <!-- Modal: encuestado no encontrada -->
     @if (mostrarModalNoEncontradaEncuestado()) {
