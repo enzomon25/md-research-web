@@ -9,13 +9,8 @@ import { ModulosService, Modulo } from '../../core/services/modulos.service';
 import { Encuesta, Parametro, PaginacionRespuesta } from '../../core/models';
 import { ESTADOS_ENCUESTA, CATEGORIAS_PARAMETROS } from '../../core/constants';
 
-interface TipoEmpresa {
-  tipoEmpresaId: number;
-  descripcionTipoEmpresa: string;
-}
-
 interface Estado {
-  estadoId: string;
+  estadoId: number;
   descripcionEstado: string;
 }
 
@@ -35,8 +30,8 @@ export class EncuestasListComponent implements OnInit {
   mostrarModalTipo = signal(false);
   mostrarDrawer = signal(false);
   mostrarMenuUsuario = signal(false);
+  mostrarMenuExportar = signal(false);
   tiposEncuesta = signal<Parametro[]>([]);
-  tiposEmpresa = signal<TipoEmpresa[]>([]);
   estados = signal<Estado[]>([]);
   creandoEncuesta = signal(false);
   modulos = signal<Modulo[]>([]);
@@ -51,11 +46,11 @@ export class EncuestasListComponent implements OnInit {
   filtroRuc = '';
   filtroNombreEmpresa = '';
   filtroFechaEncuesta = '';
-  // filtroTamanoEmpresa eliminado
-  filtroTipoEmpresa = '';
-  filtroEstado = '';
+  filtroTipoEncuesta = '';
+  filtroEstado: number | '' = '';
   
   // Filtros del drawer
+  filtroUsuarioCreacion = '';
   filtroFechaCreacionDesde = '';
   filtroFechaCreacionHasta = '';
 
@@ -74,7 +69,7 @@ export class EncuestasListComponent implements OnInit {
   ngOnInit(): void {
     this.cargarEncuestas();
     this.cargarEstados();
-    this.cargarTiposEmpresa();
+    this.cargarTiposEncuesta();
     this.cargarModulos();
   }
 
@@ -95,7 +90,20 @@ export class EncuestasListComponent implements OnInit {
 
   cargarEncuestas(): void {
     this.cargando.set(true);
-    this.encuestasService.listar(this.paginaActual(), 10).subscribe({
+    
+    // Construir objeto de filtros
+    const filtros: any = {};
+    
+    if (this.filtroRuc) filtros.ruc = this.filtroRuc;
+    if (this.filtroNombreEmpresa) filtros.razonSocial = this.filtroNombreEmpresa;
+    if (this.filtroFechaEncuesta) filtros.fechaEncuesta = this.filtroFechaEncuesta;
+    if (this.filtroTipoEncuesta) filtros.tipoEncuesta = this.filtroTipoEncuesta;
+    if (this.filtroEstado) filtros.estadoId = this.filtroEstado;
+    if (this.filtroUsuarioCreacion) filtros.usuarioCreacion = this.filtroUsuarioCreacion;
+    if (this.filtroFechaCreacionDesde) filtros.fechaCreacionDesde = this.filtroFechaCreacionDesde;
+    if (this.filtroFechaCreacionHasta) filtros.fechaCreacionHasta = this.filtroFechaCreacionHasta;
+
+    this.encuestasService.listar(this.paginaActual(), 10, filtros).subscribe({
       next: (respuesta: PaginacionRespuesta<Encuesta>) => {
         this.encuestas.set(respuesta.data);
         this.encuestasSinFiltrar.set(respuesta.data);
@@ -110,96 +118,51 @@ export class EncuestasListComponent implements OnInit {
   }
 
   cargarEstados(): void {
-    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.ESTADO_ENCUESTA).subscribe({
-      next: (estados: Parametro[]) => {
-        this.estados.set(estados.map((e): Estado => ({
-          estadoId: e.llave,
-          descripcionEstado: e.valor
-        })));
+    // Por ahora usar estados hardcodeados basados en la tabla estado del backend
+    // TODO: Crear endpoint GET /estados en el backend
+    this.estados.set([
+      { estadoId: 1, descripcionEstado: 'En registro' },
+      { estadoId: 2, descripcionEstado: 'En revisión' },
+      { estadoId: 3, descripcionEstado: 'Transferido' },
+      { estadoId: 4, descripcionEstado: 'En corrección' },
+      { estadoId: 5, descripcionEstado: 'Aprobado' },
+      { estadoId: 6, descripcionEstado: 'Observada' }
+    ]);
+  }
+
+  cargarTiposEncuesta(): void {
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_ENCUESTA).subscribe({
+      next: (tipos: Parametro[]) => {
+        this.tiposEncuesta.set(tipos);
       },
       error: (error) => {
-        console.error('Error al cargar estados:', error);
+        console.error('Error al cargar tipos de encuesta:', error);
       }
     });
   }
 
-  cargarTiposEmpresa(): void {
-    // Cargar tipos de empresa del servicio correspondiente
-    // Por ahora, definir tipos estáticos si no existe el servicio
-    this.tiposEmpresa.set([
-      { tipoEmpresaId: 1, descripcionTipoEmpresa: 'Privada' } as TipoEmpresa,
-      { tipoEmpresaId: 2, descripcionTipoEmpresa: 'Pública' } as TipoEmpresa,
-      { tipoEmpresaId: 3, descripcionTipoEmpresa: 'Mixta' } as TipoEmpresa
-    ]);
+  aplicarFiltros(): void {
+    // Recargar datos desde el backend con los filtros
+    this.paginaActual.set(1); // Resetear a la primera página
+    this.cargarEncuestas();
   }
 
-  aplicarFiltros(): void {
-    let encuestasFiltradas = [...this.encuestasSinFiltrar()];
-
-    // Filtrar por RUC
-    if (this.filtroRuc) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.empresa?.ruc?.includes(this.filtroRuc)
-      );
-    }
-
-    // Filtrar por nombre de empresa
-    if (this.filtroNombreEmpresa) {
-      const nombre = this.filtroNombreEmpresa.toLowerCase();
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.empresa?.razonSocial?.toLowerCase().includes(nombre)
-      );
-    }
-
-    // Filtrar por fecha de encuesta
-    if (this.filtroFechaEncuesta) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.fechaEncuesta === this.filtroFechaEncuesta
-      );
-    }
-
-    // Eliminado: filtro por tamaño de empresa
-
-    // Filtrar por tipo de empresa
-    if (this.filtroTipoEmpresa) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.empresa?.tipoEmpresaId?.toString() === this.filtroTipoEmpresa
-      );
-    }
-
-    // Filtrar por estado
-    if (this.filtroEstado) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.estadoId?.toString() === this.filtroEstado
-      );
-    }
-
-    // Filtrar por rango de fecha de creación (drawer)
-    if (this.filtroFechaCreacionDesde) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.fechaCreacion && e.fechaCreacion >= this.filtroFechaCreacionDesde
-      );
-    }
-
-    if (this.filtroFechaCreacionHasta) {
-      encuestasFiltradas = encuestasFiltradas.filter(e => 
-        e.fechaCreacion && e.fechaCreacion <= this.filtroFechaCreacionHasta
-      );
-    }
-
-    this.encuestas.set(encuestasFiltradas);
+  aplicarFiltrosYCerrarDrawer(): void {
+    this.aplicarFiltros();
+    this.toggleDrawer();
   }
 
   limpiarFiltros(): void {
     this.filtroRuc = '';
     this.filtroNombreEmpresa = '';
     this.filtroFechaEncuesta = '';
-    // this.filtroTamanoEmpresa = '';
-    this.filtroTipoEmpresa = '';
+    this.filtroTipoEncuesta = '';
     this.filtroEstado = '';
+    this.filtroUsuarioCreacion = '';
     this.filtroFechaCreacionDesde = '';
     this.filtroFechaCreacionHasta = '';
-    this.encuestas.set(this.encuestasSinFiltrar());
+    this.paginaActual.set(1);
+    this.cargarEncuestas();
   }
 
   nuevaEncuesta(): void {
@@ -307,6 +270,60 @@ export class EncuestasListComponent implements OnInit {
     this.mostrarMenuUsuario.set(!this.mostrarMenuUsuario());
   }
 
+  toggleMenuExportar(): void {
+    this.mostrarMenuExportar.set(!this.mostrarMenuExportar());
+  }
+
+  exportar(formato: string, tipoEncuesta?: string): void {
+    this.mostrarMenuExportar.set(false);
+    
+    // Construir los mismos filtros que se usan en listar
+    const filtros: any = {
+      pagina: 1,
+      limite: 999999, // Sin paginación para exportar todo
+    };
+
+    if (this.filtroRuc) filtros.ruc = this.filtroRuc;
+    if (this.filtroNombreEmpresa) filtros.razonSocial = this.filtroNombreEmpresa;
+    if (this.filtroFechaEncuesta) filtros.fechaEncuesta = this.filtroFechaEncuesta;
+    
+    // Para Excel, el tipo de encuesta es obligatorio (viene del dropdown)
+    // Para PDF/CSV, se usa el filtro actual si existe
+    if (formato === 'excel' && tipoEncuesta) {
+      filtros.tipoEncuesta = tipoEncuesta;
+    } else if (this.filtroTipoEncuesta) {
+      filtros.tipoEncuesta = this.filtroTipoEncuesta;
+    }
+    
+    if (this.filtroEstado !== '') filtros.estadoId = this.filtroEstado;
+    if (this.filtroUsuarioCreacion) filtros.usuarioCreacion = this.filtroUsuarioCreacion;
+    if (this.filtroFechaCreacionDesde) filtros.fechaCreacionDesde = this.filtroFechaCreacionDesde;
+    if (this.filtroFechaCreacionHasta) filtros.fechaCreacionHasta = this.filtroFechaCreacionHasta;
+    filtros.formato = formato;
+
+    this.encuestasService.exportar(filtros).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const extension = formato === 'excel' ? 'xlsx' : formato === 'pdf' ? 'pdf' : 'csv';
+        const fecha = new Date().toISOString().split('T')[0];
+        const tipoSufijo = tipoEncuesta ? `_${tipoEncuesta.toLowerCase()}` : '';
+        a.download = `encuestas${tipoSufijo}_${fecha}.${extension}`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error: any) => {
+        console.error('Error al exportar:', error);
+        alert('Error al exportar los datos. Por favor, intente nuevamente.');
+      }
+    });
+  }
+
   cerrarSesion(): void {
     // Agregar clase de fade-out
     const layoutContainer = document.querySelector('.layout-container');
@@ -333,9 +350,14 @@ export class EncuestasListComponent implements OnInit {
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const userMenuContainer = target.closest('.user-menu-container');
+    const exportMenuContainer = target.closest('.export-menu-container');
     
     if (!userMenuContainer && this.mostrarMenuUsuario()) {
       this.mostrarMenuUsuario.set(false);
+    }
+
+    if (!exportMenuContainer && this.mostrarMenuExportar()) {
+      this.mostrarMenuExportar.set(false);
     }
   }
 

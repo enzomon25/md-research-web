@@ -15,14 +15,48 @@ export class EncuestasService {
   listar(
     pagina: number = 1,
     limite: number = 10,
-    empresaId?: number
+    filtros?: {
+      empresaId?: number;
+      ruc?: string;
+      razonSocial?: string;
+      fechaEncuesta?: string;
+      tipoEncuesta?: string;
+      estadoId?: string;
+      fechaCreacionDesde?: string;
+      fechaCreacionHasta?: string;
+      usuarioCreacion?: string;
+    }
   ): Observable<PaginacionRespuesta<Encuesta>> {
     let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('limite', limite.toString());
 
-    if (empresaId) {
-      params = params.set('empresaId', empresaId.toString());
+    if (filtros?.empresaId) {
+      params = params.set('empresaId', filtros.empresaId.toString());
+    }
+    if (filtros?.ruc) {
+      params = params.set('ruc', filtros.ruc);
+    }
+    if (filtros?.razonSocial) {
+      params = params.set('razonSocial', filtros.razonSocial);
+    }
+    if (filtros?.fechaEncuesta) {
+      params = params.set('fechaEncuesta', filtros.fechaEncuesta);
+    }
+    if (filtros?.tipoEncuesta) {
+      params = params.set('tipoEncuesta', filtros.tipoEncuesta);
+    }
+    if (filtros?.estadoId) {
+      params = params.set('estadoId', filtros.estadoId);
+    }
+    if (filtros?.fechaCreacionDesde) {
+      params = params.set('fechaCreacionDesde', filtros.fechaCreacionDesde);
+    }
+    if (filtros?.fechaCreacionHasta) {
+      params = params.set('fechaCreacionHasta', filtros.fechaCreacionHasta);
+    }
+    if (filtros?.usuarioCreacion) {
+      params = params.set('usuarioCreacion', filtros.usuarioCreacion);
     }
 
     return this.http.get<PaginacionRespuesta<Encuesta>>(this.apiUrl, {
@@ -44,5 +78,21 @@ export class EncuestasService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  exportar(filtros: any): Observable<Blob> {
+    let params = new HttpParams();
+
+    // Agregar todos los parámetros de filtros
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== null && filtros[key] !== undefined && filtros[key] !== '') {
+        params = params.set(key, filtros[key].toString());
+      }
+    });
+
+    return this.http.get(`${environment.apiUrl}/reportes/xlsx`, {
+      params,
+      responseType: 'blob'
+    });
   }
 }
