@@ -2096,9 +2096,9 @@ export class EncuestaObrasFormComponent implements OnInit {
     const dir = empresa.direccion;
     if (
       dir.codPais === undefined || dir.codDepartamento === undefined || dir.codProvincia === undefined ||
-      dir.codDistrito === undefined || !dir.tipoVia || !dir.nombreVia || !dir.numeroVia || !dir.referencia
+      dir.codDistrito === undefined || !dir.tipoVia || !dir.nombreVia
     ) {
-      this.mensajeModal.set('Todos los campos de la dirección son obligatorios');
+      this.mensajeModal.set('Los campos de país, departamento, provincia, distrito, tipo de vía y nombre de vía son obligatorios');
       this.mostrarModalError.set(true);
       return;
     }
@@ -2494,7 +2494,7 @@ export class EncuestaObrasFormComponent implements OnInit {
         );
       case 'compra':
         const enc = this.encuesta();
-        if (!enc?.tipoCompra || !enc?.descCompra || enc?.precio == null) {
+        if (!enc?.tipoCompra || !enc?.tipoLugarCompra || !enc?.descCompra || enc?.precio == null) {
           return false;
         }
         // Validar campos específicos según el tipo de compra

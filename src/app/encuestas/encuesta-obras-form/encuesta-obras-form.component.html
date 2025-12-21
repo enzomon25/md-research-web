@@ -554,11 +554,11 @@
             </div>
 
             <div class="registro-form-group">
-              <label>Nº de Vía *</label>
-              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.numeroVia" placeholder="Número de la vía" required>
+              <label>Nº de Vía</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.numeroVia" placeholder="Número de la vía">
             </div>
             <div class="registro-form-group">
-              <label>Referencia *</label>
+              <label>Referencia</label>
               <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.referencia" placeholder="Referencia">
             </div>
 
@@ -1125,6 +1125,16 @@
               <label>Precio</label>
               <input type="text" maxlength="1000" [value]="encuesta()?.precio || ''"
                 (input)="actualizarPrecio($any($event.target).value)">
+            </div>
+            <div class="form-group full-width">
+              <label>¿Cuál es el lugar de compra?</label>
+              <select [value]="encuesta()?.tipoLugarCompra || ''"
+                (change)="seleccionarLugarCompra($any($event.target).value)">
+                <option value="" disabled>Seleccione un lugar</option>
+                @for (lugar of lugaresCompra(); track lugar.llave) {
+                <option [value]="lugar.llave">{{ lugar.valor }}</option>
+                }
+              </select>
             </div>
           </div>
 
