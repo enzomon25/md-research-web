@@ -520,6 +520,16 @@ th, td {
   white-space: nowrap;
 }
 
+/* Estilo especial para columnas con texto largo (como Razón Social) */
+th.col-razon-social,
+td.col-razon-social {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
 th {
   font-weight: 400;
   background: #f8f9fc;

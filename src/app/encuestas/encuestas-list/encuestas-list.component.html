@@ -234,7 +234,7 @@
             <thead>
               <tr>
                 <th>Tipo de Encuesta</th>
-                <th>Razón Social</th>
+                <th class="col-razon-social">Razón Social</th>
                 <th>RUC</th>
                 <th>Fecha de Encuesta</th>
                 <th>Fecha de Creación</th>
@@ -249,7 +249,7 @@
               @for (encuesta of encuestas(); track encuesta.encuestaId) {
                 <tr>
                   <td>{{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}</td>
-                  <td>{{ encuesta.empresa?.razonSocial || '-' }}</td>
+                  <td class="col-razon-social" [title]="encuesta.empresa?.razonSocial || '-'">{{ encuesta.empresa?.razonSocial || '-' }}</td>
                   <td>{{ encuesta.empresa?.ruc || '-' }}</td>
                   <td>{{ encuesta.fechaEncuesta || '-' }}</td>
                   <td>{{ encuesta.fechaCreacion || '-' }}</td>
