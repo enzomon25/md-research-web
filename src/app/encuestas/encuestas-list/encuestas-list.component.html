@@ -23,12 +23,23 @@
       <div class="sidebar-heading">Módulos</div>
       <ul>
         @for (modulo of modulos(); track modulo.llave) {
-          <li class="sidebar-item" [class.active]="modulo.llave === MODULOS_KEYS.ENCUESTAS">
-            {{ modulo.valor }}
-          </li>
+          @if (modulo.llave === MODULOS_KEYS.ENCUESTAS) {
+            <li class="sidebar-item active">
+              {{ modulo.valor }}
+            </li>
+          } @else {
+            <li class="sidebar-item">
+              {{ modulo.valor }}
+            </li>
+          }
         }
         @empty {
           <li class="sidebar-item disabled">No hay módulos disponibles</li>
+        }
+        @if (esAdministrador()) {
+          <li class="sidebar-item" (click)="navegarACargaMasiva()">
+            Carga Masiva
+          </li>
         }
       </ul>
     </nav>

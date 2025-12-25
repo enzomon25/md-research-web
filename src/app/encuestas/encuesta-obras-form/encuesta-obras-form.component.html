@@ -207,6 +207,10 @@
         </div>
         <div class="registro-empresa-form">
           <div class="registro-form-group">
+            <label>Dirección completa</label>
+            <input type="text" class="form-control" [(ngModel)]="direccionObra.direc" placeholder="Dirección completa" [disabled]="camposDeshabilitados()">
+          </div>
+          <div class="registro-form-group">
             <label>País *</label>
             <select class="form-control" [(ngModel)]="direccionObra.codPais" (change)="onPaisChangeObra()" required disabled>
               <option [ngValue]="''" disabled>Seleccione</option>
@@ -501,6 +505,10 @@
             </div>
           </div>
           <div class="registro-empresa-form">
+            <div class="registro-form-group">
+              <label>Dirección completa</label>
+              <input type="text" class="form-control" [(ngModel)]="direccionNuevaEmpresa.direc" placeholder="Dirección completa">
+            </div>
             <div class="registro-form-group">
               <label>País *</label>
               <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codPais" (change)="onPaisChange()" required disabled>

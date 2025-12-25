@@ -412,4 +412,12 @@ export class EncuestasListComponent implements OnInit {
     const ruta = this.obtenerRutaCompleta(encuestaId, encuesta?.tipoEncuesta);
     this.router.navigate(ruta);
   }
+
+  navegarACargaMasiva(): void {
+    this.router.navigate(['/carga-masiva']);
+  }
+
+  esAdministrador(): boolean {
+    return this.authService.getRolDescripcion() === 'Administrador';
+  }
 }

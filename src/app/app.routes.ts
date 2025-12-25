@@ -21,5 +21,9 @@ export const routes: Routes = [
   {
     path: 'encuesta/:id/obras',
     loadComponent: () => import('./encuestas/encuesta-obras-form/encuesta-obras-form.component').then(m => m.EncuestaObrasFormComponent)
+  },
+  {
+    path: 'carga-masiva',
+    loadComponent: () => import('./carga-masiva/carga-masiva.component').then(m => m.CargaMasivaComponent)
   }
 ];

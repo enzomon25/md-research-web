@@ -1,0 +1,371 @@
+<div class="layout-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <svg class="sidebar-brand-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+          <ellipse cx="9" cy="10" rx="1" ry="1.5" fill="currentColor"/>
+          <ellipse cx="15" cy="10" rx="1" ry="1.5" fill="currentColor"/>
+          <path d="M8 15 Q12 18 16 15" stroke="currentColor" stroke-width="2" fill="none"/>
+        </svg>
+        <span class="sidebar-brand-text">MD Research</span>
+      </div>
+      <hr class="sidebar-divider">
+      
+      <div class="user-welcome">
+        <h3 class="user-greeting">Hola, {{ obtenerNombreUsuario() }}</h3>
+        <p class="user-role">{{ obtenerRolUsuario() }}</p>
+      </div>
+      <hr class="sidebar-divider">
+    </div>
+    <nav>
+      <div class="sidebar-heading">Módulos</div>
+      <ul>
+        <li class="sidebar-item" (click)="navegarAEncuestas()">
+          Encuestas
+        </li>
+        @if (esAdministrador()) {
+          <li class="sidebar-item active">
+            Carga Masiva
+          </li>
+        }
+        @for (modulo of modulos(); track modulo.llave) {
+          @if (modulo.llave !== MODULOS_KEYS.ENCUESTAS && modulo.llave !== MODULOS_KEYS.CARGA_MASIVA) {
+            <li class="sidebar-item">
+              {{ modulo.valor }}
+            </li>
+          }
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="encuestas-container">
+      <div class="header">
+        <h1>Carga Masiva de Encuestas</h1>
+        <div class="header-actions">
+          <div class="user-menu-container">
+            <button class="btn-user" (click)="toggleMenuUsuario()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </button>
+            @if (mostrarMenuUsuario()) {
+              <div class="user-dropdown">
+                <div class="user-dropdown-header">
+                  <strong>{{ obtenerNombreUsuario() }}</strong>
+                  <span class="user-role-dropdown">{{ obtenerRolUsuario() }}</span>
+                </div>
+                <hr>
+                <button class="user-dropdown-item" (click)="cerrarSesion()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Cerrar Sesión
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Upload -->
+      <div class="upload-section">
+        <div class="upload-card">
+          <h2>Subir Archivo Excel</h2>
+          <div class="upload-form">
+            <div class="form-group">
+              <label for="tipo-encuesta">Tipo de Encuesta</label>
+              <select 
+                id="tipo-encuesta" 
+                [(ngModel)]="tipoEncuestaSeleccionado"
+                class="form-control"
+                [disabled]="subiendo()">
+                <option value="CONSTRUCTORA">Constructora</option>
+                <option value="INDUSTRIA">Industria</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="archivo-input">Archivo Excel (.xlsx)</label>
+              <input 
+                type="file" 
+                id="archivo-input"
+                accept=".xlsx"
+                (change)="onArchivoSeleccionado($event)"
+                class="form-control-file"
+                [disabled]="subiendo()">
+              @if (archivoSeleccionado) {
+                <div class="archivo-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                  </svg>
+                  <span>{{ archivoSeleccionado.name }}</span>
+                  <small>({{ (archivoSeleccionado.size / 1024 / 1024).toFixed(2) }} MB)</small>
+                </div>
+              }
+              @if (errorArchivo) {
+                <div class="error-message">{{ errorArchivo }}</div>
+              }
+            </div>
+
+            <div class="form-actions">
+              <button 
+                class="btn-primary"
+                (click)="subirArchivo()"
+                [disabled]="!archivoSeleccionado || subiendo()">
+                @if (subiendo()) {
+                  <span class="spinner"></span>
+                  Procesando...
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Subir Archivo
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Tipo de Encuesta</label>
+          <select [(ngModel)]="filtroTipoEncuesta" class="filter-input">
+            <option value="">Todos</option>
+            <option value="CONSTRUCTORA">Constructora</option>
+            <option value="INDUSTRIA">Industria</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn-secondary" (click)="aplicarFiltros()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            Filtrar
+          </button>
+          <button class="btn-outline" (click)="limpiarFiltros()">
+            Limpiar
+          </button>
+          <button class="btn-secondary" (click)="recargarCargas()" [disabled]="cargando()" title="Recargar lista">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Recargar
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de cargas -->
+      <div class="table-container">
+        @if (cargando()) {
+          <div class="loading-overlay">
+            <div class="spinner-large"></div>
+            <p>Cargando...</p>
+          </div>
+        } @else if (cargas().length === 0) {
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+              <polyline points="13 2 13 9 20 9"></polyline>
+            </svg>
+            <h3>No hay cargas masivas registradas</h3>
+            <p>Sube tu primer archivo Excel para comenzar</p>
+          </div>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Archivo</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Exitosos</th>
+                <th>Fallidos</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (carga of cargas(); track carga.cargaMasivaId) {
+                <tr>
+                  <td>{{ carga.cargaMasivaId }}</td>
+                  <td class="archivo-cell">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    {{ carga.nombreArchivo }}
+                  </td>
+                  <td>{{ carga.tipoEncuesta }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="obtenerEstadoBadge(carga.estado)">
+                      {{ carga.estado }}
+                    </span>
+                  </td>
+                  <td>{{ carga.totalRegistros }}</td>
+                  <td class="text-success">{{ carga.registrosExitosos }}</td>
+                  <td class="text-danger">{{ carga.registrosFallidos }}</td>
+                  <td>{{ formatearFecha(carga.fechaInicio) }}</td>
+                  <td>{{ formatearFecha(carga.fechaFin) }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      @if (carga.estado === 'COMPLETADO' || carga.estado === 'PARCIAL' || carga.estado === 'ERROR') {
+                        <button 
+                          class="btn-icon"
+                          (click)="verDetalles(carga)"
+                          title="Ver detalles">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        </button>
+                      }
+                      @if (carga.rutaArchivoResultado && (carga.estado === 'COMPLETADO' || carga.estado === 'PARCIAL')) {
+                        <button 
+                          class="btn-icon"
+                          (click)="descargarResultado(carga)"
+                          title="Descargar resultado">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                        </button>
+                      }
+                      @if (!carga.rutaArchivoResultado && carga.estado === 'PROCESANDO') {
+                        <span class="text-muted">Procesando...</span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+
+      <!-- Paginación -->
+      @if (totalPaginas() > 1) {
+        <div class="pagination">
+          <button 
+            class="pagination-btn"
+            (click)="cambiarPagina(paginaActual() - 1)"
+            [disabled]="paginaActual() === 1">
+            Anterior
+          </button>
+          
+          <span class="pagination-info">
+            Página {{ paginaActual() }} de {{ totalPaginas() }}
+          </span>
+          
+          <button 
+            class="pagination-btn"
+            (click)="cambiarPagina(paginaActual() + 1)"
+            [disabled]="paginaActual() === totalPaginas()">
+            Siguiente
+          </button>
+        </div>
+      }
+    </div>
+  </main>
+
+  <!-- Modal de notificaciones -->
+  @if (mostrarModal()) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()" [class.success]="tipoModal() === 'success'" [class.error]="tipoModal() === 'error'">
+        <div class="modal-header">
+          <h3>{{ tipoModal() === 'success' ? '✓ Éxito' : '✗ Error' }}</h3>
+          <button class="modal-close" (click)="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ mensajeModal() }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" (click)="cerrarModal()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de detalles -->
+  @if (mostrarModalDetalles()) {
+    <div class="modal-overlay" (click)="cerrarModalDetalles()">
+      <div class="modal-content modal-detalles" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Detalles de Carga - {{ cargaSeleccionada()?.nombreArchivo }}</h3>
+          <button class="modal-close" (click)="cerrarModalDetalles()">&times;</button>
+        </div>
+        <div class="modal-body">
+          @if (cargandoDetalles()) {
+            <div class="loading-overlay">
+              <div class="spinner-large"></div>
+              <p>Cargando detalles...</p>
+            </div>
+          } @else if (detallesCarga().length === 0) {
+            <div class="empty-state">
+              <p>No hay detalles disponibles</p>
+            </div>
+          } @else {
+            <div class="detalles-stats">
+              <div class="stat-card">
+                <span class="stat-label">Total:</span>
+                <span class="stat-value">{{ detallesCarga().length }}</span>
+              </div>
+              <div class="stat-card success">
+                <span class="stat-label">Exitosos:</span>
+                <span class="stat-value">{{ obtenerExitosos() }}</span>
+              </div>
+              <div class="stat-card error">
+                <span class="stat-label">Errores:</span>
+                <span class="stat-value">{{ obtenerErrores() }}</span>
+              </div>
+            </div>
+            
+            <div class="detalles-table-container">
+              <table class="detalles-table">
+                <thead>
+                  <tr>
+                    <th>Fila</th>
+                    <th>Estado</th>
+                    <th>Observación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (detalle of detallesCarga(); track detalle.numero_fila) {
+                    <tr [class.row-error]="detalle.estado === 'ERROR'" [class.row-success]="detalle.estado === 'EXITOSO'">
+                      <td>{{ detalle.numero_fila }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="detalle.estado === 'EXITOSO' ? 'badge-success' : 'badge-danger'">
+                          {{ detalle.estado }}
+                        </span>
+                      </td>
+                      <td class="observacion-cell">{{ detalle.observacion || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="cerrarModalDetalles()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

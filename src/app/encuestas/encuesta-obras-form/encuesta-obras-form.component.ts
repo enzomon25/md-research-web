@@ -275,9 +275,10 @@ export class EncuestaObrasFormComponent implements OnInit {
       const seccionesNombres: { [key: string]: string } = {
         datos_encuesta: 'Datos Generales',
         datos_obra: 'Datos de la Obra',
-        encuestado: 'Encuestado',
+        empresa: 'Datos de la Constructora',
+        encuestado: 'Datos del Encuestado',
         fabricante: 'Fabricante',
-        compra: 'Compra',
+        compra: 'Información de Compra',
       };
       // 1. Si hay observaciones activas, usar las activas
       const activas: string[] = [];
@@ -360,6 +361,7 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   // Dirección de la obra
   direccionObra: {
+    direc: string;
     codPais: string;
     codDepartamento: string;
     codProvincia: string;
@@ -369,6 +371,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     numeroVia: string;
     referencia: string;
   } = {
+    direc: '',
     codPais: '428', // Perú por defecto
     codDepartamento: '',
     codProvincia: '',
@@ -411,6 +414,7 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   private direccionDefault(): Direccion {
     return {
+      direc: '',
       codPais: '',
       codDepartamento: '',
       codProvincia: '',
@@ -1085,6 +1089,7 @@ export class EncuestaObrasFormComponent implements OnInit {
       if (encuesta.obra.direccion) {
         console.log('LOG-7: Dirección de obra encontrada', encuesta.obra.direccion);
         this.direccionObra = {
+          direc: encuesta.obra.direccion.direc || '',
           codPais: encuesta.obra.direccion.codPais || '',
           codDepartamento: encuesta.obra.direccion.codDepartamento || '',
           codProvincia: encuesta.obra.direccion.codProvincia || '',

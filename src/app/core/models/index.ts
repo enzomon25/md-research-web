@@ -97,6 +97,7 @@ export interface Encuesta {
 }
 
 export interface Direccion {
+  direc?: string;
   codPais: string;
   codDepartamento: string;
   codProvincia: string;
