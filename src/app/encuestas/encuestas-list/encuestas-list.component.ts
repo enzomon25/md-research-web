@@ -417,6 +417,18 @@ export class EncuestasListComponent implements OnInit {
     this.router.navigate(['/carga-masiva']);
   }
 
+  navegarAUsuarios(): void {
+    this.router.navigate(['/usuarios']);
+  }
+
+  navegarAModulo(ruta: string): void {
+    this.router.navigate([ruta]);
+  }
+
+  esModuloActivo(ruta: string): boolean {
+    return this.router.url === ruta;
+  }
+
   esAdministrador(): boolean {
     return this.authService.getRolDescripcion() === 'Administrador';
   }

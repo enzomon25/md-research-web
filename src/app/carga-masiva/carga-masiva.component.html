@@ -21,20 +21,24 @@
     <nav>
       <div class="sidebar-heading">Módulos</div>
       <ul>
-        <li class="sidebar-item" (click)="navegarAEncuestas()">
-          Encuestas
-        </li>
-        @if (esAdministrador()) {
-          <li class="sidebar-item active">
-            Carga Masiva
+        @for (modulo of modulos(); track modulo.llave) {
+          <li 
+            class="sidebar-item" 
+            [class.active]="esModuloActivo(modulo.ruta!)"
+            (click)="navegarAModulo(modulo.ruta!)">
+            {{ modulo.valor }}
           </li>
         }
-        @for (modulo of modulos(); track modulo.llave) {
-          @if (modulo.llave !== MODULOS_KEYS.ENCUESTAS && modulo.llave !== MODULOS_KEYS.CARGA_MASIVA) {
-            <li class="sidebar-item">
-              {{ modulo.valor }}
-            </li>
-          }
+        @empty {
+          <li class="sidebar-item disabled">No hay módulos disponibles</li>
+        }
+        @if (esAdministrador()) {
+          <li 
+            class="sidebar-item" 
+            [class.active]="esRutaActiva('/carga-masiva')"
+            (click)="navegarACargaMasiva()">
+            Carga Masiva
+          </li>
         }
       </ul>
     </nav>

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -25,5 +26,17 @@ export const routes: Routes = [
   {
     path: 'carga-masiva',
     loadComponent: () => import('./carga-masiva/carga-masiva.component').then(m => m.CargaMasivaComponent)
+  },
+  // ✅ REGLA 5: Ruta protegida con Guard (Solo ADMINISTRADOR)
+  {
+    path: 'usuarios',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./usuarios/usuarios-list/usuarios-list.component').then(m => m.UsuariosListComponent)
+  },
+  // ✅ REGLA 11: Usar UUID en rutas, no IDs numéricos
+  {
+    path: 'usuarios/:uuid',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./usuarios/usuarios-detail/usuarios-detail.component').then(m => m.UsuariosDetailComponent)
   }
 ];
