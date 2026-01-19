@@ -1,0 +1,311 @@
+<div class="layout-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <svg class="sidebar-brand-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+          <ellipse cx="9" cy="10" rx="1" ry="1.5" fill="currentColor"/>
+          <ellipse cx="15" cy="10" rx="1" ry="1.5" fill="currentColor"/>
+          <path d="M8 15 Q12 18 16 15" stroke="currentColor" stroke-width="2" fill="none"/>
+        </svg>
+        <span class="sidebar-brand-text">MD Research</span>
+      </div>
+      <hr class="sidebar-divider">
+      
+      <!-- Saludo y rol del usuario -->
+      <div class="user-welcome">
+        <h3 class="user-greeting">Hola, {{ obtenerNombreUsuario() }}</h3>
+        <p class="user-role">{{ obtenerRolUsuario() }}</p>
+      </div>
+      <hr class="sidebar-divider">
+    </div>
+    <nav>
+      <div class="sidebar-heading">Módulos</div>
+      <ul>
+        @for (modulo of modulos(); track modulo.llave) {
+          <li 
+            class="sidebar-item" 
+            [class.active]="esModuloActivo(modulo.ruta!)"
+            (click)="navegarAModulo(modulo.ruta!)">
+            {{ modulo.valor }}
+          </li>
+        }
+        @empty {
+          <li class="sidebar-item disabled">No hay módulos disponibles</li>
+        }
+        @if (esAdministrador()) {
+          <li class="sidebar-item" (click)="navegarACargaMasiva()">
+            Carga Masiva
+          </li>
+        }
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="usuarios-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Gestión de Usuarios</h1>
+    <div class="header-actions">
+      <span class="total-usuarios">Total: {{ total() }} usuarios</span>
+      
+      <!-- Menú de usuario -->
+      <div class="user-menu-container">
+        <button class="user-menu-trigger" (click)="toggleMenuUsuario()">
+          <div class="user-avatar-menu">{{ obtenerInicialesUsuario() }}</div>
+        </button>
+        
+        @if (mostrarMenuUsuario()) {
+          <div class="user-dropdown">
+            <div class="user-dropdown-header">
+              <div class="user-dropdown-badge">{{ obtenerInicialesUsuario() }}</div>
+              <div class="user-dropdown-info">
+                <div class="user-dropdown-name">{{ obtenerNombreCompletoUsuario() }}</div>
+                <div class="user-dropdown-email">{{ obtenerEmailUsuario() }}</div>
+              </div>
+            </div>
+            <hr class="user-dropdown-divider">
+            <button class="user-dropdown-item" (click)="cerrarSesion()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="filtros-row">
+        <div class="filtro-group">
+          <label for="filtroNombre">Nombre</label>
+          <input
+            id="filtroNombre"
+            type="text"
+            class="form-control"
+            [(ngModel)]="filtroNombre"
+            placeholder="Buscar por nombre..."
+          />
+        </div>
+
+        <div class="filtro-group">
+          <label for="filtroUsername">Username</label>
+          <input
+            id="filtroUsername"
+            type="text"
+            class="form-control"
+            [(ngModel)]="filtroUsername"
+            placeholder="Buscar por username..."
+          />
+        </div>
+
+        <div class="filtro-group">
+          <label for="filtroActivo">Estado</label>
+          <select id="filtroActivo" class="form-control" [(ngModel)]="filtroActivo">
+            <option value="todos">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </select>
+        </div>
+
+        <div class="filtro-group-buttons">
+          <button class="btn-limpiar" (click)="limpiarFiltros()">
+            Limpiar Filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="cargando()" class="loading">
+    <p>Cargando usuarios...</p>
+  </div>
+
+  <!-- Tabla -->
+  <div *ngIf="!cargando()" class="card">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Avatar</th>
+            <th>Nombre Completo</th>
+            <th>Username</th>
+            <th>Documento</th>
+            <th>Roles</th>
+            <th>Estado</th>
+            <th>Fecha Creación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (usuario of usuariosFiltrados(); track usuario.userId) {
+            <tr>
+              <!-- Avatar -->
+              <td>
+                <div class="user-avatar">
+                  {{ obtenerIniciales(usuario) }}
+                </div>
+              </td>
+
+              <!-- Nombre Completo -->
+              <td class="col-nombre">
+                <div class="user-name-cell">
+                  <span class="user-name">{{ obtenerNombreCompleto(usuario) }}</span>
+                  <span class="user-uuid">{{ usuario.userUuid }}</span>
+                </div>
+              </td>
+
+              <!-- Username -->
+              <td>{{ usuario.username }}</td>
+
+              <!-- Documento -->
+              <td>
+                <div class="documento-cell">
+                  <span class="tipo-doc">{{ usuario.tipodoc }}</span>
+                  <span class="num-doc">{{ usuario.numdoc }}</span>
+                </div>
+              </td>
+
+              <!-- Roles -->
+              <td>
+                <div class="roles-cell">
+                  @for (rol of usuario.roles; track rol.rolId) {
+                    <span class="badge-rol">{{ rol.descripcion }}</span>
+                  }
+                  @empty {
+                    <span class="text-muted">Sin rol</span>
+                  }
+                </div>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span [class]="obtenerEstadoClass(usuario)">
+                  {{ obtenerEstadoTexto(usuario) }}
+                </span>
+              </td>
+
+              <!-- Fecha Creación -->
+              <td>
+                {{ usuario.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+
+              <!-- Acciones -->
+              <td>
+                <div class="acciones-container">
+                  <!-- Botón Ver Detalle -->
+                  <button
+                    class="btn-icon btn-icon-primary"
+                    (click)="verDetalleUsuario(usuario.userUuid)"
+                    title="Ver detalle"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                      <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke-width="2"/>
+                      <circle cx="8" cy="8" r="2" stroke-width="2"/>
+                    </svg>
+                  </button>
+
+                  <!-- Botón Activar/Desactivar -->
+                  <button
+                    [class]="usuario.indActivo === 1 ? 'btn-icon btn-icon-danger' : 'btn-icon btn-icon-success'"
+                    (click)="solicitarCambioEstado(usuario)"
+                    [title]="usuario.indActivo === 1 ? 'Desactivar usuario' : 'Activar usuario'"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                      @if (usuario.indActivo === 1) {
+                        <!-- Icono de desactivar -->
+                        <path d="M8 1v14M1 8h14" stroke-width="2"/>
+                      } @else {
+                        <!-- Icono de activar -->
+                        <circle cx="8" cy="8" r="7" stroke-width="2"/>
+                        <path d="M5 8l2 2 4-4" stroke-width="2"/>
+                      }
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="8" class="empty-message">
+                No se encontraron usuarios
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Paginación -->
+  <div *ngIf="totalPaginas() > 1" class="pagination">
+    <button
+      (click)="cambiarPagina(paginaActual() - 1)"
+      [disabled]="paginaActual() === 1"
+      class="btn-pagination"
+    >
+      Anterior
+    </button>
+
+    <span class="pagination-info">
+      Página {{ paginaActual() }} de {{ totalPaginas() }}
+    </span>
+
+    <button
+      (click)="cambiarPagina(paginaActual() + 1)"
+      [disabled]="paginaActual() === totalPaginas()"
+      class="btn-pagination"
+    >
+      Siguiente
+    </button>
+  </div>
+    </div>
+  </main>
+</div>
+
+@if (mostrarConfirmacionEstado()) {
+  <div class="modal-backdrop" (click)="cerrarModalEstado()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Confirmar acción</h2>
+        <button class="modal-close" (click)="cerrarModalEstado()" aria-label="Cerrar">
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="confirm-text">
+          ¿Deseas {{ obtenerAccionEstado() }} el usuario
+          <strong>{{ usuarioEstadoPendiente()?.username }}</strong>?
+        </p>
+        @if (errorCambioEstado()) {
+          <div class="modal-error">{{ errorCambioEstado() }}</div>
+        }
+      </div>
+
+      <div class="modal-footer modal-actions">
+        <button class="btn-secondary" (click)="cerrarModalEstado()" [disabled]="cambiandoEstado()">
+          Cancelar
+        </button>
+        <button class="btn-primary" (click)="confirmarCambioEstado()" [disabled]="cambiandoEstado()">
+          @if (cambiandoEstado()) {
+            Procesando...
+          } @else {
+            Confirmar
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

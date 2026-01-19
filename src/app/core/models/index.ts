@@ -184,3 +184,36 @@ export interface EncuestaObservacionHistorial {
   usuarioModificacion: string;
   indActivo: number;
 }
+
+/**
+ * Interface de Rol
+ */
+export interface Rol {
+  rolId: number;
+  descripcion: string;
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion: string;
+  usuarioModificacion: string;
+  indActivo: number;
+}
+
+/**
+ * Interface de Usuario completo
+ */
+export interface Usuario {
+  userId: number;
+  userUuid: string;
+  nombres: string;
+  apepat: string;
+  apemat: string;
+  numdoc: string;
+  tipodoc: string;
+  username: string;
+  roles: Rol[];
+  fechaCreacion: string;
+  usuarioCreacion: string;
+  fechaModificacion: string;
+  usuarioModificacion: string;
+  indActivo: number;
+}

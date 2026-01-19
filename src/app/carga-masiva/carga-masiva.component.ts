@@ -293,6 +293,22 @@ export class CargaMasivaComponent implements OnInit {
     this.router.navigate(['/encuestas']);
   }
 
+  navegarACargaMasiva(): void {
+    // Ya estamos en carga masiva, no hacer nada
+  }
+
+  navegarAModulo(ruta: string): void {
+    this.router.navigate([ruta]);
+  }
+
+  esModuloActivo(ruta: string): boolean {
+    return this.router.url === ruta;
+  }
+
+  esRutaActiva(ruta: string): boolean {
+    return this.router.url === ruta;
+  }
+
   esEncuestador(): boolean {
     const rol = this.authService.obtenerRol();
     return rol === 'ENCUESTADOR';

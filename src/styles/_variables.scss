@@ -1,0 +1,78 @@
+// ==============================================
+// SB ADMIN 2 - DESIGN TOKENS
+// ✅ REGLA 13: Sistema de Design Tokens Obligatorio
+// ==============================================
+
+// Colores Primarios
+$primary: #4e73df;
+$primary-dark: #224abe;
+$primary-light: #6685e0;
+
+// Colores de Estado
+$success: #1cc88a;
+$success-dark: #17a673;
+$info: #36b9cc;
+$warning: #f6c23e;
+$danger: #e74a3b;
+$danger-dark: #d32f2f;
+
+// Colores Neutros (Grays)
+$gray-100: #f8f9fc;
+$gray-200: #eaecf4;
+$gray-300: #dddfeb;
+$gray-400: #d1d3e2;
+$gray-500: #b7b9cc;
+$gray-600: #858796;
+$gray-700: #6e707e;
+$gray-800: #5a5c69;
+$gray-900: #3a3b45;
+
+// Tipografía
+$font-family-primary: 'Nunito', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-family-heading: 'Nunito', 'Roboto', sans-serif;
+
+$font-size-xs: 0.7rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.25rem;
+$font-size-xl: 1.75rem;
+
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-bold: 700;
+$font-weight-extrabold: 800;
+
+// Espaciado
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-xxl: 3rem;
+
+// Border Radius
+$border-radius-sm: 0.2rem;
+$border-radius: 0.35rem;
+$border-radius-lg: 0.5rem;
+$border-radius-pill: 10rem;
+
+// Shadows
+$shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+$shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+$shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+// Transitions
+$transition-base: all 0.15s ease-in-out;
+$transition-fast: all 0.1s ease-in-out;
+$transition-slow: all 0.3s ease-in-out;
+
+// Z-index
+$z-modal: 1050;
+$z-dropdown: 1000;
+$z-fixed: 1030;
+
+// Breakpoints
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1440px;

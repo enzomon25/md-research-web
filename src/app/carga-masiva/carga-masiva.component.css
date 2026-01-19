@@ -68,20 +68,21 @@
 }
 
 .user-greeting {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #fff;
   margin: 0 0 0.25rem 0;
   font-family: 'Nunito', 'Roboto', sans-serif;
+  letter-spacing: 0.02rem;
 }
 
 .user-role {
   font-size: 0.7rem;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.65);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 0.05rem;
+  letter-spacing: 0.08rem;
 }
 
 .sidebar nav {
@@ -111,14 +112,28 @@
   gap: 0.75rem;
   padding: 0.75rem 1.5rem;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 400;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
   color: rgba(255, 255, 255, 0.8);
   background: transparent;
   border: none;
-  border-left: 3px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  position: relative;
+}
+
+/* ✅ Usar pseudo-elemento para evitar que se mueva */
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: all 0.15s ease-in-out;
 }
 
 .sidebar-item:hover {
@@ -129,7 +144,20 @@
 .sidebar-item.active {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  border-left: 3px solid #fff;
+}
+
+.sidebar-item.active::before {
+  background: #fff;
+}
+
+.sidebar-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sidebar-item.disabled:hover {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .main-content {
