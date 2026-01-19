@@ -1,0 +1,3253 @@
+# Estructura Estándar - MD Research Web (Angular)
+
+## 📋 Tabla de Contenido
+1. [🚨 Reglas Obligatorias](#-reglas-obligatorias)
+2. [Visión General](#visión-general)
+3. [Arquitectura de Capas](#arquitectura-de-capas)
+4. [Estructura del Proyecto](#estructura-del-proyecto)
+5. [Convenciones de Código](#convenciones-de-código)
+6. [Flujo de Datos](#flujo-de-datos)
+7. [Ejemplos Completos](#ejemplos-completos)
+
+---
+
+## 🚨 Reglas Obligatorias
+
+Estas reglas deben aplicarse **INMEDIATAMENTE** en todo código nuevo y deben ir corrigiéndose paulatinamente en el código existente.
+
+### 📏 1. Límites de Tamaño de Componentes
+
+**REGLA**: Los componentes NO deben exceder los siguientes límites:
+
+- ✅ **Component TypeScript**: Máximo **500 líneas**
+- ✅ **Template HTML**: Máximo **300 líneas**
+- ✅ **Estilos CSS/SCSS**: Máximo **200 líneas**
+
+**Razón**: Components grandes son difíciles de mantener, testear y entender.
+
+**Solución**: Si un component excede estos límites:
+1. Dividir en sub-components más pequeños
+2. Extraer lógica a services
+3. Crear components reutilizables
+4. Usar composition en lugar de herencia
+
+**Ejemplo de Refactorización**:
+
+```typescript
+// ❌ MAL - Component de 2000 líneas
+@Component({
+  selector: 'app-encuesta-form',
+  // ... todo el código aquí
+})
+export class EncuestaFormComponent {
+  // 2000 líneas de código
+}
+
+// ✅ BIEN - Dividido en sub-components
+@Component({
+  selector: 'app-encuesta-form',
+  imports: [
+    EncuestaHeaderComponent,
+    EncuestaDatosComponent,
+    EncuestaDireccionComponent,
+    EncuestaFabricantesComponent,
+    EncuestaFooterComponent,
+  ]
+})
+export class EncuestaFormComponent {
+  // Solo lógica de coordinación (~200 líneas)
+}
+```
+
+### 🚫 2. Prohibición de Archivos de Documentación en Components
+
+**REGLA**: NO incluir archivos de documentación dentro de carpetas de components.
+
+**Archivos prohibidos**:
+- ❌ `README.md` dentro de carpetas de components
+- ❌ `INSTRUCCIONES.md` dentro de carpetas de components
+- ❌ `CORRECCIONES.md` dentro de carpetas de components
+- ❌ `TODO.md` dentro de carpetas de components
+- ❌ Archivos `.txt` de código temporal
+
+**Ubicación correcta**:
+- ✅ Documentación general: `/docs/` en la raíz del proyecto
+- ✅ Documentación de API: `/docs/api/`
+- ✅ Documentación de features: `/docs/features/`
+
+**Razón**: Los archivos de documentación ensucian la estructura del proyecto y deben estar centralizados.
+
+**Acción inmediata**:
+```bash
+# Mover documentación a carpeta centralizada
+mkdir -p docs/features
+mv src/app/encuestas/encuesta-obras-form/*.md docs/features/
+mv src/app/encuestas/encuesta-obras-form/*.txt docs/features/
+```
+
+### 💉 3. Uso Obligatorio de inject()
+
+**REGLA**: SIEMPRE usar `inject()` en lugar de constructor injection.
+
+```typescript
+// ❌ MAL - Constructor injection (estilo antiguo)
+export class RecursosComponent {
+  constructor(
+    private recursosService: RecursosService,
+    private router: Router,
+    private authService: AuthService
+  ) {}
+}
+
+// ✅ BIEN - Function injection (moderno)
+export class RecursosComponent {
+  private recursosService = inject(RecursosService);
+  private router = inject(Router);
+  private authService = inject(AuthService);
+}
+
+// ✅ TAMBIÉN BIEN - Usando private
+export class RecursosComponent {
+  private recursosService = inject(RecursosService);
+  private router = inject(Router);
+  
+  // O sin private si es público
+  authService = inject(AuthService);
+}
+```
+
+**Razón**: 
+- Más limpio y conciso
+- Mejor para composition
+- Facilita testing
+- Es el estándar de Angular 14+
+
+**Excepción**: Mantener constructor injection SOLO si:
+- Necesitas lógica en el constructor antes de inyecciones
+- Estás usando herencia (muy raro en Angular moderno)
+
+### 📊 4. Uso de Computed Signals
+
+**REGLA**: Usar `computed()` para valores derivados/calculados en lugar de métodos en el template.
+
+```typescript
+// ❌ MAL - Método llamado en el template (se ejecuta en cada cambio)
+export class RecursosComponent {
+  recursos = signal<Recurso[]>([]);
+  filtroNombre = '';
+
+  // Se ejecuta muchas veces innecesariamente
+  getRecursosFiltrados(): Recurso[] {
+    return this.recursos().filter(r => 
+      r.nombre.includes(this.filtroNombre)
+    );
+  }
+}
+// Template: <div *ngFor="let r of getRecursosFiltrados()">
+
+// ✅ BIEN - Computed signal (se ejecuta solo cuando cambian dependencias)
+export class RecursosComponent {
+  recursos = signal<Recurso[]>([]);
+  filtroNombre = signal('');
+
+  // Solo se recalcula cuando recursos o filtroNombre cambian
+  recursosFiltrados = computed(() => {
+    const nombre = this.filtroNombre().toLowerCase();
+    return this.recursos().filter(r => 
+      r.nombre.toLowerCase().includes(nombre)
+    );
+  });
+}
+// Template: <div *ngFor="let r of recursosFiltrados()">
+```
+
+**Razón**:
+- Mejor rendimiento (memoización automática)
+- Reactividad clara
+- Menos re-renderizados
+
+**Aplicar en**:
+- Filtros de listas
+- Cálculos derivados
+- Transformaciones de datos
+- Validaciones complejas
+
+### 🛡️ 5. Guards Obligatorios para Rutas Protegidas
+
+**REGLA**: TODAS las rutas que requieren autenticación DEBEN tener un AuthGuard.
+
+```typescript
+// ❌ MAL - Rutas sin protección
+export const routes: Routes = [
+  {
+    path: 'encuestas',
+    loadComponent: () => import('./encuestas/encuestas-list.component')
+      .then(m => m.EncuestasListComponent)
+  }
+];
+
+// ✅ BIEN - Rutas protegidas con guard
+export const routes: Routes = [
+  {
+    path: 'encuestas',
+    canActivate: [authGuard],  // Guard funcional
+    loadComponent: () => import('./encuestas/encuestas-list.component')
+      .then(m => m.EncuestasListComponent)
+  }
+];
+```
+
+**Crear AuthGuard**:
+
+```typescript
+// src/app/core/guards/auth.guard.ts
+
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+/**
+ * Guard funcional para proteger rutas que requieren autenticación
+ */
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+
+  // Redirigir a login guardando la URL de retorno
+  router.navigate(['/inicio-sesion'], {
+    queryParams: { returnUrl: state.url }
+  });
+  return false;
+};
+```
+
+**Razón**:
+- Seguridad en el frontend
+- Mejor UX (evita cargas innecesarias)
+- Redirección automática a login
+
+### 🚨 6. Error Interceptor Obligatorio
+
+**REGLA**: DEBE existir un interceptor global para manejo de errores HTTP.
+
+```typescript
+// src/app/core/interceptors/error.interceptor.ts
+
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+
+/**
+ * Interceptor para manejar errores HTTP globalmente
+ * OBLIGATORIO en toda aplicación
+ */
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  const router = inject(Router);
+
+  return next(req).pipe(
+    catchError((error) => {
+      console.error('HTTP Error:', error);
+
+      // Error de autenticación (401)
+      if (error.status === 401) {
+        // Limpiar token
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        // Redirigir a login
+        router.navigate(['/inicio-sesion']);
+      }
+
+      // Error de permisos (403)
+      if (error.status === 403) {
+        console.error('Acceso denegado');
+        // Podría mostrar un toast/notification
+      }
+
+      // Error del servidor (500+)
+      if (error.status >= 500) {
+        console.error('Error del servidor:', error);
+        // Podría mostrar un toast/notification global
+      }
+
+      // Error de conexión (0)
+      if (error.status === 0) {
+        console.error('Sin conexión al servidor');
+        // Podría mostrar un toast/notification
+      }
+
+      return throwError(() => error);
+    })
+  );
+};
+```
+
+**Registrar en app.config.ts**:
+
+```typescript
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([
+        authInterceptor,
+        errorInterceptor,  // ✅ OBLIGATORIO
+      ])
+    ),
+  ],
+};
+```
+
+**Razón**:
+- Manejo consistente de errores
+- Evita código duplicado en cada component
+- Mejor UX con mensajes de error claros
+- Logout automático en 401
+
+### 📝 7. Documentación JSDoc Obligatoria
+
+**REGLA**: Todos los métodos públicos de services y components DEBEN tener documentación JSDoc.
+
+```typescript
+// ❌ MAL - Sin documentación
+export class RecursosService {
+  listar(pagina: number, limite: number) {
+    return this.http.get(`${this.apiUrl}`, { params: { pagina, limite } });
+  }
+}
+
+// ✅ BIEN - Con documentación JSDoc
+export class RecursosService {
+  /**
+   * Lista recursos con paginación
+   * @param pagina Número de página (1-based)
+   * @param limite Cantidad de items por página
+   * @returns Observable con respuesta paginada de recursos
+   * @example
+   * this.recursosService.listar(1, 10).subscribe(recursos => {
+   *   console.log(recursos.data);
+   * });
+   */
+  listar(pagina: number, limite: number): Observable<PaginacionRespuesta<Recurso>> {
+    let params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('limite', limite.toString());
+    
+    return this.http.get<PaginacionRespuesta<Recurso>>(this.apiUrl, { params });
+  }
+}
+```
+
+**Mínimo requerido en JSDoc**:
+- Descripción breve del método
+- `@param` para cada parámetro
+- `@returns` para el valor de retorno
+- `@throws` si lanza excepciones (opcional pero recomendado)
+- `@example` para métodos complejos (opcional)
+
+### 🎯 8. Señales Reactivas para Estado de UI
+
+**REGLA**: TODO estado de UI debe manejarse con signals, NO con variables normales.
+
+```typescript
+// ❌ MAL - Variables normales (requiere detectChanges manual)
+export class RecursosComponent {
+  cargando = false;
+  mostrarModal = false;
+  recursos: Recurso[] = [];
+}
+
+// ✅ BIEN - Signals (reactividad automática)
+export class RecursosComponent {
+  cargando = signal(false);
+  mostrarModal = signal(false);
+  recursos = signal<Recurso[]>([]);
+}
+```
+
+**Estado de UI incluye**:
+- Flags de loading/cargando
+- Modales/drawers abiertos o cerrados
+- Datos mostrados en pantalla
+- Paginación (página actual, total)
+- Filtros aplicados (si son reactivos)
+
+**Excepción**: Variables de formulario con `[(ngModel)]` pueden ser normales:
+```typescript
+// ✅ OK - Para ngModel bidireccional
+filtroNombre = '';
+filtroCategoria = '';
+
+// Pero si necesitas reactividad, usa signals:
+filtroNombre = signal('');
+filtroCategoria = signal('');
+```
+
+### 🧪 9. Validación Antes de Envío
+
+**REGLA**: SIEMPRE validar datos en el component antes de llamar al service.
+
+```typescript
+// ❌ MAL - Sin validación
+guardar(): void {
+  this.recursosService.crear(this.recurso).subscribe({
+    next: () => this.router.navigate(['/recursos']),
+    error: (error) => console.error(error)
+  });
+}
+
+// ✅ BIEN - Con validación
+guardar(): void {
+  // 1. Validar formulario
+  if (!this.validarFormulario()) {
+    return;
+  }
+
+  // 2. Mostrar estado de carga
+  this.guardando.set(true);
+
+  // 3. Llamar al service
+  this.recursosService.crear(this.recurso).subscribe({
+    next: () => {
+      this.guardando.set(false);
+      this.router.navigate(['/recursos']);
+    },
+    error: (error) => {
+      console.error('Error al guardar:', error);
+      this.guardando.set(false);
+      this.manejarError(error);
+    }
+  });
+}
+
+private validarFormulario(): boolean {
+  // Resetear errores
+  this.errores = { nombre: '', categoria: '' };
+  
+  let valido = true;
+
+  // Validar cada campo
+  if (!this.recurso.nombre?.trim()) {
+    this.errores.nombre = 'El nombre es requerido';
+    valido = false;
+  }
+
+  if (!this.recurso.categoria) {
+    this.errores.categoria = 'La categoría es requerida';
+    valido = false;
+  }
+
+  return valido;
+}
+```
+
+**Validaciones mínimas**:
+- Campos requeridos no vacíos
+- Formatos correctos (email, teléfono, etc.)
+- Rangos válidos (números, fechas)
+- Longitudes mínimas/máximas
+
+### 🎨 10. Imports Organizados
+
+**REGLA**: Los imports deben estar organizados en grupos específicos.
+
+```typescript
+// ✅ BIEN - Imports organizados
+// 1. Angular Core
+import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+// 2. Angular Router
+import { Router, ActivatedRoute } from '@angular/router';
+
+// 3. Services propios
+import { RecursosService } from '../../core/services/recursos.service';
+import { AuthService } from '../../core/services/auth.service';
+
+// 4. Models e Interfaces
+import { Recurso, PaginacionRespuesta } from '../../core/models';
+
+// 5. Constants
+import { ROLES } from '../../core/constants';
+
+// 6. Components hijos (si aplica)
+import { RecursoItemComponent } from './recurso-item/recurso-item.component';
+
+@Component({
+  selector: 'app-recursos-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RecursoItemComponent],
+  templateUrl: './recursos-list.component.html',
+  styleUrl: './recursos-list.component.css'
+})
+export class RecursosListComponent {}
+```
+
+**Orden de imports**:
+1. Angular Core y módulos
+2. Angular Router
+3. RxJS (si se usa)
+4. Services propios
+5. Models, interfaces, tipos
+6. Constants
+7. Components hijos
+
+### 🔒 11. No Exponer Lógica Sensible en el Frontend
+
+**REGLA**: NUNCA incluir lógica de negocio sensible, validaciones críticas o secretos en el frontend.
+
+```typescript
+// ❌ MAL - Validación de permisos en el frontend (inseguro)
+export class RecursosComponent {
+  eliminarRecurso(id: number): void {
+    // ❌ NO hacer validaciones de permisos aquí
+    if (this.authService.getRol() !== 'Administrador') {
+      alert('No tienes permisos');
+      return;
+    }
+    this.recursosService.eliminar(id).subscribe();
+  }
+}
+
+// ✅ BIEN - Solo UI, validación en el backend
+export class RecursosComponent {
+  eliminarRecurso(id: number): void {
+    if (!confirm('¿Eliminar recurso?')) {
+      return;
+    }
+    
+    // El backend valida permisos
+    this.recursosService.eliminar(id).subscribe({
+      next: () => this.cargarRecursos(),
+      error: (error) => {
+        // El backend retorna 403 si no tiene permisos
+        if (error.status === 403) {
+          alert('No tienes permisos para eliminar');
+        }
+      }
+    });
+  }
+}
+```
+
+**Nunca incluir en el frontend**:
+- ❌ API Keys o secretos
+- ❌ Lógica de cálculo de precios
+- ❌ Validaciones de permisos críticas
+- ❌ Algoritmos de negocio importantes
+- ❌ Credenciales o tokens hardcodeados
+
+**El frontend solo**:
+- ✅ Valida formato y datos básicos (UX)
+- ✅ Muestra/oculta elementos según rol (UI)
+- ✅ Confía en las respuestas del backend
+
+### 📱 12. Responsive Design Obligatorio
+
+**REGLA**: TODAS las vistas deben ser responsive y funcionar en móviles.
+
+```scss
+// ✅ BIEN - Mobile-first approach
+
+// Estilos base para móvil
+.recursos-list {
+  padding: 1rem;
+  
+  .recurso-item {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+  }
+}
+
+// Tablets
+@media (min-width: 768px) {
+  .recursos-list {
+    padding: 2rem;
+    
+    .recurso-item {
+      padding: 1rem;
+    }
+  }
+}
+
+// Desktop
+@media (min-width: 1024px) {
+  .recursos-list {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+```
+
+**Breakpoints estándar**:
+- Mobile: `< 768px` (base)
+- Tablet: `>= 768px`
+- Desktop: `>= 1024px`
+- Large Desktop: `>= 1440px`
+
+### 🎨 13. Sistema de Design Tokens Obligatorio
+
+**REGLA**: TODOS los estilos deben usar un sistema de Design Tokens basado en variables SCSS. NUNCA usar estilos inline ni valores hardcodeados.
+
+**Problema**: Angular encapsula estilos por component, causando que debas usar estilos inline (mala práctica).
+
+**Solución Obligatoria**: Implementar sistema de Design Tokens con SB Admin 2.
+
+#### Estructura Requerida:
+
+```
+src/
+├── styles/
+│   ├── _variables.scss    # ✅ OBLIGATORIO - Variables de diseño
+│   ├── _mixins.scss       # ✅ OBLIGATORIO - Mixins reutilizables
+│   └── _utilities.scss    # ✅ OPCIONAL - Clases de utilidad
+└── styles.scss            # Importa todo
+```
+
+#### Variables Mínimas Requeridas:
+
+```scss
+// src/styles/_variables.scss
+
+// Colores (basados en SB Admin 2)
+$primary: #4e73df;
+$primary-dark: #224abe;
+$success: #1cc88a;
+$danger: #e74a3b;
+$warning: #f6c23e;
+
+// Grays
+$gray-100: #f8f9fc;
+$gray-400: #d1d3e2;
+$gray-600: #858796;
+$gray-800: #5a5c69;
+
+// Tipografía
+$font-family-primary: 'Nunito', sans-serif;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+
+// Espaciado
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+
+// Otros
+$border-radius: 0.35rem;
+$shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+$transition-base: all 0.15s ease-in-out;
+```
+
+#### Mixins Obligatorios:
+
+```scss
+// src/styles/_mixins.scss
+@import 'variables';
+
+// Botón primario
+@mixin button-primary {
+  padding: $spacing-sm $spacing-md;
+  background-color: $primary;
+  color: white;
+  border: none;
+  border-radius: $border-radius;
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: $transition-base;
+  
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+  }
+  
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+// Card
+@mixin card {
+  background: white;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  border: 1px solid $gray-400;
+}
+
+// Form control
+@mixin form-control {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid $gray-400;
+  border-radius: $border-radius;
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  
+  &:focus {
+    border-color: $primary;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+}
+```
+
+#### Uso en Components:
+
+```scss
+// component.scss
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+// ✅ BIEN - Usar variables y mixins
+.mi-boton {
+  @include button-primary;
+}
+
+.mi-input {
+  @include form-control;
+  width: 100%;
+}
+
+.mi-card {
+  @include card;
+  padding: $spacing-lg;
+}
+
+// ✅ BIEN - Usar variables directamente
+.mi-titulo {
+  color: $gray-800;
+  font-size: $font-size-lg;
+  margin-bottom: $spacing-md;
+}
+```
+
+#### Clases Globales en styles.scss:
+
+```scss
+// src/styles.scss
+@import 'styles/variables';
+@import 'styles/mixins';
+
+// Clases globales reutilizables
+.btn-primary {
+  @include button-primary;
+}
+
+.card {
+  @include card;
+}
+
+.form-control {
+  @include form-control;
+}
+
+// Utilidades
+.d-flex { display: flex !important; }
+.gap-2 { gap: $spacing-sm !important; }
+.mb-3 { margin-bottom: $spacing-md !important; }
+.text-center { text-align: center !important; }
+```
+
+#### 🚫 Prohibido:
+
+```html
+<!-- ❌ NUNCA HACER - Estilos inline -->
+<button style="background-color: #4e73df; color: white;">
+  Guardar
+</button>
+
+<!-- ❌ NUNCA HACER - Valores hardcodeados en CSS -->
+```
+
+```scss
+/* ❌ MAL */
+.boton {
+  background-color: #4e73df;  /* Valor hardcodeado */
+  padding: 8px 16px;           /* Valores hardcodeados */
+}
+```
+
+#### ✅ Obligatorio:
+
+```html
+<!-- ✅ Usar clases globales -->
+<button class="btn-primary">Guardar</button>
+
+<!-- ✅ Usar clases del component -->
+<button class="mi-boton-custom">Guardar</button>
+```
+
+```scss
+/* ✅ BIEN - Usar variables */
+.mi-boton-custom {
+  @include button-primary;
+  // Personalizaciones si son necesarias
+  font-weight: $font-weight-bold;
+}
+
+/* ✅ BIEN - Variables directamente */
+.mi-container {
+  padding: $spacing-lg;
+  background-color: $gray-100;
+  border-radius: $border-radius;
+}
+```
+
+#### Razones:
+
+1. **Mantenibilidad**: Cambiar colores en un solo lugar
+2. **Consistencia**: Todos los components usan los mismos valores
+3. **Escalabilidad**: Fácil agregar themes o modo oscuro
+4. **Legibilidad**: `$primary` es más claro que `#4e73df`
+5. **Sin estilos inline**: View Encapsulation resuelto correctamente
+
+#### Acción Inmediata:
+
+1. ✅ Crear carpeta `src/styles/`
+2. ✅ Crear archivos `_variables.scss` y `_mixins.scss`
+3. ✅ Importar en `styles.scss`
+4. ✅ Usar en todos los components nuevos
+5. 🔄 Migrar paulatinamente estilos inline existentes
+
+---
+
+## 🎨 Gestión de Estilos (SB Admin 2 + Angular)
+
+### Problema: View Encapsulation en Angular
+
+Angular encapsula los estilos de cada componente por defecto, lo que significa que:
+
+1. **Estilos en `component.css` NO afectan a otros components**
+2. **Estilos globales (en `styles.scss`) SÍ afectan a todos**
+3. **Clases de Bootstrap/SB Admin 2 no funcionan si no están cargadas globalmente**
+
+Este es el motivo por el cual **tenías que escribir estilos inline** en las etiquetas.
+
+### ❌ Problema Común
+
+```typescript
+// component.ts
+@Component({
+  selector: 'app-recursos',
+  templateUrl: './recursos.component.html',
+  styleUrl: './recursos.component.css',  // ❌ Estilos encapsulados
+})
+export class RecursosComponent {}
+```
+
+```css
+/* recursos.component.css */
+/* ❌ Estos estilos NO funcionan si intentas usar clases de SB Admin 2 */
+.btn-primary {
+  background-color: #4e73df;
+}
+```
+
+```html
+<!-- Template -->
+<!-- ❌ La clase btn-primary no funciona porque está encapsulada -->
+<button class="btn-primary">Guardar</button>
+
+<!-- ❌ MALA PRÁCTICA - Estilo inline (lo que estabas haciendo) -->
+<button style="background-color: #4e73df; color: white; padding: 0.5rem 1rem;">
+  Guardar
+</button>
+```
+
+### ✅ Solución 1: Sistema de Design Tokens (RECOMENDADO)
+
+Crear un sistema de tokens de diseño basado en SB Admin 2.
+
+#### Paso 1: Crear archivo de variables SCSS
+
+```scss
+// src/styles/_variables.scss
+
+// ==============================================
+// SB ADMIN 2 - DESIGN TOKENS
+// ==============================================
+
+// Colores Primarios
+$primary: #4e73df;
+$primary-dark: #224abe;
+$primary-light: #6685e0;
+
+// Colores de Estado
+$success: #1cc88a;
+$info: #36b9cc;
+$warning: #f6c23e;
+$danger: #e74a3b;
+
+// Colores Neutros (Grays)
+$gray-100: #f8f9fc;
+$gray-200: #eaecf4;
+$gray-300: #dddfeb;
+$gray-400: #d1d3e2;
+$gray-500: #b7b9cc;
+$gray-600: #858796;
+$gray-700: #6e707e;
+$gray-800: #5a5c69;
+$gray-900: #3a3b45;
+
+// Tipografía
+$font-family-primary: 'Nunito', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-family-heading: 'Nunito', 'Roboto', sans-serif;
+
+$font-size-xs: 0.7rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.25rem;
+$font-size-xl: 1.75rem;
+
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-bold: 700;
+$font-weight-extrabold: 800;
+
+// Espaciado
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+
+// Border Radius
+$border-radius-sm: 0.2rem;
+$border-radius: 0.35rem;
+$border-radius-lg: 0.5rem;
+$border-radius-pill: 10rem;
+
+// Shadows
+$shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+$shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+$shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+// Transitions
+$transition-base: all 0.15s ease-in-out;
+$transition-fast: all 0.1s ease-in-out;
+$transition-slow: all 0.3s ease-in-out;
+```
+
+#### Paso 2: Crear mixins reutilizables
+
+```scss
+// src/styles/_mixins.scss
+
+@import 'variables';
+
+// Botones
+@mixin button-base {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-normal;
+  font-family: $font-family-primary;
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: $transition-base;
+  box-shadow: $shadow-sm;
+  
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  color: white;
+  background-color: $primary;
+  
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+    box-shadow: $shadow;
+  }
+}
+
+@mixin button-success {
+  @include button-base;
+  color: white;
+  background-color: $success;
+  
+  &:hover:not(:disabled) {
+    background-color: darken($success, 10%);
+    box-shadow: $shadow;
+  }
+}
+
+// Cards
+@mixin card {
+  background: white;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  border: 1px solid $gray-300;
+}
+
+@mixin card-body {
+  padding: $spacing-lg;
+}
+
+// Forms
+@mixin form-control {
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  font-family: $font-family-primary;
+  border: 1px solid $gray-400;
+  border-radius: $border-radius;
+  color: $gray-700;
+  transition: border-color 0.15s ease-in-out;
+  
+  &:focus {
+    border-color: $primary;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+}
+
+// Estados de badge
+@mixin badge($color, $bg-color) {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: $border-radius-pill;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  font-family: $font-family-primary;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  color: $color;
+  background-color: $bg-color;
+}
+```
+
+#### Paso 3: Importar en styles.scss global
+
+```scss
+// src/styles.scss
+
+// 1. Importar variables y mixins
+@import 'styles/variables';
+@import 'styles/mixins';
+
+// 2. Reset básico
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// 3. Estilos base del body
+body {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $gray-800;
+  background-color: $gray-100;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 4. Headings
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-family-heading;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  color: $gray-800;
+  margin-bottom: $spacing-md;
+}
+
+// 5. Clases de utilidad globales (inspiradas en SB Admin 2)
+.btn-primary {
+  @include button-primary;
+}
+
+.btn-success {
+  @include button-success;
+}
+
+.card {
+  @include card;
+}
+
+.card-body {
+  @include card-body;
+}
+
+.form-control {
+  @include form-control;
+}
+
+// Estados de badge
+.badge-success {
+  @include badge(#155724, $success);
+}
+
+.badge-warning {
+  @include badge(#856404, $warning);
+}
+
+.badge-danger {
+  @include badge(white, $danger);
+}
+
+.badge-primary {
+  @include badge(white, $primary);
+}
+
+// Transiciones de rutas
+router-outlet ~ * {
+  animation: fadeInRoute 0.4s ease-in;
+}
+
+@keyframes fadeInRoute {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+```
+
+#### Paso 4: Usar en components
+
+```typescript
+// recursos.component.ts
+@Component({
+  selector: 'app-recursos',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './recursos.component.html',
+  styleUrl: './recursos.component.scss',  // ✅ Ahora usa .scss
+})
+export class RecursosComponent {}
+```
+
+```scss
+// recursos.component.scss
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+// ✅ BIEN - Usar variables y mixins
+.recursos-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-xl;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+  
+  h1 {
+    color: $gray-800;
+    font-size: $font-size-xl;
+  }
+}
+
+// Usar mixin para botón personalizado
+.btn-nuevo {
+  @include button-primary;
+  // Personalizaciones adicionales si son necesarias
+  padding: $spacing-md $spacing-lg;
+}
+
+.table-container {
+  @include card;
+  overflow-x: auto;
+}
+
+// Usar variables para consistencia
+.filtro-input {
+  @include form-control;
+  width: 100%;
+}
+```
+
+```html
+<!-- recursos.component.html -->
+<div class="recursos-container">
+  <div class="header">
+    <h1>Recursos</h1>
+    <!-- ✅ Clase local que usa mixin -->
+    <button class="btn-nuevo" (click)="nuevoRecurso()">
+      Nuevo Recurso
+    </button>
+  </div>
+  
+  <div class="table-container">
+    <!-- contenido -->
+  </div>
+</div>
+```
+
+### ✅ Solución 2: ViewEncapsulation.None (Usar con PRECAUCIÓN)
+
+Si necesitas que los estilos de un component NO estén encapsulados:
+
+```typescript
+import { Component, ViewEncapsulation } from '@angular/core';
+
+@Component({
+  selector: 'app-recursos',
+  templateUrl: './recursos.component.html',
+  styleUrl: './recursos.component.css',
+  encapsulation: ViewEncapsulation.None,  // ⚠️ PRECAUCIÓN
+})
+export class RecursosComponent {}
+```
+
+**⚠️ ADVERTENCIA**: Usar `ViewEncapsulation.None`:
+- Los estilos se filtran a TODA la aplicación
+- Puede causar conflictos de estilos
+- Dificulta el mantenimiento
+- **SOLO usar en casos muy específicos** (ej: wrappers de librerías externas)
+
+### ✅ Solución 3: Clases de Utilidad Globales
+
+Crear clases de utilidad en `styles.scss` que se puedan usar en cualquier component:
+
+```scss
+// src/styles.scss
+
+// ... otras importaciones ...
+
+// ==============================================
+// UTILITY CLASSES (Inspiradas en SB Admin 2)
+// ==============================================
+
+// Spacing (padding y margin)
+.p-0 { padding: 0 !important; }
+.p-1 { padding: $spacing-xs !important; }
+.p-2 { padding: $spacing-sm !important; }
+.p-3 { padding: $spacing-md !important; }
+.p-4 { padding: $spacing-lg !important; }
+.p-5 { padding: $spacing-xl !important; }
+
+.m-0 { margin: 0 !important; }
+.m-1 { margin: $spacing-xs !important; }
+.m-2 { margin: $spacing-sm !important; }
+.m-3 { margin: $spacing-md !important; }
+.m-4 { margin: $spacing-lg !important; }
+.m-5 { margin: $spacing-xl !important; }
+
+.mb-2 { margin-bottom: $spacing-sm !important; }
+.mb-3 { margin-bottom: $spacing-md !important; }
+.mb-4 { margin-bottom: $spacing-lg !important; }
+
+.mt-2 { margin-top: $spacing-sm !important; }
+.mt-3 { margin-top: $spacing-md !important; }
+.mt-4 { margin-top: $spacing-lg !important; }
+
+// Display
+.d-flex { display: flex !important; }
+.d-block { display: block !important; }
+.d-none { display: none !important; }
+
+// Flex utilities
+.flex-column { flex-direction: column !important; }
+.flex-row { flex-direction: row !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-center { justify-content: center !important; }
+.align-items-center { align-items: center !important; }
+.gap-1 { gap: $spacing-xs !important; }
+.gap-2 { gap: $spacing-sm !important; }
+.gap-3 { gap: $spacing-md !important; }
+
+// Text utilities
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+.text-primary { color: $primary !important; }
+.text-success { color: $success !important; }
+.text-danger { color: $danger !important; }
+.text-warning { color: $warning !important; }
+.text-muted { color: $gray-600 !important; }
+
+.font-weight-bold { font-weight: $font-weight-bold !important; }
+.font-weight-normal { font-weight: $font-weight-normal !important; }
+
+// Width utilities
+.w-100 { width: 100% !important; }
+.w-50 { width: 50% !important; }
+.w-auto { width: auto !important; }
+
+// Shadow utilities
+.shadow-sm { box-shadow: $shadow-sm !important; }
+.shadow { box-shadow: $shadow !important; }
+.shadow-lg { box-shadow: $shadow-lg !important; }
+```
+
+### 🎨 Paleta de Colores SB Admin 2
+
+```scss
+// Colores base (ya definidos arriba)
+$primary: #4e73df;      // Azul principal
+$success: #1cc88a;      // Verde
+$info: #36b9cc;         // Cyan
+$warning: #f6c23e;      // Amarillo
+$danger: #e74a3b;       // Rojo
+
+// Grays
+$gray-100: #f8f9fc;     // Fondo claro
+$gray-200: #eaecf4;     // Hover
+$gray-300: #dddfeb;     // Bordes claros
+$gray-400: #d1d3e2;     // Bordes
+$gray-500: #b7b9cc;     // Bordes oscuros
+$gray-600: #858796;     // Texto secundario
+$gray-700: #6e707e;     // Texto
+$gray-800: #5a5c69;     // Texto principal
+$gray-900: #3a3b45;     // Texto oscuro
+```
+
+### 📏 Estructura de Archivos de Estilos
+
+```
+src/
+├── styles/
+│   ├── _variables.scss       # Variables de diseño
+│   ├── _mixins.scss          # Mixins reutilizables
+│   ├── _utilities.scss       # Clases de utilidad
+│   └── _components.scss      # Components globales
+│
+└── styles.scss               # Archivo principal que importa todo
+```
+
+### 🚫 Anti-Patrones a Evitar
+
+```html
+<!-- ❌ NO HACER - Estilos inline -->
+<button style="background-color: #4e73df; color: white; padding: 0.5rem 1rem;">
+  Guardar
+</button>
+
+<!-- ❌ NO HACER - Clases hardcodeadas sin variables -->
+<button class="btn-custom" style="background: #4e73df;">
+  Guardar
+</button>
+
+<!-- ✅ HACER - Usar clases globales -->
+<button class="btn-primary">
+  Guardar
+</button>
+
+<!-- ✅ HACER - Usar clases locales con variables -->
+<button class="btn-guardar">
+  Guardar
+</button>
+```
+
+```scss
+// ❌ NO HACER - Colores hardcodeados
+.btn-guardar {
+  background-color: #4e73df;
+  color: white;
+}
+
+// ✅ HACER - Usar variables
+.btn-guardar {
+  @include button-primary;
+}
+
+// ✅ TAMBIÉN BIEN - Usar variables directamente
+.btn-guardar {
+  background-color: $primary;
+  color: white;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius;
+}
+```
+
+### 📝 Reglas de Estilos
+
+**REGLA 1**: NUNCA usar estilos inline en templates
+- ❌ `<div style="color: red">`
+- ✅ `<div class="text-danger">`
+
+**REGLA 2**: SIEMPRE usar variables SCSS en lugar de valores hardcodeados
+- ❌ `background-color: #4e73df;`
+- ✅ `background-color: $primary;`
+
+**REGLA 3**: Crear mixins para patrones repetitivos
+- ❌ Copiar y pegar estilos de botones en cada component
+- ✅ Usar `@include button-primary;`
+
+**REGLA 4**: Usar `::ng-deep` SOLO cuando sea absolutamente necesario
+```scss
+// ⚠️ Usar con precaución y SIEMPRE con selector padre
+:host ::ng-deep .external-library-class {
+  color: $primary;
+}
+```
+
+**REGLA 5**: Mantener clases de utilidad en `styles.scss` global
+- Clases como `.d-flex`, `.text-center`, `.btn-primary` van en global
+- Estilos específicos del component van en su `.scss`
+
+### 🎯 Ejemplo Completo
+
+```typescript
+// recursos.component.ts
+@Component({
+  selector: 'app-recursos',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './recursos.component.html',
+  styleUrl: './recursos.component.scss',
+})
+export class RecursosComponent {
+  recursos = signal<Recurso[]>([]);
+  // ...
+}
+```
+
+```scss
+// recursos.component.scss
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.recursos-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-xl;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+  
+  h1 {
+    font-size: $font-size-xl;
+    color: $gray-800;
+    margin: 0;
+  }
+}
+
+.btn-nuevo-recurso {
+  @include button-primary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.recursos-table {
+  @include card;
+  overflow-x: auto;
+  
+  table {
+    width: 100%;
+    font-size: $font-size-sm;
+    border-collapse: collapse;
+    
+    th {
+      background-color: $gray-100;
+      color: $gray-700;
+      font-weight: $font-weight-bold;
+      text-transform: uppercase;
+      font-size: $font-size-xs;
+      padding: $spacing-md;
+      border-bottom: 1px solid $gray-300;
+    }
+    
+    td {
+      padding: $spacing-md;
+      color: $gray-800;
+      border-bottom: 1px solid $gray-300;
+    }
+    
+    tr:hover {
+      background-color: $gray-100;
+    }
+  }
+}
+```
+
+```html
+<!-- recursos.component.html -->
+<div class="recursos-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Gestión de Recursos</h1>
+    <button class="btn-nuevo-recurso" (click)="nuevoRecurso()">
+      <svg width="16" height="16" viewBox="0 0 16 16">
+        <path d="M8 0v16M0 8h16" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Nuevo Recurso
+    </button>
+  </div>
+
+  <!-- Filtros usando clases globales -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="d-flex gap-3">
+        <input type="text" class="form-control" placeholder="Buscar...">
+        <button class="btn-primary">Buscar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="recursos-table">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (recurso of recursos(); track recurso.id) {
+          <tr>
+            <td>{{ recurso.id }}</td>
+            <td>{{ recurso.nombre }}</td>
+            <td>
+              <!-- Usar clases globales de badge -->
+              <span class="badge-success">Activo</span>
+            </td>
+            <td class="d-flex gap-2 justify-content-center">
+              <button class="btn-primary">Editar</button>
+              <button class="btn-danger">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+```
+
+---
+
+## 📋 Resumen de Reglas Críticas
+
+| # | Regla | Prioridad | Acción |
+|---|-------|-----------|--------|
+| 1 | Límite 500 líneas por component | 🔴 Alta | Refactorizar components grandes |
+| 2 | Sin archivos MD/TXT en components | 🔴 Alta | Mover a /docs/ |
+| 3 | Usar inject() siempre | 🟡 Media | Migrar paulatinamente |
+| 4 | Computed signals para derivados | 🟡 Media | Aplicar en nuevo código |
+| 5 | AuthGuard en rutas protegidas | 🔴 Alta | Implementar YA |
+| 6 | Error Interceptor global | 🔴 Alta | Implementar YA |
+| 7 | JSDoc en métodos públicos | 🟢 Baja | Aplicar paulatinamente |
+| 8 | Signals para estado UI | 🟡 Media | Aplicar en nuevo código |
+| 9 | Validación antes de envío | 🔴 Alta | Siempre en nuevo código |
+| 10 | Imports organizados | 🟢 Baja | Aplicar paulatinamente |
+| 11 | Sin lógica sensible en frontend | 🔴 Alta | Revisar código existente |
+| 12 | Responsive design | 🟡 Media | Probar en móvil siempre |
+| 13 | Sistema de Design Tokens | 🔴 Alta | Implementar YA |
+
+### 🚀 Plan de Acción Inmediata
+
+**Hacer HOY**:
+1. ✅ Crear `authGuard` y aplicar a todas las rutas protegidas
+2. ✅ Crear `errorInterceptor` y registrar en `app.config.ts`
+3. ✅ Mover archivos `.md` y `.txt` de carpetas de components a `/docs/`
+4. ✅ Crear estructura de Design Tokens (`src/styles/`)
+5. ✅ Crear `_variables.scss` con colores y espaciados de SB Admin 2
+6. ✅ Crear `_mixins.scss` con componentes reutilizables
+
+**Hacer esta SEMANA**:
+1. 🔄 Identificar components > 500 líneas y dividirlos
+2. 🔄 Migrar a `inject()` en nuevo código
+3. 🔄 Agregar validaciones en formularios sin validación
+4. 🔄 Migrar estilos inline a clases con Design Tokens
+
+**Hacer este MES**:
+1. 📝 Agregar JSDoc a services principales
+2. 📝 Convertir métodos de filtrado a computed signals
+3. 📝 Revisar responsive en todas las vistas
+4. 📝 Eliminar todos los estilos inline del código
+
+---
+
+## 🎯 Visión General
+
+Este proyecto es una aplicación Angular moderna que utiliza **Standalone Components** (sin módulos NgModules) y las últimas características de Angular 20+.
+
+### Stack Tecnológico
+- **Framework**: Angular 20.x (Standalone Components)
+- **Gestión de Estado**: Signals (Angular 20)
+- **Detección de Cambios**: Zoneless Change Detection
+- **HTTP**: HttpClient con interceptores funcionales
+- **Routing**: Lazy Loading con loadComponent
+- **Estilos**: SCSS
+- **Node**: 20.x
+
+### Características Clave
+- ✅ **Sin NgModules** - Todo es standalone
+- ✅ **Signals** - Manejo reactivo de estado
+- ✅ **Zoneless** - Mejor rendimiento
+- ✅ **Functional Interceptors** - Interceptores modernos
+- ✅ **Lazy Loading** - Carga diferida de componentes
+
+---
+
+## 🏗️ Arquitectura de Capas
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    CLIENTE (Browser)                     │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                  LAYER 1: COMPONENTS                     │
+│  - Presentación y UI                                    │
+│  - Manejo de eventos de usuario                        │
+│  - Uso de Signals para estado local                    │
+│  - Validación básica de formularios                    │
+│  - NO contiene lógica de negocio                       │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                   LAYER 2: SERVICES                      │
+│  - Comunicación con API (HttpClient)                   │
+│  - Gestión de estado global (si aplica)                │
+│  - Transformación de datos                             │
+│  - Caché (si aplica)                                   │
+│  - Lógica de negocio compartida                        │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│              LAYER 3: INTERCEPTORS                       │
+│  - Autenticación (agregar JWT token)                   │
+│  - Manejo de errores global                            │
+│  - Logging                                             │
+│  - Transformación de requests/responses                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                  API REST (Backend)                      │
+│  - NestJS API (md-research-api)                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Estructura del Proyecto
+
+### Estructura General
+
+```
+src/
+├── app/
+│   ├── app.ts                           # Componente raíz (standalone)
+│   ├── app.html                         # Template del componente raíz
+│   ├── app.scss                         # Estilos del componente raíz
+│   ├── app.routes.ts                    # Configuración de rutas
+│   ├── app.config.ts                    # Configuración de la aplicación
+│   │
+│   ├── core/                            # Elementos centrales de la app
+│   │   ├── services/                    # Servicios globales
+│   │   │   ├── auth.service.ts
+│   │   │   ├── encuestas.service.ts
+│   │   │   └── ...otros-services.ts
+│   │   ├── interceptors/                # Interceptores HTTP
+│   │   │   └── auth.interceptor.ts
+│   │   ├── guards/                      # Guards de navegación (opcional)
+│   │   │   └── auth.guard.ts
+│   │   ├── models/                      # Interfaces y tipos TypeScript
+│   │   │   └── index.ts
+│   │   └── constants/                   # Constantes globales
+│   │       ├── estados-encuesta.constants.ts
+│   │       ├── roles.constants.ts
+│   │       └── index.ts
+│   │
+│   ├── common/                          # Recursos compartidos
+│   │   ├── components/                  # Componentes reutilizables (opcional)
+│   │   │   ├── modal/
+│   │   │   └── loading/
+│   │   ├── pipes/                       # Pipes personalizados (opcional)
+│   │   └── constants/                   # Constantes compartidas
+│   │
+│   └── {feature-name}/                  # Módulos de funcionalidad
+│       ├── {feature}-list/              # Componente de listado
+│       │   ├── {feature}-list.component.ts
+│       │   ├── {feature}-list.component.html
+│       │   └── {feature}-list.component.css
+│       ├── {feature}-form/              # Componente de formulario
+│       │   ├── {feature}-form.component.ts
+│       │   ├── {feature}-form.component.html
+│       │   └── {feature}-form.component.css
+│       └── {feature}-detail/            # Componente de detalle (opcional)
+│           ├── {feature}-detail.component.ts
+│           ├── {feature}-detail.component.html
+│           └── {feature}-detail.component.css
+│
+├── environments/                        # Configuraciones por entorno
+│   ├── environment.ts                   # Development
+│   └── environment.prod.ts              # Production
+│
+├── index.html                           # HTML principal
+├── main.ts                              # Punto de entrada de la aplicación
+└── styles.scss                          # Estilos globales
+```
+
+### Ejemplo de Feature Module
+
+```
+src/app/encuestas/
+├── encuestas-list/                      # Listado de encuestas
+│   ├── encuestas-list.component.ts
+│   ├── encuestas-list.component.html
+│   └── encuestas-list.component.css
+├── encuesta-form/                       # Formulario de encuesta
+│   ├── encuesta-form.component.ts
+│   ├── encuesta-form.component.html
+│   └── encuesta-form.component.css
+└── encuesta-detail/                     # Detalle de encuesta (opcional)
+    ├── encuesta-detail.component.ts
+    ├── encuesta-detail.component.html
+    └── encuesta-detail.component.css
+```
+
+---
+
+## 📝 Convenciones de Código
+
+### 1. **Nomenclatura**
+
+#### Archivos
+- **Components**: `{nombre}.component.ts` (kebab-case)
+- **Services**: `{nombre}.service.ts` (kebab-case)
+- **Interceptors**: `{nombre}.interceptor.ts` (kebab-case)
+- **Guards**: `{nombre}.guard.ts` (kebab-case)
+- **Models**: `index.ts` (todos los modelos en un solo archivo o por dominio)
+- **Constants**: `{nombre}.constants.ts` (kebab-case)
+
+#### Clases y Selectores
+```typescript
+// Components (PascalCase + Component)
+@Component({
+  selector: 'app-encuestas-list',  // kebab-case con prefijo 'app-'
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './encuestas-list.component.html',
+  styleUrl: './encuestas-list.component.css'
+})
+export class EncuestasListComponent {}
+
+// Services (PascalCase + Service)
+@Injectable({
+  providedIn: 'root'  // Siempre 'root' para servicios globales
+})
+export class EncuestasService {}
+```
+
+### 2. **Estructura de Services**
+
+#### Service Básico (GET/POST/PUT/DELETE)
+
+```typescript
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Recurso, PaginacionRespuesta } from '../models';
+
+/**
+ * Service para manejar operaciones CRUD de Recursos
+ */
+@Injectable({
+  providedIn: 'root'
+})
+export class RecursosService {
+  // ✅ USAR inject() en lugar de constructor injection (Angular 14+)
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/recursos`;
+
+  /**
+   * Listar recursos con paginación y filtros
+   */
+  listar(
+    pagina: number = 1,
+    limite: number = 10,
+    filtros?: {
+      nombre?: string;
+      categoria?: string;
+      activo?: boolean;
+    }
+  ): Observable<PaginacionRespuesta<Recurso>> {
+    let params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('limite', limite.toString());
+
+    // Agregar filtros opcionales
+    if (filtros?.nombre) {
+      params = params.set('nombre', filtros.nombre);
+    }
+    if (filtros?.categoria) {
+      params = params.set('categoria', filtros.categoria);
+    }
+    if (filtros?.activo !== undefined) {
+      params = params.set('activo', filtros.activo.toString());
+    }
+
+    return this.http.get<PaginacionRespuesta<Recurso>>(this.apiUrl, { params });
+  }
+
+  /**
+   * Obtener recurso por ID
+   */
+  obtenerPorId(id: number): Observable<Recurso> {
+    return this.http.get<Recurso>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Crear nuevo recurso
+   */
+  crear(recurso: Partial<Recurso>): Observable<Recurso> {
+    return this.http.post<Recurso>(this.apiUrl, recurso);
+  }
+
+  /**
+   * Actualizar recurso existente
+   */
+  actualizar(id: number, recurso: Partial<Recurso>): Observable<Recurso> {
+    return this.http.patch<Recurso>(`${this.apiUrl}/${id}`, recurso);
+  }
+
+  /**
+   * Eliminar recurso (soft delete)
+   */
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+}
+```
+
+#### Service con Métodos Especiales
+
+```typescript
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EncuestasService {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/encuestas`;
+
+  /**
+   * Cambiar estado de una encuesta
+   */
+  cambiarEstado(id: number, estadoId: number): Observable<Encuesta> {
+    return this.http.patch<Encuesta>(
+      `${this.apiUrl}/${id}/estados`,
+      { estadoId }
+    );
+  }
+
+  /**
+   * Exportar datos a Excel/PDF
+   * Retorna un Blob para descarga
+   */
+  exportar(filtros: any): Observable<Blob> {
+    let params = new HttpParams();
+
+    // Agregar todos los parámetros de filtros
+    Object.keys(filtros).forEach(key => {
+      if (filtros[key] !== null && filtros[key] !== undefined && filtros[key] !== '') {
+        params = params.set(key, filtros[key].toString());
+      }
+    });
+
+    return this.http.get(`${environment.apiUrl}/reportes/xlsx`, {
+      params,
+      responseType: 'blob'  // ⚠️ Importante para descargar archivos
+    });
+  }
+}
+```
+
+### 3. **Estructura de Components**
+
+#### Component Básico (Lista)
+
+```typescript
+import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { RecursosService } from '../../core/services/recursos.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Recurso, PaginacionRespuesta } from '../../core/models';
+
+/**
+ * Componente para listar recursos
+ */
+@Component({
+  selector: 'app-recursos-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './recursos-list.component.html',
+  styleUrl: './recursos-list.component.css'
+})
+export class RecursosListComponent implements OnInit {
+  // ✅ USAR signals para estado reactivo (Angular 20+)
+  recursos = signal<Recurso[]>([]);
+  paginaActual = signal(1);
+  totalPaginas = signal(0);
+  cargando = signal(false);
+  
+  // Filtros (variables normales para ngModel)
+  filtroNombre = '';
+  filtroCategoria = '';
+
+  // ✅ USAR inject() en constructor o como propiedad
+  constructor(
+    private recursosService: RecursosService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarRecursos();
+  }
+
+  /**
+   * Cargar recursos desde el backend
+   */
+  cargarRecursos(): void {
+    this.cargando.set(true);
+    
+    const filtros = {
+      nombre: this.filtroNombre || undefined,
+      categoria: this.filtroCategoria || undefined,
+    };
+
+    this.recursosService.listar(this.paginaActual(), 10, filtros).subscribe({
+      next: (respuesta: PaginacionRespuesta<Recurso>) => {
+        this.recursos.set(respuesta.data);
+        this.totalPaginas.set(respuesta.totalPaginas);
+        this.cargando.set(false);
+      },
+      error: (error) => {
+        console.error('Error al cargar recursos:', error);
+        this.cargando.set(false);
+        // Mostrar mensaje de error al usuario
+      }
+    });
+  }
+
+  /**
+   * Aplicar filtros y recargar
+   */
+  aplicarFiltros(): void {
+    this.paginaActual.set(1); // Resetear a la primera página
+    this.cargarRecursos();
+  }
+
+  /**
+   * Limpiar filtros
+   */
+  limpiarFiltros(): void {
+    this.filtroNombre = '';
+    this.filtroCategoria = '';
+    this.paginaActual.set(1);
+    this.cargarRecursos();
+  }
+
+  /**
+   * Cambiar página
+   */
+  cambiarPagina(pagina: number): void {
+    this.paginaActual.set(pagina);
+    this.cargarRecursos();
+  }
+
+  /**
+   * Navegar al formulario de creación
+   */
+  nuevoRecurso(): void {
+    this.router.navigate(['/recursos/nuevo']);
+  }
+
+  /**
+   * Navegar al formulario de edición
+   */
+  editarRecurso(id: number): void {
+    this.router.navigate(['/recursos', id, 'editar']);
+  }
+
+  /**
+   * Eliminar recurso
+   */
+  eliminarRecurso(id: number): void {
+    if (!confirm('¿Está seguro de eliminar este recurso?')) {
+      return;
+    }
+
+    this.recursosService.eliminar(id).subscribe({
+      next: () => {
+        // Recargar lista
+        this.cargarRecursos();
+      },
+      error: (error) => {
+        console.error('Error al eliminar recurso:', error);
+        alert('Error al eliminar el recurso');
+      }
+    });
+  }
+}
+```
+
+#### Component de Formulario
+
+```typescript
+import { Component, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { RecursosService } from '../../core/services/recursos.service';
+import { Recurso } from '../../core/models';
+
+@Component({
+  selector: 'app-recurso-form',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './recurso-form.component.html',
+  styleUrl: './recurso-form.component.css'
+})
+export class RecursoFormComponent implements OnInit {
+  // Estado del formulario
+  recurso: Recurso = {
+    nombre: '',
+    categoria: '',
+    descripcion: '',
+  };
+
+  // Estados de UI
+  guardando = signal(false);
+  modoEdicion = signal(false);
+  recursoId: number | null = null;
+
+  // Errores de validación
+  errores = {
+    nombre: '',
+    categoria: '',
+  };
+
+  constructor(
+    private recursosService: RecursosService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    // Obtener ID de la ruta si existe
+    const id = this.route.snapshot.paramMap.get('id');
+    
+    if (id) {
+      this.recursoId = +id;
+      this.modoEdicion.set(true);
+      this.cargarRecurso(this.recursoId);
+    }
+  }
+
+  /**
+   * Cargar recurso para edición
+   */
+  cargarRecurso(id: number): void {
+    this.recursosService.obtenerPorId(id).subscribe({
+      next: (recurso) => {
+        this.recurso = recurso;
+      },
+      error: (error) => {
+        console.error('Error al cargar recurso:', error);
+        alert('Error al cargar el recurso');
+        this.router.navigate(['/recursos']);
+      }
+    });
+  }
+
+  /**
+   * Validar formulario
+   */
+  validarFormulario(): boolean {
+    let valido = true;
+
+    // Resetear errores
+    this.errores = {
+      nombre: '',
+      categoria: '',
+    };
+
+    // Validar nombre
+    if (!this.recurso.nombre || this.recurso.nombre.trim() === '') {
+      this.errores.nombre = 'El nombre es requerido';
+      valido = false;
+    }
+
+    // Validar categoría
+    if (!this.recurso.categoria) {
+      this.errores.categoria = 'La categoría es requerida';
+      valido = false;
+    }
+
+    return valido;
+  }
+
+  /**
+   * Guardar recurso (crear o actualizar)
+   */
+  guardar(): void {
+    if (!this.validarFormulario()) {
+      return;
+    }
+
+    this.guardando.set(true);
+
+    const operacion = this.modoEdicion()
+      ? this.recursosService.actualizar(this.recursoId!, this.recurso)
+      : this.recursosService.crear(this.recurso);
+
+    operacion.subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.router.navigate(['/recursos']);
+      },
+      error: (error) => {
+        console.error('Error al guardar recurso:', error);
+        this.guardando.set(false);
+        
+        // Manejar errores específicos del backend
+        if (error.status === 409) {
+          this.errores.nombre = 'Ya existe un recurso con ese nombre';
+        } else {
+          alert('Error al guardar el recurso');
+        }
+      }
+    });
+  }
+
+  /**
+   * Cancelar y volver al listado
+   */
+  cancelar(): void {
+    this.router.navigate(['/recursos']);
+  }
+}
+```
+
+### 4. **Estructura de Models (Interfaces)**
+
+```typescript
+// src/app/core/models/index.ts
+
+/**
+ * Interfaz base con campos de auditoría
+ */
+export interface AuditoriaEntity {
+  fechaCreacion?: string;
+  usuarioCreacion?: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
+  indActivo?: number;
+}
+
+/**
+ * Respuesta paginada genérica
+ */
+export interface PaginacionRespuesta<T> {
+  data: T[];
+  total: number;
+  pagina: number;
+  limite: number;
+  totalPaginas: number;
+}
+
+/**
+ * Interfaz de Recurso
+ */
+export interface Recurso extends AuditoriaEntity {
+  recursoId?: number;
+  nombre: string;
+  categoria: string;
+  descripcion?: string;
+}
+
+/**
+ * Interfaz de Usuario
+ */
+export interface Usuario extends AuditoriaEntity {
+  userId?: number;
+  userUuid?: string;
+  nombres: string;
+  apepat: string;
+  apemat: string;
+  numdoc: string;
+  tipodoc: string;
+  username: string;
+  roles?: Rol[];
+}
+
+/**
+ * Interfaz de Rol
+ */
+export interface Rol extends AuditoriaEntity {
+  rolId: number;
+  descripcion: string;
+}
+
+/**
+ * Request/Response de Login
+ */
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse extends Usuario {
+  token: string;
+  fechaExpiracion: string;
+}
+```
+
+### 5. **Estructura de Constants**
+
+```typescript
+// src/app/core/constants/estados-encuesta.constants.ts
+
+/**
+ * Estados de encuesta
+ */
+export const ESTADOS_ENCUESTA = {
+  EN_REGISTRO: 1,
+  EN_REVISION: 2,
+  TRANSFERIDO: 3,
+  EN_CORRECCION: 4,
+  APROBADO: 5,
+  OBSERVADA: 6,
+} as const;
+
+/**
+ * Tipo para estados de encuesta
+ */
+export type EstadoEncuesta = typeof ESTADOS_ENCUESTA[keyof typeof ESTADOS_ENCUESTA];
+```
+
+```typescript
+// src/app/core/constants/roles.constants.ts
+
+/**
+ * Roles del sistema
+ */
+export const ROLES = {
+  ENCUESTADOR: 'Encuestador',
+  ADMINISTRADOR: 'Administrador',
+  VALIDADOR: 'Validador',
+} as const;
+
+/**
+ * Tipo para los roles del sistema
+ */
+export type RolDescripcion = typeof ROLES[keyof typeof ROLES];
+```
+
+```typescript
+// src/app/core/constants/index.ts
+
+export * from './estados-encuesta.constants';
+export * from './roles.constants';
+```
+
+### 6. **Interceptors**
+
+#### Auth Interceptor (Functional)
+
+```typescript
+// src/app/core/interceptors/auth.interceptor.ts
+
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth.service';
+
+/**
+ * Interceptor funcional para agregar el token JWT a todas las requests HTTP
+ * ✅ USAR HttpInterceptorFn (Angular 15+) en lugar de class-based interceptors
+ */
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const token = authService.getToken();
+
+  // Si existe token, clonar la request y agregar el header Authorization
+  if (token) {
+    const clonedRequest = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return next(clonedRequest);
+  }
+
+  // Si no hay token, continuar con la request original
+  return next(req);
+};
+```
+
+#### Error Interceptor (Opcional)
+
+```typescript
+// src/app/core/interceptors/error.interceptor.ts
+
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+
+/**
+ * Interceptor para manejar errores HTTP globalmente
+ */
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  const router = inject(Router);
+
+  return next(req).pipe(
+    catchError((error) => {
+      // Error de autenticación - redirigir a login
+      if (error.status === 401) {
+        // Limpiar token
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        // Redirigir a login
+        router.navigate(['/inicio-sesion']);
+      }
+
+      // Error de permisos
+      if (error.status === 403) {
+        alert('No tiene permisos para realizar esta acción');
+      }
+
+      // Error del servidor
+      if (error.status >= 500) {
+        console.error('Error del servidor:', error);
+        alert('Error del servidor. Por favor, intente nuevamente.');
+      }
+
+      return throwError(() => error);
+    })
+  );
+};
+```
+
+### 7. **Routing Configuration**
+
+```typescript
+// src/app/app.routes.ts
+
+import { Routes } from '@angular/router';
+
+/**
+ * Configuración de rutas de la aplicación
+ * ✅ USAR loadComponent para lazy loading (Angular 14+)
+ */
+export const routes: Routes = [
+  // Ruta por defecto
+  {
+    path: '',
+    redirectTo: '/inicio-sesion',
+    pathMatch: 'full'
+  },
+  
+  // Login
+  {
+    path: 'inicio-sesion',
+    loadComponent: () => import('./auth/login/login.component')
+      .then(m => m.LoginComponent)
+  },
+  
+  // Recursos - Lista
+  {
+    path: 'recursos',
+    loadComponent: () => import('./recursos/recursos-list/recursos-list.component')
+      .then(m => m.RecursosListComponent)
+  },
+  
+  // Recursos - Nuevo
+  {
+    path: 'recursos/nuevo',
+    loadComponent: () => import('./recursos/recurso-form/recurso-form.component')
+      .then(m => m.RecursoFormComponent)
+  },
+  
+  // Recursos - Editar
+  {
+    path: 'recursos/:id/editar',
+    loadComponent: () => import('./recursos/recurso-form/recurso-form.component')
+      .then(m => m.RecursoFormComponent)
+  },
+  
+  // 404 - Not Found
+  {
+    path: '**',
+    redirectTo: '/inicio-sesion'
+  }
+];
+```
+
+### 8. **App Configuration**
+
+```typescript
+// src/app/app.config.ts
+
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { errorInterceptor } from './core/interceptors/error.interceptor';
+
+/**
+ * Configuración principal de la aplicación
+ */
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Error listeners globales
+    provideBrowserGlobalErrorListeners(),
+    
+    // ✅ Zoneless Change Detection para mejor rendimiento
+    provideZonelessChangeDetection(),
+    
+    // Router
+    provideRouter(routes),
+    
+    // Hydration para SSR (opcional)
+    provideClientHydration(withEventReplay()),
+    
+    // HttpClient con interceptores
+    provideHttpClient(
+      withFetch(),  // Usar Fetch API
+      withInterceptors([
+        authInterceptor,
+        errorInterceptor,  // Opcional
+      ])
+    ),
+  ],
+};
+```
+
+### 9. **Environment Configuration**
+
+```typescript
+// src/environments/environment.ts (Development)
+
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api',
+};
+```
+
+```typescript
+// src/environments/environment.prod.ts (Production)
+
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.md-research.com/api',
+};
+```
+
+---
+
+## 🔄 Flujo de Datos
+
+### Flujo Completo de una Petición
+
+```
+1. Usuario interactúa con la UI (click en botón)
+   ↓
+2. Component maneja el evento
+   - Actualiza signals si es necesario
+   - Valida datos básicos
+   ↓
+3. Component llama al Service
+   - Pasa datos necesarios
+   ↓
+4. Service hace HTTP request
+   - HttpClient envía request
+   ↓
+5. Interceptors procesan la request
+   - authInterceptor: Agrega JWT token
+   - errorInterceptor: Maneja errores (opcional)
+   ↓
+6. Request llega al Backend (NestJS API)
+   ↓
+7. Backend procesa y retorna respuesta
+   ↓
+8. Interceptors procesan la response
+   ↓
+9. Service recibe response (Observable)
+   ↓
+10. Component se subscribe al Observable
+    - next: Actualiza signals con datos
+    - error: Maneja error y muestra mensaje
+    ↓
+11. Angular detecta cambios (via Signals)
+    - Template se re-renderiza automáticamente
+    ↓
+12. UI actualizada mostrada al usuario
+```
+
+### Ejemplo de Flujo Completo
+
+```typescript
+// 1. Usuario hace click en "Guardar"
+// Template
+<button (click)="guardarRecurso()">Guardar</button>
+
+// 2. Component maneja el evento
+guardarRecurso(): void {
+  // Validar
+  if (!this.validarFormulario()) {
+    return;
+  }
+  
+  // Actualizar UI
+  this.guardando.set(true);
+  
+  // 3. Llamar al service
+  this.recursosService.crear(this.recurso).subscribe({
+    // 10. Manejar respuesta
+    next: (recursoCreado) => {
+      // 11. Actualizar signals (detección automática de cambios)
+      this.guardando.set(false);
+      // Navegar a lista
+      this.router.navigate(['/recursos']);
+    },
+    error: (error) => {
+      console.error('Error:', error);
+      this.guardando.set(false);
+      alert('Error al guardar');
+    }
+  });
+}
+
+// 4-9. Service, Interceptors, Backend, etc.
+```
+
+---
+
+## 🎨 Patrones de UI con Signals
+
+### 1. **Estado de Carga**
+
+```typescript
+export class RecursosListComponent {
+  recursos = signal<Recurso[]>([]);
+  cargando = signal(false);
+
+  cargarRecursos(): void {
+    this.cargando.set(true);
+    
+    this.recursosService.listar().subscribe({
+      next: (respuesta) => {
+        this.recursos.set(respuesta.data);
+        this.cargando.set(false);
+      },
+      error: () => {
+        this.cargando.set(false);
+      }
+    });
+  }
+}
+```
+
+```html
+<!-- Template -->
+<div *ngIf="cargando()">
+  Cargando...
+</div>
+
+<div *ngIf="!cargando()">
+  <div *ngFor="let recurso of recursos()">
+    {{ recurso.nombre }}
+  </div>
+</div>
+```
+
+### 2. **Modales con Signals**
+
+```typescript
+export class RecursosListComponent {
+  mostrarModal = signal(false);
+  recursoSeleccionado = signal<Recurso | null>(null);
+
+  abrirModal(recurso: Recurso): void {
+    this.recursoSeleccionado.set(recurso);
+    this.mostrarModal.set(true);
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal.set(false);
+    this.recursoSeleccionado.set(null);
+  }
+}
+```
+
+```html
+<!-- Template -->
+<div *ngIf="mostrarModal()" class="modal">
+  <div class="modal-content">
+    <h2>{{ recursoSeleccionado()?.nombre }}</h2>
+    <button (click)="cerrarModal()">Cerrar</button>
+  </div>
+</div>
+```
+
+### 3. **Filtros Reactivos**
+
+```typescript
+export class RecursosListComponent {
+  recursos = signal<Recurso[]>([]);
+  filtroNombre = '';
+  filtroCategoria = '';
+
+  // Signal computado para recursos filtrados
+  recursosFiltrados = computed(() => {
+    const recursos = this.recursos();
+    let filtrados = recursos;
+
+    if (this.filtroNombre) {
+      filtrados = filtrados.filter(r =>
+        r.nombre.toLowerCase().includes(this.filtroNombre.toLowerCase())
+      );
+    }
+
+    if (this.filtroCategoria) {
+      filtrados = filtrados.filter(r => r.categoria === this.filtroCategoria);
+    }
+
+    return filtrados;
+  });
+}
+```
+
+```html
+<!-- Template -->
+<input [(ngModel)]="filtroNombre" placeholder="Buscar por nombre">
+<select [(ngModel)]="filtroCategoria">
+  <option value="">Todas</option>
+  <option value="A">Categoría A</option>
+  <option value="B">Categoría B</option>
+</select>
+
+<div *ngFor="let recurso of recursosFiltrados()">
+  {{ recurso.nombre }}
+</div>
+```
+
+---
+
+## 📋 Ejemplos Completos
+
+### Ejemplo 1: Módulo de Autenticación
+
+#### Service
+
+```typescript
+// src/app/core/services/auth.service.ts
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { LoginRequest, LoginResponse } from '../models';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class AuthService {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/usuarios`;
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly USER_KEY = 'user_data';
+
+  /**
+   * Iniciar sesión
+   */
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/inicio-sesion`, credentials).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUserData(response);
+      })
+    );
+  }
+
+  /**
+   * Cerrar sesión
+   */
+  logout(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/cierre-sesion`, {}).pipe(
+      tap(() => {
+        this.clearStorage();
+      })
+    );
+  }
+
+  /**
+   * Obtener token
+   */
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  /**
+   * Obtener datos del usuario
+   */
+  getUserData(): LoginResponse | null {
+    const userData = localStorage.getItem(this.USER_KEY);
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  /**
+   * Verificar si está autenticado
+   */
+  isAuthenticated(): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return false;
+    }
+
+    const userData = this.getUserData();
+    if (userData && userData.fechaExpiracion) {
+      const expirationDate = new Date(userData.fechaExpiracion);
+      return expirationDate > new Date();
+    }
+
+    return false;
+  }
+
+  /**
+   * Obtener rol del usuario
+   */
+  getRolDescripcion(): string {
+    const userData = this.getUserData();
+    if (userData?.roles && userData.roles.length > 0) {
+      return userData.roles[0].descripcion;
+    }
+    return 'Usuario';
+  }
+
+  private setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+  }
+
+  private setUserData(userData: LoginResponse): void {
+    localStorage.setItem(this.USER_KEY, JSON.stringify(userData));
+  }
+
+  private clearStorage(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+  }
+}
+```
+
+#### Component
+
+```typescript
+// src/app/auth/login/login.component.ts
+
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  // Datos del formulario
+  credentials = {
+    username: '',
+    password: ''
+  };
+
+  // Estados de UI
+  isLoading = signal(false);
+  
+  // Errores de validación
+  usernameError = '';
+  passwordError = '';
+
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  /**
+   * Manejar submit del formulario
+   */
+  onSubmit(): void {
+    // Limpiar errores previos
+    this.usernameError = '';
+    this.passwordError = '';
+    
+    // Validación básica
+    if (!this.credentials.username || !this.credentials.password) {
+      if (!this.credentials.username) {
+        this.usernameError = 'El usuario es requerido';
+      }
+      if (!this.credentials.password) {
+        this.passwordError = 'La contraseña es requerida';
+      }
+      return;
+    }
+
+    // Iniciar proceso de login
+    this.isLoading.set(true);
+
+    this.authService.login(this.credentials).subscribe({
+      next: (response) => {
+        console.log('Login exitoso:', response);
+        // Navegar a la página principal
+        setTimeout(() => {
+          this.router.navigate(['/encuestas']);
+        }, 500);
+      },
+      error: (error) => {
+        console.error('Error en login:', error);
+        this.isLoading.set(false);
+        
+        // Manejar diferentes tipos de errores
+        if (error.status === 401) {
+          this.usernameError = 'Usuario incorrecto';
+          this.passwordError = 'Contraseña incorrecta';
+        } else if (error.status === 400) {
+          this.usernameError = error.error?.detalle || 'Usuario inactivo o datos inválidos';
+        } else if (error.status === 0) {
+          this.usernameError = 'No se pudo conectar con el servidor';
+        } else {
+          this.usernameError = 'Error al iniciar sesión';
+        }
+      }
+    });
+  }
+}
+```
+
+#### Template
+
+```html
+<!-- src/app/auth/login/login.component.html -->
+
+<div class="login-container">
+  <div class="login-card">
+    <h1>Iniciar Sesión</h1>
+    
+    <form (ngSubmit)="onSubmit()">
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="credentials.username"
+          [class.error]="usernameError"
+          [disabled]="isLoading()"
+          placeholder="Ingrese su usuario"
+        />
+        <span *ngIf="usernameError" class="error-message">
+          {{ usernameError }}
+        </span>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="credentials.password"
+          [class.error]="passwordError"
+          [disabled]="isLoading()"
+          placeholder="Ingrese su contraseña"
+        />
+        <span *ngIf="passwordError" class="error-message">
+          {{ passwordError }}
+        </span>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        [disabled]="isLoading()"
+        class="btn-primary"
+      >
+        <span *ngIf="!isLoading()">Iniciar Sesión</span>
+        <span *ngIf="isLoading()">Cargando...</span>
+      </button>
+    </form>
+  </div>
+</div>
+```
+
+### Ejemplo 2: CRUD Completo con Paginación
+
+#### Service
+
+```typescript
+// Ya mostrado en secciones anteriores
+// Ver: Estructura de Services -> Service Básico
+```
+
+#### Component Lista
+
+```typescript
+// Ya mostrado en secciones anteriores
+// Ver: Estructura de Components -> Component Básico (Lista)
+```
+
+#### Template Lista
+
+```html
+<!-- src/app/recursos/recursos-list/recursos-list.component.html -->
+
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Recursos</h1>
+    <button (click)="nuevoRecurso()" class="btn-primary">
+      Nuevo Recurso
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-container">
+    <div class="filter-group">
+      <input
+        [(ngModel)]="filtroNombre"
+        placeholder="Buscar por nombre"
+        (keyup.enter)="aplicarFiltros()"
+      />
+    </div>
+    
+    <div class="filter-group">
+      <select [(ngModel)]="filtroCategoria">
+        <option value="">Todas las categorías</option>
+        <option value="A">Categoría A</option>
+        <option value="B">Categoría B</option>
+      </select>
+    </div>
+
+    <button (click)="aplicarFiltros()" class="btn-secondary">
+      Buscar
+    </button>
+    
+    <button (click)="limpiarFiltros()" class="btn-outline">
+      Limpiar
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="cargando()" class="loading-container">
+    Cargando recursos...
+  </div>
+
+  <!-- Tabla -->
+  <div *ngIf="!cargando()" class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Fecha Creación</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let recurso of recursos()">
+          <td>{{ recurso.recursoId }}</td>
+          <td>{{ recurso.nombre }}</td>
+          <td>{{ recurso.categoria }}</td>
+          <td>{{ recurso.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button (click)="editarRecurso(recurso.recursoId!)" class="btn-icon">
+              Editar
+            </button>
+            <button (click)="eliminarRecurso(recurso.recursoId!)" class="btn-icon-danger">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Sin resultados -->
+    <div *ngIf="recursos().length === 0" class="no-results">
+      No se encontraron recursos
+    </div>
+  </div>
+
+  <!-- Paginación -->
+  <div *ngIf="totalPaginas() > 1" class="pagination">
+    <button
+      (click)="cambiarPagina(paginaActual() - 1)"
+      [disabled]="paginaActual() === 1"
+      class="btn-pagination"
+    >
+      Anterior
+    </button>
+
+    <span class="pagination-info">
+      Página {{ paginaActual() }} de {{ totalPaginas() }}
+    </span>
+
+    <button
+      (click)="cambiarPagina(paginaActual() + 1)"
+      [disabled]="paginaActual() === totalPaginas()"
+      class="btn-pagination"
+    >
+      Siguiente
+    </button>
+  </div>
+</div>
+```
+
+---
+
+## ✅ Checklist de Implementación
+
+### Para Crear un Nuevo Módulo/Feature
+
+- [ ] **1. Crear carpeta del feature**
+  - [ ] `src/app/{feature-name}/`
+
+- [ ] **2. Crear Service**
+  - [ ] Crear `src/app/core/services/{feature}.service.ts`
+  - [ ] Usar `@Injectable({ providedIn: 'root' })`
+  - [ ] Usar `inject(HttpClient)`
+  - [ ] Implementar métodos CRUD básicos
+  - [ ] Documentar con JSDoc
+
+- [ ] **3. Crear Models**
+  - [ ] Agregar interfaces en `src/app/core/models/index.ts`
+  - [ ] Extender de `AuditoriaEntity` si aplica
+  - [ ] Exportar interfaces
+
+- [ ] **4. Crear Component de Lista**
+  - [ ] Crear carpeta `{feature}-list/`
+  - [ ] Crear archivos: `.ts`, `.html`, `.css`
+  - [ ] Marcar como `standalone: true`
+  - [ ] Importar `CommonModule` y `FormsModule`
+  - [ ] Usar signals para estado reactivo
+  - [ ] Implementar paginación
+  - [ ] Implementar filtros
+
+- [ ] **5. Crear Component de Formulario**
+  - [ ] Crear carpeta `{feature}-form/`
+  - [ ] Crear archivos: `.ts`, `.html`, `.css`
+  - [ ] Marcar como `standalone: true`
+  - [ ] Implementar validaciones
+  - [ ] Manejar modo creación y edición
+  - [ ] Manejar errores del backend
+
+- [ ] **6. Agregar Rutas**
+  - [ ] Actualizar `src/app/app.routes.ts`
+  - [ ] Usar `loadComponent` para lazy loading
+  - [ ] Definir rutas con parámetros si es necesario
+
+- [ ] **7. Testing**
+  - [ ] Probar creación
+  - [ ] Probar edición
+  - [ ] Probar eliminación
+  - [ ] Probar filtros y paginación
+  - [ ] Probar manejo de errores
+
+---
+
+## 🚨 Mejores Prácticas
+
+### ✅ DO (Hacer)
+
+1. **Usar Standalone Components** - No crear NgModules
+2. **Usar Signals** - Para estado reactivo (Angular 20+)
+3. **Usar inject()** - En lugar de constructor injection
+4. **Lazy Loading** - Usar `loadComponent` en rutas
+5. **Functional Interceptors** - Usar `HttpInterceptorFn`
+6. **Zoneless** - Configurar `provideZonelessChangeDetection()`
+7. **Validación en Formularios** - Validar antes de enviar
+8. **Manejo de Errores** - Siempre manejar errores en subscribe
+9. **Loading States** - Mostrar indicadores de carga
+10. **TypeScript Strict** - Mantener `strict: true` en tsconfig
+11. **Documentación** - Comentar métodos complejos con JSDoc
+12. **Nomenclatura Consistente** - Seguir convenciones de Angular
+
+### ❌ DON'T (No Hacer)
+
+1. **NO usar NgModules** - Todo debe ser standalone
+2. **NO usar Zone.js** - Está deshabilitado (zoneless)
+3. **NO manipular DOM directamente** - Usar data binding
+4. **NO poner lógica en Templates** - Mover a component
+5. **NO hardcodear URLs** - Usar `environment.apiUrl`
+6. **NO ignorar errores** - Siempre manejarlos
+7. **NO crear Services sin `providedIn`** - Siempre usar `providedIn: 'root'`
+8. **NO mezclar estilos** - Un estilo por componente
+9. **NO olvidar unsubscribe** - Aunque con pipe async/signals es automático
+10. **NO usar `any`** - Tipar correctamente todas las variables
+
+---
+
+## 🎯 Resumen de Diferencias con Angular Tradicional
+
+### Cambios Principales (Angular 20+)
+
+| Característica | Tradicional (Angular <14) | Moderno (Angular 20+) |
+|---|---|---|
+| **Modules** | NgModules obligatorios | Standalone components |
+| **Estado** | Variables + OnPush | Signals (reactivo) |
+| **Change Detection** | Zone.js | Zoneless |
+| **Injection** | Constructor injection | `inject()` function |
+| **Interceptors** | Class-based | Functional (`HttpInterceptorFn`) |
+| **Routing** | `loadChildren` | `loadComponent` |
+| **HTTP** | Observable manual | Observable + signals |
+
+### Ejemplo de Migración
+
+**Antes (Angular <14):**
+```typescript
+@Component({
+  selector: 'app-recursos',
+  templateUrl: './recursos.component.html',
+})
+export class RecursosComponent implements OnInit {
+  recursos: Recurso[] = [];
+  cargando = false;
+
+  constructor(private recursosService: RecursosService) {}
+
+  ngOnInit() {
+    this.cargarRecursos();
+  }
+
+  cargarRecursos() {
+    this.cargando = true;
+    this.recursosService.listar().subscribe(data => {
+      this.recursos = data;
+      this.cargando = false;
+    });
+  }
+}
+```
+
+**Ahora (Angular 20+):**
+```typescript
+@Component({
+  selector: 'app-recursos',
+  standalone: true,  // ✅ Standalone
+  imports: [CommonModule],
+  templateUrl: './recursos.component.html',
+})
+export class RecursosComponent implements OnInit {
+  // ✅ Signals para estado reactivo
+  recursos = signal<Recurso[]>([]);
+  cargando = signal(false);
+
+  // ✅ inject() en lugar de constructor
+  private recursosService = inject(RecursosService);
+
+  ngOnInit() {
+    this.cargarRecursos();
+  }
+
+  cargarRecursos() {
+    this.cargando.set(true);
+    this.recursosService.listar().subscribe(data => {
+      this.recursos.set(data);
+      this.cargando.set(false);
+    });
+  }
+}
+```
+
+---
+
+## 📚 Recursos Adicionales
+
+### Documentación Oficial
+- [Angular Official Docs](https://angular.dev)
+- [Angular Signals](https://angular.dev/guide/signals)
+- [Standalone Components](https://angular.dev/guide/components/importing)
+- [HttpClient](https://angular.dev/guide/http)
+
+### Archivos de Configuración
+- `angular.json` - Configuración de Angular CLI
+- `tsconfig.json` - Configuración de TypeScript
+- `package.json` - Dependencias del proyecto
+
+### Comandos Útiles
+
+```bash
+# Desarrollo
+npm start                    # Iniciar servidor de desarrollo
+ng serve                     # Iniciar servidor (alternativa)
+
+# Build
+npm run build                # Build para producción
+ng build                     # Build (alternativa)
+
+# Generar componentes/servicios
+ng generate component nombre           # Generar componente
+ng generate service nombre             # Generar servicio
+ng g c nombre --standalone             # Generar standalone component
+
+# Testing
+npm test                     # Ejecutar tests
+ng test                      # Tests (alternativa)
+```
+
+---
+
+## 🎉 Conclusión
+
+Esta estructura estándar está diseñada para:
+
+- ✅ Aprovechar las últimas características de Angular 20+
+- ✅ Mantener código limpio y organizado
+- ✅ Facilitar el mantenimiento y escalabilidad
+- ✅ Asegurar consistencia en todo el proyecto
+- ✅ Mejorar el rendimiento (Signals + Zoneless)
+- ✅ Simplificar el desarrollo (Standalone Components)
+
+**Referencias principales**: 
+- `AuthService` y `LoginComponent` - Autenticación completa
+- `EncuestasService` y `EncuestasListComponent` - CRUD con paginación
+- `authInterceptor` - Interceptor funcional moderno
+
+Para cualquier duda, consultar estos componentes como ejemplos completos y funcionales de esta estructura.
