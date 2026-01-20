@@ -1,0 +1,207 @@
+<div class="layout-container">
+  <app-sidebar />
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="empresas-page">
+      <app-page-header
+        title="Gestión de Empresas"
+        subtitle="Consulta y gestiona el catálogo de empresas registradas">
+        <app-user-menu />
+      </app-page-header>
+
+      <!-- Filtros -->
+      <div class="filters-card">
+        <div class="filters-header">
+          <h2 class="filters-title">Filtros de búsqueda</h2>
+        </div>
+        <div class="filters-body">
+          <div class="filters-grid">
+            <div class="form-group">
+              <label for="filtroRazonSocial">Razón Social</label>
+              <input
+                type="text"
+                id="filtroRazonSocial"
+                class="form-control"
+                placeholder="Buscar por razón social..."
+                [ngModel]="filtroRazonSocial()"
+                (ngModelChange)="filtroRazonSocial.set($event)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="filtroRuc">RUC</label>
+              <input
+                type="text"
+                id="filtroRuc"
+                class="form-control"
+                placeholder="Buscar por RUC..."
+                [ngModel]="filtroRuc()"
+                (ngModelChange)="filtroRuc.set($event)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="filtroTipoEmpresa">Tipo de Empresa</label>
+              <select
+                id="filtroTipoEmpresa"
+                class="form-control"
+                [ngModel]="filtroTipoEmpresa()"
+                (ngModelChange)="filtroTipoEmpresa.set($event)"
+              >
+                <option [ngValue]="null">Todos los tipos</option>
+                @for (tipo of tiposEmpresa(); track tipo.tipoEmpresaId) {
+                  <option [ngValue]="tipo.tipoEmpresaId">{{ tipo.descripcionTipoEmpresa }}</option>
+                }
+              </select>
+            </div>
+
+          </div>
+
+          <div class="filters-actions">
+            <button type="button" class="btn btn-primary" (click)="aplicarFiltros()">
+              <i class="fas fa-search"></i>
+              Buscar
+            </button>
+            <button type="button" class="btn btn-outline" (click)="limpiarFiltros()">
+              <i class="fas fa-eraser"></i>
+              Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje de error -->
+      @if (error()) {
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Estado de carga -->
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando empresas...</p>
+        </div>
+      }
+
+      <!-- Tabla de empresas -->
+      @if (!cargando() && !error()) {
+        <div class="table-card">
+          <!-- Header de tabla con contador -->
+          <div class="table-header">
+            <h2 class="table-title">Listado de Empresas</h2>
+            <span class="table-count">
+              {{ totalRegistros() }} empresas encontradas
+            </span>
+          </div>
+
+          <!-- Tabla responsive -->
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>RUC</th>
+                  <th>RAZÓN SOCIAL</th>
+                  <th>TIPO</th>
+                  <th>ACTIVIDAD ECONÓMICA</th>
+                  <th>TAMAÑO</th>
+                  <th class="text-center">ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (empresas().length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center empty-state">
+                      <i class="fas fa-building"></i>
+                      <p>No se encontraron empresas con los filtros aplicados</p>
+                    </td>
+                  </tr>
+                } @else {
+                  @for (empresa of empresas(); track empresa.empresaId) {
+                    <tr>
+                      <td>
+                        <span class="ruc-badge">{{ empresa.ruc }}</span>
+                      </td>
+                      <td>
+                        <strong>{{ empresa.razonSocial }}</strong>
+                      </td>
+                      <td>
+                        <span class="tipo-badge">
+                          {{ obtenerNombreTipoEmpresa(empresa.tipoEmpresaId) }}
+                        </span>
+                      </td>
+                      <td>{{ empresa.actividadEconomica || 'N/A' }}</td>
+                      <td>
+                        @if (empresa.tamanoEmpresaTop10k) {
+                          <span class="tamano-badge top10k">{{ empresa.tamanoEmpresaTop10k }}</span>
+                        } @else {
+                          <span class="tamano-badge">N/A</span>
+                        }
+                      </td>
+                      <td class="text-center">
+                        <div class="acciones-container">
+                          <button
+                            type="button"
+                            class="btn-icon btn-icon-primary"
+                            (click)="verDetalleEmpresa(empresa.empresaId)"
+                            title="Ver detalle"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                              <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke-width="2"/>
+                              <circle cx="8" cy="8" r="2" stroke-width="2"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación -->
+          @if (totalPaginas() > 1) {
+            <div class="pagination-container">
+              <div class="pagination-info">
+                Mostrando {{ rangoInicio }} - {{ rangoFin }} de {{ totalRegistros() }} empresas
+              </div>
+              <div class="pagination">
+                <button
+                  class="pagination-btn"
+                  (click)="cambiarPagina(paginaActual() - 1)"
+                  [disabled]="paginaActual() === 1"
+                >
+                  <i class="fas fa-chevron-left"></i>
+                  Anterior
+                </button>
+
+                @for (pagina of paginasArray; track pagina) {
+                  <button
+                    class="pagination-btn"
+                    [class.active]="pagina === paginaActual()"
+                    (click)="cambiarPagina(pagina)"
+                  >
+                    {{ pagina }}
+                  </button>
+                }
+
+                <button
+                  class="pagination-btn"
+                  (click)="cambiarPagina(paginaActual() + 1)"
+                  [disabled]="paginaActual() === totalPaginas()"
+                >
+                  Siguiente
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</div>

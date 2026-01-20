@@ -1,86 +1,14 @@
 <div class="layout-container">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <svg class="sidebar-brand-icon" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
-          <ellipse cx="9" cy="10" rx="1" ry="1.5" fill="currentColor"/>
-          <ellipse cx="15" cy="10" rx="1" ry="1.5" fill="currentColor"/>
-          <path d="M8 15 Q12 18 16 15" stroke="currentColor" stroke-width="2" fill="none"/>
-        </svg>
-        <span class="sidebar-brand-text">MD Research</span>
-      </div>
-      <hr class="sidebar-divider">
-      
-      <!-- Saludo y rol del usuario -->
-      <div class="user-welcome">
-        <h3 class="user-greeting">Hola, {{ obtenerNombreUsuario() }}</h3>
-        <p class="user-role">{{ obtenerRolUsuario() }}</p>
-      </div>
-      <hr class="sidebar-divider">
-    </div>
-    <nav>
-      <div class="sidebar-heading">Módulos</div>
-      <ul>
-        @for (modulo of modulos(); track modulo.llave) {
-          <li 
-            class="sidebar-item" 
-            [class.active]="esModuloActivo(modulo.ruta!)"
-            (click)="navegarAModulo(modulo.ruta!)">
-            {{ modulo.valor }}
-          </li>
-        }
-        @empty {
-          <li class="sidebar-item disabled">No hay módulos disponibles</li>
-        }
-        @if (esAdministrador()) {
-          <li class="sidebar-item" (click)="navegarACargaMasiva()">
-            Carga Masiva
-          </li>
-        }
-      </ul>
-    </nav>
-  </aside>
+  <app-sidebar />
 
   <!-- Main Content -->
   <main class="main-content">
     <div class="usuarios-page">
   <!-- Header -->
-  <div class="page-header">
-    <h1>Gestión de Usuarios</h1>
-    <div class="header-actions">
-      <span class="total-usuarios">Total: {{ total() }} usuarios</span>
-      
-      <!-- Menú de usuario -->
-      <div class="user-menu-container">
-        <button class="user-menu-trigger" (click)="toggleMenuUsuario()">
-          <div class="user-avatar-menu">{{ obtenerInicialesUsuario() }}</div>
-        </button>
-        
-        @if (mostrarMenuUsuario()) {
-          <div class="user-dropdown">
-            <div class="user-dropdown-header">
-              <div class="user-dropdown-badge">{{ obtenerInicialesUsuario() }}</div>
-              <div class="user-dropdown-info">
-                <div class="user-dropdown-name">{{ obtenerNombreCompletoUsuario() }}</div>
-                <div class="user-dropdown-email">{{ obtenerEmailUsuario() }}</div>
-              </div>
-            </div>
-            <hr class="user-dropdown-divider">
-            <button class="user-dropdown-item" (click)="cerrarSesion()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              Cerrar sesión
-            </button>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
+  <app-page-header title="Gestión de Usuarios">
+    <span class="total-usuarios">Total: {{ total() }} usuarios</span>
+    <app-user-menu />
+  </app-page-header>
 
   <!-- Filtros -->
   <div class="card mb-4">
@@ -273,6 +201,98 @@
     </div>
   </main>
 </div>
+
+@if (mostrarDetalleModal()) {
+  <div class="modal-backdrop" (click)="cerrarDetalleModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Detalle de Usuario</h2>
+        <button class="modal-close" (click)="cerrarDetalleModal()" aria-label="Cerrar">
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (cargandoDetalle()) {
+          <div class="modal-loading">Cargando detalle...</div>
+        } @else if (errorDetalle()) {
+          <div class="modal-error">{{ errorDetalle() }}</div>
+        } @else if (usuarioDetalle()) {
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Nombre completo</span>
+              <span class="detail-value">{{ obtenerNombreCompleto(usuarioDetalle()!) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Usuario</span>
+              <span class="detail-value">{{ usuarioDetalle()!.username }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">UUID</span>
+              <span class="detail-value">{{ usuarioDetalle()!.userUuid }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">ID interno</span>
+              <span class="detail-value">{{ usuarioDetalle()!.userId }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Documento</span>
+              <span class="detail-value">
+                {{ usuarioDetalle()!.tipodoc }} - {{ usuarioDetalle()!.numdoc }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Estado</span>
+              <span class="detail-value">
+                <span [class]="obtenerEstadoClass(usuarioDetalle()!)">
+                  {{ obtenerEstadoTexto(usuarioDetalle()!) }}
+                </span>
+              </span>
+            </div>
+            <div class="detail-item detail-item-full">
+              <span class="detail-label">Roles</span>
+              <span class="detail-value">
+                @if (usuarioDetalle()!.roles.length) {
+                  <span class="detail-roles">
+                    @for (rol of usuarioDetalle()!.roles; track rol.rolId) {
+                      <span class="badge-rol">{{ rol.descripcion }}</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="text-muted">Sin rol</span>
+                }
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Fecha creación</span>
+              <span class="detail-value">
+                {{ usuarioDetalle()!.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Usuario creación</span>
+              <span class="detail-value">{{ usuarioDetalle()!.usuarioCreacion }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Fecha modificación</span>
+              <span class="detail-value">
+                {{ usuarioDetalle()!.fechaModificacion | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Usuario modificación</span>
+              <span class="detail-value">{{ usuarioDetalle()!.usuarioModificacion }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cerrarDetalleModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (mostrarConfirmacionEstado()) {
   <div class="modal-backdrop" (click)="cerrarModalEstado()">

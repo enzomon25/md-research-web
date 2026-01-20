@@ -102,6 +102,10 @@ export interface Direccion {
   codDepartamento: string;
   codProvincia: string;
   codDistrito: string;
+  descPais?: string;
+  descDepartamento?: string;
+  descProvincia?: string;
+  descDistrito?: string;
   tipoVia: string;
   nombreVia: string;
   numeroVia: string;

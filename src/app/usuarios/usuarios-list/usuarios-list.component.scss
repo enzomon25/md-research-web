@@ -188,9 +188,9 @@
 }
 
 .usuarios-page {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  @include responsive-padding;
+  padding: 2rem;
 }
 
 .page-header {
@@ -683,6 +683,41 @@
 .modal-error {
   color: $danger;
   font-size: $font-size-sm;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-md $spacing-lg;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.detail-item-full {
+  grid-column: span 2;
+}
+
+.detail-label {
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.04rem;
+  color: $gray-500;
+}
+
+.detail-value {
+  font-size: $font-size-sm;
+  color: $gray-800;
+  word-break: break-word;
+}
+
+.detail-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
 }
 
 .confirm-text {

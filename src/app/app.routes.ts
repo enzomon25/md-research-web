@@ -27,6 +27,15 @@ export const routes: Routes = [
     path: 'carga-masiva',
     loadComponent: () => import('./carga-masiva/carga-masiva.component').then(m => m.CargaMasivaComponent)
   },
+  // Ruta de Empresas (disponible para todos los roles)
+  {
+    path: 'empresas',
+    loadComponent: () => import('./empresas/empresas-list/empresas-list.component').then(m => m.EmpresasListComponent)
+  },
+  {
+    path: 'empresas/:id',
+    loadComponent: () => import('./empresas/empresas-detail/empresas-detail.component').then(m => m.EmpresasDetailComponent)
+  },
   // ✅ REGLA 5: Ruta protegida con Guard (Solo ADMINISTRADOR)
   {
     path: 'usuarios',
@@ -37,6 +46,7 @@ export const routes: Routes = [
   {
     path: 'usuarios/:uuid',
     canActivate: [adminGuard],
-    loadComponent: () => import('./usuarios/usuarios-detail/usuarios-detail.component').then(m => m.UsuariosDetailComponent)
+    loadComponent: () => import('./usuarios/usuarios-list/usuarios-list.component').then(m => m.UsuariosListComponent)
+    // TODO: Crear componente de detalle cuando sea necesario
   }
 ];

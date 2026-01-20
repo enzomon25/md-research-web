@@ -1,19 +1,21 @@
 // ✅ REGLA 10: Imports organizados
 // 1. Angular Core
-import { Component, signal, computed, OnInit, inject, HostListener } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // 2. Angular Router
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 // 3. Services propios
 import { UsuariosService } from '../../core/services/usuarios.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ModulosService, Modulo } from '../../core/services/modulos.service';
 
 // 4. Models e Interfaces
 import { Usuario, PaginacionRespuesta } from '../../core/models';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 
 /**
  * Component para listar y gestionar usuarios
@@ -23,7 +25,7 @@ import { Usuario, PaginacionRespuesta } from '../../core/models';
 @Component({
   selector: 'app-usuarios-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, UserMenuComponent, PageHeaderComponent],
   templateUrl: './usuarios-list.component.html',
   styleUrl: './usuarios-list.component.scss'
 })
@@ -32,7 +34,7 @@ export class UsuariosListComponent implements OnInit {
   private usuariosService = inject(UsuariosService);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private modulosService = inject(ModulosService);
+  private route = inject(ActivatedRoute);
 
   // ✅ REGLA 8: Signals para estado de UI
   usuarios = signal<Usuario[]>([]);
@@ -41,7 +43,13 @@ export class UsuariosListComponent implements OnInit {
   total = signal(0);
   cargando = signal(false);
 
-  // Modales
+  // Modales y detalle
+  mostrarDetalleModal = signal(false);
+  usuarioDetalle = signal<Usuario | null>(null);
+  uuidDetalleActual = signal<string | null>(null);
+  cargandoDetalle = signal(false);
+  errorDetalle = signal<string | null>(null);
+
   mostrarConfirmacionEstado = signal(false);
   usuarioEstadoPendiente = signal<Usuario | null>(null);
   nuevoEstadoPendiente = signal<boolean | null>(null);
@@ -49,8 +57,6 @@ export class UsuariosListComponent implements OnInit {
   errorCambioEstado = signal<string | null>(null);
   
   // Sidebar y UI
-  modulos = signal<Modulo[]>([]);
-  mostrarMenuUsuario = signal(false);
   readonly MODULOS_KEYS = { ENCUESTAS: 'ENCUESTAS', USUARIOS: 'USUARIOS' };
   
   // Filtros (variables normales para ngModel bidireccional)
@@ -91,22 +97,28 @@ export class UsuariosListComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarUsuarios();
-    this.cargarModulos();
+    this.escucharRutaDetalle();
+  }
+
+  /**
+   * Escucha el parámetro UUID para abrir el detalle
+   */
+  escucharRutaDetalle(): void {
+    this.route.paramMap.subscribe((params) => {
+      const uuid = params.get('uuid');
+      if (uuid) {
+        if (this.uuidDetalleActual() !== uuid) {
+          this.abrirDetalleUsuario(uuid, false);
+        }
+      } else {
+        this.cerrarDetalleModal();
+      }
+    });
   }
   
   /**
    * Carga los módulos disponibles para el usuario
    */
-  cargarModulos(): void {
-    this.modulosService.obtenerModulosDisponibles().subscribe({
-      next: (modulos) => {
-        this.modulos.set(modulos);
-      },
-      error: (error) => {
-        console.error('Error al cargar módulos:', error);
-      }
-    });
-  }
 
   /**
    * Carga usuarios desde el backend
@@ -221,7 +233,49 @@ export class UsuariosListComponent implements OnInit {
    * @param userUuid UUID del usuario
    */
   verDetalleUsuario(userUuid: string): void {
-    this.router.navigate(['/usuarios', userUuid]);
+    this.abrirDetalleUsuario(userUuid, true);
+  }
+
+  /**
+   * Abre el modal de detalle del usuario
+   */
+  abrirDetalleUsuario(userUuid: string, navegar: boolean): void {
+    if (navegar) {
+      this.router.navigate(['/usuarios', userUuid]);
+    }
+
+    this.mostrarDetalleModal.set(true);
+    this.cargandoDetalle.set(true);
+    this.errorDetalle.set(null);
+    this.uuidDetalleActual.set(userUuid);
+
+    this.usuariosService.obtenerPorUuid(userUuid).subscribe({
+      next: (usuario) => {
+        this.usuarioDetalle.set(usuario);
+        this.cargandoDetalle.set(false);
+      },
+      error: (error) => {
+        console.error('Error al cargar detalle:', error);
+        this.usuarioDetalle.set(null);
+        this.cargandoDetalle.set(false);
+        this.errorDetalle.set('No se pudo cargar el detalle del usuario.');
+      }
+    });
+  }
+
+  /**
+   * Cierra el modal de detalle
+   */
+  cerrarDetalleModal(): void {
+    this.mostrarDetalleModal.set(false);
+    this.usuarioDetalle.set(null);
+    this.uuidDetalleActual.set(null);
+    this.errorDetalle.set(null);
+    this.cargandoDetalle.set(false);
+
+    if (this.route.snapshot.paramMap.get('uuid')) {
+      this.router.navigate(['/usuarios']);
+    }
   }
 
   /**
@@ -286,92 +340,6 @@ export class UsuariosListComponent implements OnInit {
   /**
    * Obtiene el nombre del usuario actual
    */
-  obtenerNombreUsuario(): string {
-    const userData = this.authService.getUserData();
-    return userData?.nombres || 'Usuario';
-  }
-
-  /**
-   * Obtiene el rol del usuario actual
-   */
-  obtenerRolUsuario(): string {
-    return this.authService.getRolDescripcion();
-  }
-
-  /**
-   * Verifica si el usuario es administrador
-   */
-  esAdministrador(): boolean {
-    return this.authService.getRolDescripcion() === 'Administrador';
-  }
-
-  /**
-   * Navega a la vista de encuestas
-   */
-  navegarAEncuestas(): void {
-    this.router.navigate(['/encuestas']);
-  }
-
-  /**
-   * Navega a la carga masiva
-   */
-  navegarACargaMasiva(): void {
-    this.router.navigate(['/carga-masiva']);
-  }
-
-  /**
-   * Navega a un módulo específico
-   * @param ruta Ruta del módulo
-   */
-  navegarAModulo(ruta: string): void {
-    this.router.navigate([ruta]);
-  }
-
-  /**
-   * Verifica si un módulo está activo según la ruta actual
-   * @param ruta Ruta del módulo
-   */
-  esModuloActivo(ruta: string): boolean {
-    return this.router.url === ruta;
-  }
-
-  /**
-   * Obtiene las iniciales del usuario actual para el avatar del menú
-   */
-  obtenerInicialesUsuario(): string {
-    const userData = this.authService.getUserData();
-    if (!userData) return 'U';
-    
-    const inicialNombre = userData.nombres?.charAt(0).toUpperCase() || '';
-    const inicialApellido = userData.apepat?.charAt(0).toUpperCase() || '';
-    
-    return inicialNombre + inicialApellido;
-  }
-
-  /**
-   * Obtiene el nombre completo del usuario actual
-   */
-  obtenerNombreCompletoUsuario(): string {
-    const userData = this.authService.getUserData();
-    if (!userData) return 'Usuario';
-    
-    return `${userData.nombres} ${userData.apepat}`.trim();
-  }
-
-  /**
-   * Obtiene el email/username del usuario actual
-   */
-  obtenerEmailUsuario(): string {
-    const userData = this.authService.getUserData();
-    return userData?.username || '';
-  }
-
-  /**
-   * Toggle del menú de usuario
-   */
-  toggleMenuUsuario(): void {
-    this.mostrarMenuUsuario.set(!this.mostrarMenuUsuario());
-  }
 
   /**
    * Cierra sesión del usuario
@@ -395,16 +363,4 @@ export class UsuariosListComponent implements OnInit {
     }, 300);
   }
 
-  /**
-   * Cierra menús al hacer click fuera
-   */
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    const userMenuContainer = target.closest('.user-menu-container');
-    
-    if (!userMenuContainer) {
-      this.mostrarMenuUsuario.set(false);
-    }
-  }
 }

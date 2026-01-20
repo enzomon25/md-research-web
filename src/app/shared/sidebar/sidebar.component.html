@@ -1,0 +1,41 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <svg class="sidebar-brand-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+        <ellipse cx="9" cy="10" rx="1" ry="1.5" fill="currentColor" />
+        <ellipse cx="15" cy="10" rx="1" ry="1.5" fill="currentColor" />
+        <path d="M8 15 Q12 18 16 15" stroke="currentColor" stroke-width="2" fill="none" />
+      </svg>
+      <span class="sidebar-brand-text">MD Research</span>
+    </div>
+    <hr class="sidebar-divider" />
+
+    <div class="user-welcome">
+      <h3 class="user-greeting">Hola, {{ obtenerNombreUsuario() }}</h3>
+      <p class="user-role">{{ obtenerRolUsuario() }}</p>
+    </div>
+    <hr class="sidebar-divider" />
+  </div>
+  <nav>
+    <div class="sidebar-heading">Módulos</div>
+    <ul>
+      @for (modulo of modulos(); track modulo.llave) {
+        <li
+          class="sidebar-item"
+          [class.active]="esModuloActivo(modulo.ruta!)"
+          (click)="navegarAModulo(modulo.ruta!)">
+          {{ modulo.valor }}
+        </li>
+      }
+      @empty {
+        <li class="sidebar-item disabled">No hay módulos disponibles</li>
+      }
+      @if (esAdministrador()) {
+        <li class="sidebar-item" (click)="navegarACargaMasiva()">
+          Carga Masiva
+        </li>
+      }
+    </ul>
+  </nav>
+</aside>

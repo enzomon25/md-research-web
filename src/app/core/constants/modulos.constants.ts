@@ -4,6 +4,7 @@
 export const MODULOS = {
   ENCUESTAS: 'ENCUESTAS',
   USUARIOS: 'USUARIOS',
+  EMPRESAS: 'EMPRESAS',
   ZONAS: 'ZONAS',
   CLIENTES: 'CLIENTES',
   CONTACTO: 'CONTACTO',
@@ -16,6 +17,7 @@ export const MODULOS = {
 export const RUTAS_MODULOS: Record<string, string> = {
   [MODULOS.ENCUESTAS]: '/encuestas',
   [MODULOS.USUARIOS]: '/usuarios',
+  [MODULOS.EMPRESAS]: '/empresas',
   [MODULOS.ZONAS]: '/zonas',
   [MODULOS.CLIENTES]: '/clientes',
   [MODULOS.CONTACTO]: '/contacto',

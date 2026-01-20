@@ -5,9 +5,11 @@ import { Router } from '@angular/router';
 import { EncuestasService } from '../../core/services/encuestas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ModulosService, Modulo } from '../../core/services/modulos.service';
 import { Encuesta, Parametro, PaginacionRespuesta } from '../../core/models';
 import { ESTADOS_ENCUESTA, CATEGORIAS_PARAMETROS } from '../../core/constants';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
+import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 
 interface Estado {
   estadoId: number;
@@ -17,7 +19,7 @@ interface Estado {
 @Component({
   selector: 'app-encuestas-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, UserMenuComponent, PageHeaderComponent],
   templateUrl: './encuestas-list.component.html',
   styleUrl: './encuestas-list.component.css'
 })
@@ -29,12 +31,10 @@ export class EncuestasListComponent implements OnInit {
   cargando = signal(false);
   mostrarModalTipo = signal(false);
   mostrarDrawer = signal(false);
-  mostrarMenuUsuario = signal(false);
   mostrarMenuExportar = signal(false);
   tiposEncuesta = signal<Parametro[]>([]);
   estados = signal<Estado[]>([]);
   creandoEncuesta = signal(false);
-  modulos = signal<Modulo[]>([]);
   
   // Constantes para el template
   readonly MODULOS_KEYS = { ENCUESTAS: 'ENCUESTAS' };
@@ -58,7 +58,6 @@ export class EncuestasListComponent implements OnInit {
     private encuestasService: EncuestasService,
     private parametrosService: ParametrosService,
     private authService: AuthService,
-    private modulosService: ModulosService,
     private router: Router
   ) {
     // Establecer fecha máxima como hoy en formato YYYY-MM-DD
@@ -70,18 +69,6 @@ export class EncuestasListComponent implements OnInit {
     this.cargarEncuestas();
     this.cargarEstados();
     this.cargarTiposEncuesta();
-    this.cargarModulos();
-  }
-
-  cargarModulos(): void {
-    this.modulosService.obtenerModulosDisponibles().subscribe({
-      next: (modulos) => {
-        this.modulos.set(modulos);
-      },
-      error: (error) => {
-        console.error('Error al cargar módulos:', error);
-      }
-    });
   }
 
   toggleDrawer(): void {
@@ -235,44 +222,9 @@ export class EncuestasListComponent implements OnInit {
     return this.encuestas().some(encuesta => !!encuesta.usuarioCreacion);
   }
 
-  obtenerNombreUsuario(): string {
-    const userData = this.authService.getUserData();
-    return userData?.nombres || 'Usuario';
-  }
-
-  obtenerRolUsuario(): string {
-    return this.authService.getRolDescripcion();
-  }
-
   esEncuestador(): boolean {
     const rol = this.authService.obtenerRol();
     return rol === 'ENCUESTADOR';
-  }
-
-  obtenerInicialesUsuario(): string {
-    const userData = this.authService.getUserData();
-    if (!userData) return 'U';
-    
-    const inicialNombre = userData.nombres?.charAt(0).toUpperCase() || '';
-    const inicialApellido = userData.apepat?.charAt(0).toUpperCase() || '';
-    
-    return inicialNombre + inicialApellido;
-  }
-
-  obtenerNombreCompletoUsuario(): string {
-    const userData = this.authService.getUserData();
-    if (!userData) return 'Usuario';
-    
-    return `${userData.nombres} ${userData.apepat}`.trim();
-  }
-
-  obtenerEmailUsuario(): string {
-    const userData = this.authService.getUserData();
-    return userData?.username || '';
-  }
-
-  toggleMenuUsuario(): void {
-    this.mostrarMenuUsuario.set(!this.mostrarMenuUsuario());
   }
 
   toggleMenuExportar(): void {
@@ -329,38 +281,11 @@ export class EncuestasListComponent implements OnInit {
     });
   }
 
-  cerrarSesion(): void {
-    // Agregar clase de fade-out
-    const layoutContainer = document.querySelector('.layout-container');
-    if (layoutContainer) {
-      layoutContainer.classList.add('fade-out');
-    }
-
-    // Esperar la animación antes de cerrar sesión
-    setTimeout(() => {
-      this.authService.logout().subscribe({
-        next: () => {
-          this.router.navigate(['/inicio-sesion']);
-        },
-        error: (error) => {
-          console.error('Error al cerrar sesión:', error);
-          // Aunque falle el request, redirigimos igual
-          this.router.navigate(['/inicio-sesion']);
-        }
-      });
-    }, 300);
-  }
-
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const userMenuContainer = target.closest('.user-menu-container');
     const exportMenuContainer = target.closest('.export-menu-container');
     
-    if (!userMenuContainer && this.mostrarMenuUsuario()) {
-      this.mostrarMenuUsuario.set(false);
-    }
-
     if (!exportMenuContainer && this.mostrarMenuExportar()) {
       this.mostrarMenuExportar.set(false);
     }
@@ -413,23 +338,7 @@ export class EncuestasListComponent implements OnInit {
     this.router.navigate(ruta);
   }
 
-  navegarACargaMasiva(): void {
-    this.router.navigate(['/carga-masiva']);
-  }
-
   navegarAUsuarios(): void {
     this.router.navigate(['/usuarios']);
-  }
-
-  navegarAModulo(ruta: string): void {
-    this.router.navigate([ruta]);
-  }
-
-  esModuloActivo(ruta: string): boolean {
-    return this.router.url === ruta;
-  }
-
-  esAdministrador(): boolean {
-    return this.authService.getRolDescripcion() === 'Administrador';
   }
 }

@@ -199,6 +199,36 @@ export const routes: Routes = [
 
 **Crear AuthGuard**:
 
+### 🧱 6. Reutilización Obligatoria de Layout (Sidebar / UserMenu / PageHeader)
+
+**REGLA**: Los módulos deben **reutilizar componentes compartidos** para evitar estilos y HTML duplicados.
+
+**Componentes obligatorios**:
+- ✅ `app-sidebar` para el menú lateral
+- ✅ `app-user-menu` para el menú de usuario
+- ✅ `app-page-header` para el título y acciones del header
+
+**Formato obligatorio del título**:
+- ✅ `Gestión de X` (Title Case, sin MAYÚSCULAS completas)
+
+**Ejemplo correcto**:
+```html
+<div class="layout-container">
+  <app-sidebar />
+  <main class="main-content">
+    <app-page-header title="Gestión de Empresas" subtitle="Texto opcional">
+      <button class="btn-primary">Acción</button>
+      <app-user-menu />
+    </app-page-header>
+  </main>
+</div>
+```
+
+**Prohibido**:
+- ❌ Duplicar el HTML del sidebar en cada módulo
+- ❌ Estilos distintos por módulo para sidebar o header
+- ❌ Usar títulos en MAYÚSCULAS completas
+
 ```typescript
 // src/app/core/guards/auth.guard.ts
 
