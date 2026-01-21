@@ -796,7 +796,7 @@
                 <div style="margin-bottom: 1.5rem;">
                   <!-- Fabricante -->
                   <div class="fabricante-row-controls">
-                    <div class="fabricante-select-container">
+                    <div class="fabricante-select-container fabricante-cell">
                       <select class="form-control-bootstrap" style="width: 100%;"
                         [(ngModel)]="marcaSeleccionada.fabricanteId"
                         (change)="onFabricanteChange($index, $event)"
@@ -807,7 +807,7 @@
                         }
                       </select>
                     </div>
-                    @if (!marcaSeleccionada.completo && marcasSeleccionadas().length > 1) {
+                    @if (!marcaSeleccionada.encuestaFabricanteId && (marcasSeleccionadas().length > 1 || marcaSeleccionada.completo)) {
                       <button type="button" class="btn-eliminar-fila-fabricante" (click)="eliminarMarcaFabricante($index)" title="Eliminar fila">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -817,56 +817,46 @@
                     }
                   </div>
 
-                  <!-- Marca: solo si fabricante seleccionado -->
-                  @if (marcaSeleccionada.fabricanteId) {
-                  <div class="fabricante-field-container">
-                    <select class="form-control-bootstrap"
-                      [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
-                      (change)="onMarcaChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
-                      <option [value]="0">Seleccione una marca</option>
-                      @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
-                        <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
-                      }
-                    </select>
-                  </div>
-                  }
+                  <div class="fabricante-grid">
+                    <div class="fabricante-field-container fabricante-cell">
+                      <select class="form-control-bootstrap"
+                        [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
+                        (change)="onMarcaChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo || !marcaSeleccionada.fabricanteId">
+                        <option [value]="0">Seleccione una marca</option>
+                        @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
+                          <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
+                        }
+                      </select>
+                    </div>
 
-                  <!-- Tipo de Cemento: solo si marca seleccionada -->
-                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId) {
-                  <div class="fabricante-field-container">
-                    <select class="form-control-bootstrap"
-                      [(ngModel)]="marcaSeleccionada.tipoCemento"
-                      (change)="onTipoCementoChange($index, $event)"
-                      [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
-                      <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
-                      @for (tipo of tiposCementoPorFila[$index]; track tipo) {
-                        <option [value]="tipo">{{ tipo }}</option>
-                      }
-                    </select>
-                  </div>
-                  }
+                    <div class="fabricante-field-container fabricante-cell">
+                      <select class="form-control-bootstrap"
+                        [(ngModel)]="marcaSeleccionada.tipoCemento"
+                        (change)="onTipoCementoChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo || !marcaSeleccionada.fabricanteId || !marcaSeleccionada.marcaFabricanteId">
+                        <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
+                        @for (tipo of tiposCementoPorFila[$index]; track tipo) {
+                          <option [value]="tipo">{{ tipo }}</option>
+                        }
+                      </select>
+                    </div>
 
-                  <!-- Descripción física: solo si tipoCemento seleccionado -->
-                  @if (marcaSeleccionada.fabricanteId && marcaSeleccionada.marcaFabricanteId && marcaSeleccionada.tipoCemento) {
-                    @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
-                      <div class="fabricante-field-container">
-                        <input class="form-control-bootstrap" type="text" [value]="descripcionesFisicasPorFila[$index][0]" disabled />
-                      </div>
-                    } @else {
-                      <div class="fabricante-field-container">
-                        <select class="form-control-bootstrap"
-                          [(ngModel)]="marcaSeleccionada.descFisica"
-                          (change)="onDescFisicaChange($index, $event)"
-                          [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo">
-                          <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
-                          @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
-                            <option [ngValue]="desc">{{ desc }}</option>
-                          }
-                        </select>
-                      </div>
-                    }
-                  }
+                    <div class="fabricante-field-container fabricante-cell">
+                      <select class="form-control-bootstrap"
+                        [(ngModel)]="marcaSeleccionada.descFisica"
+                        (change)="onDescFisicaChange($index, $event)"
+                        [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo || !marcaSeleccionada.fabricanteId || !marcaSeleccionada.marcaFabricanteId || !marcaSeleccionada.tipoCemento || (descripcionesFisicasPorFila[$index]?.length || 0) === 1">
+                        <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
+                        @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
+                          <option [ngValue]="desc">{{ desc }}</option>
+                        }
+                      </select>
+                      @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
+                        <small class="fabricante-autofill">Se completa automáticamente</small>
+                      }
+                    </div>
+                  </div>
 
                   <!-- Botón Desestimar para cada elemento completo y con encuestaFabricanteId -->
                   @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {

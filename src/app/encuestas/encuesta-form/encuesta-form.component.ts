@@ -268,6 +268,20 @@ export class EncuestaFormComponent implements OnInit {
       this.marcasPorFila.splice(index, 1);
       this.tiposCementoPorFila.splice(index, 1);
       this.descripcionesFisicasPorFila.splice(index, 1);
+    } else {
+      this.marcasSeleccionadas.set([
+        {
+          encuestaFabricanteId: 0,
+          marcaFabricanteId: 0,
+          fabricanteId: 0,
+          tipoCemento: '',
+          descFisica: '',
+          completo: false,
+        },
+      ]);
+      this.marcasPorFila[0] = [];
+      this.tiposCementoPorFila[0] = [];
+      this.descripcionesFisicasPorFila[0] = [];
     }
   }
 
@@ -1004,9 +1018,7 @@ export class EncuestaFormComponent implements OnInit {
 
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
-        this.encuesta.set(encuestaGuardada);
-        // Actualizar la copia original y limpiar la bandera de cambios sin guardar
-        this.encuestaOriginal.set(JSON.parse(JSON.stringify(encuestaGuardada)));
+        this.procesarEncuesta(encuestaGuardada);
         this.tieneCambiosSinGuardar.set(false);
         this.mensajeModal.set('Encuesta guardada exitosamente');
         this.mostrarModalExito.set(true);
@@ -1737,7 +1749,7 @@ export class EncuestaFormComponent implements OnInit {
       
       this.encuestasService.guardar(encuestaActualizada).subscribe({
         next: (encuestaGuardada) => {
-          this.encuesta.set(encuestaGuardada);
+          this.procesarEncuesta(encuestaGuardada);
           this.empresaSeleccionada.set(empresa);
           this.mostrarResultadosEmpresa.set(false);
           this.terminoBusqueda.set(`${empresa.razonSocial} (RUC: ${empresa.ruc})`);
@@ -1873,7 +1885,7 @@ export class EncuestaFormComponent implements OnInit {
               this.mostrarFormularioRegistro.set(false);
               
               // Actualizar la encuesta y la empresa seleccionada
-              this.encuesta.set(encuestaGuardada);
+              this.procesarEncuesta(encuestaGuardada);
               this.empresaSeleccionada.set(empresaCreada);
               this.terminoBusqueda.set(`${empresaCreada.razonSocial} (RUC: ${empresaCreada.ruc})`);
               
@@ -2002,7 +2014,7 @@ export class EncuestaFormComponent implements OnInit {
         encuestadoId: encuestado.encuestadoId
       } as Partial<Encuesta>).subscribe({
         next: (encuestaGuardada) => {
-          this.encuesta.set(encuestaGuardada);
+          this.procesarEncuesta(encuestaGuardada);
           this.encuestadoSeleccionado.set(encuestado);
           this.mostrarResultadosEncuestado.set(false);
           this.terminoBusquedaEncuestado.set('');
@@ -2153,7 +2165,7 @@ export class EncuestaFormComponent implements OnInit {
               this.mostrarFormularioRegistroEncuestado.set(false);
               
               // Actualizar la encuesta y el encuestado seleccionado
-              this.encuesta.set(encuestaGuardada);
+              this.procesarEncuesta(encuestaGuardada);
               this.encuestadoSeleccionado.set(encuestadoCreado);
               this.terminoBusquedaEncuestado.set('');
               

@@ -299,6 +299,15 @@ tbody tr:hover {
   display: block;
 }
 
+.btn-accion.btn-clonar {
+  color: $primary;
+}
+
+.btn-accion.btn-clonar:hover {
+  background-color: rgba($primary, 0.1);
+  color: $primary;
+}
+
 @media (max-width: 768px) {
   .detail-row {
     flex-direction: column;
