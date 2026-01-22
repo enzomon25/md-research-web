@@ -128,9 +128,47 @@ export class EmpresasListComponent implements OnInit {
     return tipo ? tipo.descripcionTipoEmpresa : 'N/A';
   }
 
-  // Paginación helpers
+  // Paginación helpers - muestra solo páginas cercanas a la actual
   get paginasArray(): number[] {
-    return Array.from({ length: this.totalPaginas() }, (_, i) => i + 1);
+    const total = this.totalPaginas();
+    const actual = this.paginaActual();
+    const rango = 2; // mostrar 2 páginas antes y después de la actual
+    const maxBotones = 5; // máximo de botones de página
+
+    if (total <= maxBotones) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const paginas: number[] = [];
+    const inicio = Math.max(1, actual - rango);
+    const fin = Math.min(total, actual + rango);
+
+    // Agregar página 1
+    paginas.push(1);
+
+    // Agregar ellipsis si necesario
+    if (inicio > 2) {
+      paginas.push(-1); // -1 representa ellipsis
+    }
+
+    // Agregar páginas cercanas a la actual
+    for (let i = inicio; i <= fin; i++) {
+      if (i !== 1) {
+        paginas.push(i);
+      }
+    }
+
+    // Agregar ellipsis si necesario
+    if (fin < total - 1) {
+      paginas.push(-1);
+    }
+
+    // Agregar última página
+    if (fin < total) {
+      paginas.push(total);
+    }
+
+    return paginas;
   }
 
   get rangoInicio(): number {

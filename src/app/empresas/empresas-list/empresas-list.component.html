@@ -180,13 +180,17 @@
                 </button>
 
                 @for (pagina of paginasArray; track pagina) {
-                  <button
-                    class="pagination-btn"
-                    [class.active]="pagina === paginaActual()"
-                    (click)="cambiarPagina(pagina)"
-                  >
-                    {{ pagina }}
-                  </button>
+                  @if (pagina === -1) {
+                    <span class="pagination-ellipsis">...</span>
+                  } @else {
+                    <button
+                      class="pagination-btn"
+                      [class.active]="pagina === paginaActual()"
+                      (click)="cambiarPagina(pagina)"
+                    >
+                      {{ pagina }}
+                    </button>
+                  }
                 }
 
                 <button

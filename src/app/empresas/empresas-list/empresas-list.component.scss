@@ -632,6 +632,15 @@ nav ul {
   }
 }
 
+.pagination-ellipsis {
+  padding: $spacing-xs $spacing-sm;
+  color: $gray-600;
+  font-size: $font-size-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 // ==============================================
 // RESPONSIVE
 // ==============================================
