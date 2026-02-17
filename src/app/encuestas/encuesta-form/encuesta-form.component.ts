@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,11 +16,19 @@ import { ESTADOS_ENCUESTA } from '../../core/constants/estados-encuesta.constant
 import { ROLES } from '../../core/constants/roles.constants';
 import { CATEGORIAS_PARAMETROS } from '../../core/constants';
 import { EncuestaHistorialEstadosComponent } from '../encuesta-historial-estados/encuesta-historial-estados.component';
+import { ObservacionesPanelComponent } from '../observaciones-panel/observaciones-panel.component';
+import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-encuesta-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, EncuestaHistorialEstadosComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    EncuestaHistorialEstadosComponent,
+    ObservacionesPanelComponent,
+    ConfirmDialogComponent
+  ],
   templateUrl: './encuesta-form.component.html',
   styleUrls: [
     './encuesta-form.component.css',
@@ -404,13 +412,7 @@ export class EncuestaFormComponent implements OnInit {
      * Para encuestador: si no hay activas, mostrar del último ciclo del historial
      */
     obtenerSeccionesConObservacionesVisibles(): string[] {
-      const seccionesNombres: { [key: string]: string } = {
-        empresa: 'Empresa',
-        encuestado: 'Encuestado',
-        productos: 'Productos',
-        fabricante: 'Fabricante',
-        compra: 'Compra',
-      };
+      const seccionesNombres: { [key: string]: string } = this.seccionLabels;
       // 1. Si hay observaciones activas, usar las activas
       const activas: string[] = [];
       this.observacionesTexto().forEach((texto, seccion) => {
@@ -569,9 +571,27 @@ export class EncuestaFormComponent implements OnInit {
   seccionDesestimar = signal<string>('');
   procesandoDesestimar = signal(false);
 
+  // Modal de confirmación para guardar observación
+  mostrarModalGuardarObservacion = signal(false);
+  seccionGuardarObservacion = signal<string>('');
+  guardandoObservacionModal = signal(false);
+
   // Control de cambios sin guardar
   encuestaOriginal = signal<Encuesta | null>(null);
   tieneCambiosSinGuardar = signal(false);
+
+  // Panel de observaciones
+  panelObservacionesAbierto = signal(false);
+  observacionesResueltas = signal<Set<string>>(new Set());
+  seccionLabels: Record<string, string> = {
+    datos_encuesta: 'Datos Generales',
+    empresa: 'Empresa',
+    encuestado: 'Datos del Encuestado',
+    productos: 'Productos',
+    fabricante: 'Fabricante',
+    compra: 'Información de Compra',
+    uso: 'Motivación de Compra',
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -1384,6 +1404,9 @@ export class EncuestaFormComponent implements OnInit {
         // Actualizar estado de guardado
         guardandoMap.set(seccion, false);
         this.guardandoObservacion.set(guardandoMap);
+        if (this.seccionGuardarObservacion() === seccion) {
+          this.guardandoObservacionModal.set(false);
+        }
         // Recargar observaciones para obtener datos actualizados
         this.cargarObservaciones(encuestaId);
       },
@@ -1391,6 +1414,9 @@ export class EncuestaFormComponent implements OnInit {
         console.error('Error al guardar observación:', error);
         guardandoMap.set(seccion, false);
         this.guardandoObservacion.set(guardandoMap);
+        if (this.seccionGuardarObservacion() === seccion) {
+          this.guardandoObservacionModal.set(false);
+        }
         
         // Mostrar error del backend en modal
         let mensajeError = 'Error al guardar la observación';
@@ -1435,6 +1461,21 @@ export class EncuestaFormComponent implements OnInit {
 
     this.procesandoDesestimar.set(true);
 
+    const observacion = this.observaciones().get(seccion);
+    if (!observacion?.observacionId) {
+      const textoMap = new Map(this.observacionesTexto());
+      textoMap.set(seccion, '');
+      this.observacionesTexto.set(textoMap);
+
+      const observacionesMap = new Map(this.observaciones());
+      observacionesMap.delete(seccion);
+      this.observaciones.set(observacionesMap);
+
+      this.procesandoDesestimar.set(false);
+      this.cerrarModalDesestimar();
+      return;
+    }
+
     // Usar el endpoint DELETE para eliminar la observación
     this.observacionService.eliminarObservacion(encuestaId, seccion).subscribe({
       next: () => {
@@ -1456,6 +1497,59 @@ export class EncuestaFormComponent implements OnInit {
         this.mostrarModalError.set(true);
       }
     });
+  }
+
+  /**
+   * Abrir modal para confirmar guardar observación
+   */
+  abrirModalGuardarObservacion(seccion: string): void {
+    const texto = this.obtenerObservacionTexto(seccion).trim();
+    if (!texto) {
+      console.log('[Obs] Guardar bloqueado: texto vacío', { seccion });
+      return;
+    }
+    console.log('[Obs] Abrir modal guardar', { seccion, texto });
+    this.seccionGuardarObservacion.set(seccion);
+    this.guardandoObservacionModal.set(false);
+    this.mostrarModalGuardarObservacion.set(true);
+    console.log('[Obs] Modal guardar abierto', {
+      mostrar: this.mostrarModalGuardarObservacion(),
+      seccion: this.seccionGuardarObservacion(),
+    });
+  }
+
+  /**
+   * Cerrar modal de guardar observación
+   */
+  cerrarModalGuardarObservacion(): void {
+    console.log('[Obs] Cerrar modal guardar', {
+      seccion: this.seccionGuardarObservacion(),
+    });
+    this.mostrarModalGuardarObservacion.set(false);
+    this.seccionGuardarObservacion.set('');
+    this.guardandoObservacionModal.set(false);
+  }
+
+  /**
+   * Confirmar guardar observación
+   */
+  confirmarGuardarObservacion(): void {
+    const seccion = this.seccionGuardarObservacion();
+    if (!seccion) {
+      console.log('[Obs] Confirmar guardar sin sección');
+      return;
+    }
+    console.log('[Obs] Confirmar guardar', { seccion });
+    this.guardandoObservacionModal.set(true);
+    this.mostrarModalGuardarObservacion.set(false);
+    this.guardarObservacion(seccion);
+  }
+
+  /**
+   * Obtener etiqueta de sección para modal
+   */
+  obtenerEtiquetaSeccionFormulario(seccion: string): string {
+    return this.seccionLabels[seccion] || seccion;
   }
 
   /**
@@ -1499,7 +1593,7 @@ export class EncuestaFormComponent implements OnInit {
    * Puede ver cuando es validador/admin pero la encuesta ya fue procesada
    */
   puedeVerObservaciones(): boolean {
-    const estadoId = this.encuesta()?.estadoId;
+    const estadoId = this.encuesta()?.estado?.estadoId ?? this.encuesta()?.estadoId;
     const esValidador = this.esValidador();
     const esAdmin = this.authService.getRolDescripcion() === ROLES.ADMINISTRADOR;
     const esObservada = estadoId === ESTADOS_ENCUESTA.OBSERVADA;
@@ -1513,7 +1607,7 @@ export class EncuestaFormComponent implements OnInit {
    * Puede ver cuando es encuestador y la encuesta está OBSERVADA o EN_CORRECCION
    */
   encuestadorPuedeVerObservaciones(): boolean {
-    const estadoId = this.encuesta()?.estadoId;
+    const estadoId = this.encuesta()?.estado?.estadoId ?? this.encuesta()?.estadoId;
     const esEncuestador = this.esEncuestador();
     const esObservada = estadoId === ESTADOS_ENCUESTA.OBSERVADA;
     const esCorreccion = estadoId === ESTADOS_ENCUESTA.EN_CORRECCION;
@@ -1535,7 +1629,7 @@ export class EncuestaFormComponent implements OnInit {
     
     this.encuestasService.cambiarEstado(encuestaActual.encuestaId, ESTADOS_ENCUESTA.EN_CORRECCION).subscribe({
       next: (encuestaActualizada) => {
-        this.encuesta.set(encuestaActualizada);
+        this.procesarEncuesta(encuestaActualizada);
         this.mostrarModalEncuestaObservada.set(false);
         this.procesandoCambioEstadoCorreccion.set(false);
         this.mensajeModal.set('Ahora puede editar los campos observados');
@@ -1588,17 +1682,61 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   /**
+   * Contar observaciones visibles (activas o último ciclo de historial)
+   */
+  contarObservacionesVisibles(): number {
+    const activas = this.contarObservaciones();
+    if (activas > 0) {
+      return activas;
+    }
+    return this.obtenerSeccionesConObservacionesVisibles().length;
+  }
+
+  /**
+   * Obtener el último ciclo de historial disponible
+   */
+  private obtenerUltimoCicloHistorial(): number {
+    let maxCiclo = 0;
+    this.historialObservaciones().forEach((lista) => {
+      lista.forEach((item) => {
+        if (item.cicloRevision > maxCiclo) {
+          maxCiclo = item.cicloRevision;
+        }
+      });
+    });
+    return maxCiclo;
+  }
+
+  /**
+   * Obtener texto visible de observación (activa o historial último ciclo)
+   */
+  obtenerObservacionVisibleTexto(seccion: string): string {
+    const textoActivo = this.obtenerObservacionTexto(seccion).trim();
+    if (textoActivo) {
+      return textoActivo;
+    }
+    const ultimoCiclo = this.obtenerUltimoCicloHistorial();
+    if (!ultimoCiclo) {
+      return '';
+    }
+    const historial = this.historialObservaciones().get(seccion) || [];
+    const item = historial.find((entry) => entry.cicloRevision === ultimoCiclo);
+    return item?.texto?.trim() || '';
+  }
+
+  /**
+   * Verificar si existe observación visible para la sección
+   */
+  tieneObservacionVisible(seccion: string): boolean {
+    return this.obtenerObservacionVisibleTexto(seccion).length > 0;
+  }
+
+  /**
    * Obtener secciones con observaciones
    */
   obtenerSeccionesConObservaciones(): string[] {
     const secciones: string[] = [];
-    const seccionesNombres: { [key: string]: string } = {
-      empresa: 'Empresa',
-      encuestado: 'Encuestado',
-      productos: 'Productos',
-      fabricante: 'Fabricante',
-      compra: 'Compra',
-    };
+    const seccionesNombres: { [key: string]: string } = this.seccionLabels;
 
     this.observacionesTexto().forEach((texto, seccion) => {
       if (texto && texto.trim().length > 0) {
@@ -1614,6 +1752,32 @@ export class EncuestaFormComponent implements OnInit {
    */
   tieneObservaciones(): boolean {
     return this.contarObservaciones() > 0;
+  }
+
+  /**
+   * Verificar si debe mostrarse el panel de observaciones
+   */
+  mostrarPanelObservaciones(): boolean {
+    const hayObservaciones = this.contarObservaciones() > 0 || this.obtenerHistorialTotal() > 0;
+    const puedeVer =
+      this.puedeEditarObservaciones() ||
+      this.puedeVerObservaciones() ||
+      this.encuestadorPuedeVerObservaciones();
+    const resultado = hayObservaciones && puedeVer;
+    console.log('[ObsPanel] mostrarPanelObservaciones', {
+      encuestaId: this.encuesta()?.encuestaId,
+      estadoId: this.encuesta()?.estado?.estadoId ?? this.encuesta()?.estadoId,
+      hayObservaciones,
+      totalObservaciones: this.contarObservaciones(),
+      totalHistorial: this.obtenerHistorialTotal(),
+      puedeEditar: this.puedeEditarObservaciones(),
+      puedeVer,
+      esValidador: this.esValidador(),
+      esEncuestador: this.esEncuestador(),
+      rol: this.authService.getRolDescripcion(),
+      resultado
+    });
+    return resultado;
   }
 
   /**
@@ -2342,5 +2506,38 @@ export class EncuestaFormComponent implements OnInit {
         this.mostrarModalError.set(true);
       }
     });
+  }
+
+  /**
+   * Ir a una sección específica desde el panel de observaciones
+   */
+  irASeccion(seccion: string): void {
+    const elementId = `seccion-${seccion}`;
+    this.seccionExpandida.set(seccion);
+    if (seccion === 'fabricante' && !this.fabricantesCargados()) {
+      this.cargarFabricantes();
+    }
+    const elemento = document.getElementById(elementId);
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Pequeño enfoque visual
+      elemento.classList.add('enfoque-temporal');
+      setTimeout(() => {
+        elemento.classList.remove('enfoque-temporal');
+      }, 2000);
+    }
+  }
+
+  /**
+   * Marcar observación como resuelta/no resuelta
+   */
+  toggleObservacionResuelta(seccion: string): void {
+    const resueltas = new Set(this.observacionesResueltas());
+    if (resueltas.has(seccion)) {
+      resueltas.delete(seccion);
+    } else {
+      resueltas.add(seccion);
+    }
+    this.observacionesResueltas.set(resueltas);
   }
 }

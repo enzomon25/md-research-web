@@ -1,29 +1,29 @@
 /* Botón para colapsar/expandir historial, igual a btn-guardar-empresa pero azul */
 /* Botón historial compacto y centrado */
 .btn-toggle-historial {
-  padding: 0.32rem 1.1rem;
-  min-width: 160px;
-  height: 38px;
+  padding: 0.3rem 0.9rem;
+  min-width: 140px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.98rem;
-  margin: 18px auto 0 auto;
+  font-size: 0.85rem;
+  margin: 12px auto 0 auto;
   box-sizing: border-box;
-  background-color: #4e73df;
+  background-color: #1976d2;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   cursor: pointer;
   font-family: 'Roboto', sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(80, 112, 255, 0.07);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15);
 }
 
 .btn-toggle-historial:hover:not(:disabled) {
-  background-color: #2e59d9;
-  box-shadow: 0 4px 16px rgba(80, 112, 255, 0.12);
+  background-color: #1565c0;
+  box-shadow: 0 4px 14px rgba(25, 118, 210, 0.2);
 }
 
 .btn-toggle-historial:disabled {
@@ -45,11 +45,10 @@
 }
 
 .historial-container {
-  background: white;
-  border-radius: 0.35rem;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-  border: 1px solid #e3e6f0;
-  padding: 1.5rem;
+  background: #fff;
+  border-radius: 0.5rem;
+  border: 1px solid #e0e0e0;
+  padding: 1rem;
   font-family: 'Nunito', sans-serif;
   margin-bottom: 1rem;
 }
@@ -58,32 +57,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e3e6f0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .historial-header h3 {
   font-family: 'Nunito', sans-serif;
-  font-size: 1rem;
-  font-weight: 400;
-  color: #5a5c69;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
   margin: 0;
 }
 
 
 .timeline-card.compact-card {
-  background: #f8f9fc;
-  border: 1px solid #e3e6f0;
-  border-radius: 0.35rem;
-  padding: 0.5rem 0.75rem;
+  background: #f7f7f7;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.65rem;
   transition: all 0.2s ease-in-out;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
 }
 
 .timeline-card.compact-card:hover {
-  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.12);
 }
 
 
@@ -92,7 +90,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  font-size: 0.95em;
+  font-size: 0.85rem;
 }
 
 .card-row-main {
@@ -114,8 +112,8 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: #5a5c69;
-  font-size: 0.95em;
+  color: #666;
+  font-size: 0.8rem;
 
   .estado-badge {
     width: 100%;
@@ -130,7 +128,7 @@
 .timeline-item {
   display: flex;
   position: relative;
-  padding-bottom: 2rem;
+  padding-bottom: 1.25rem;
 }
 
 .timeline-item.last {
@@ -142,18 +140,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 1.5rem;
+  margin-right: 1rem;
   flex-shrink: 0;
 
-  width: 40px;
-  min-width: 40px;
-  max-width: 40px;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
   margin-right: 0;
 }
 
 .timeline-dot {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 3px solid white;
   box-shadow: 0 0 0 2px currentColor;
@@ -192,9 +190,9 @@
 .timeline-line {
   width: 2px;
   flex: 1;
-  background-color: #e3e6f0;
+  background-color: #e0e0e0;
   margin-top: 0.5rem;
-  min-height: 40px;
+  min-height: 28px;
 }
 
 .timeline-content {

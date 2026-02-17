@@ -1,8 +1,21 @@
-<div class="encuesta-form-container" [class.formulario-deshabilitado]="!esEditable()">
+<div class="encuesta-form-container"
+  [class.formulario-deshabilitado]="!esEditable()"
+  [class.con-panel-abierto]="tieneObservaciones() && panelObservacionesAbierto()">
   @if (cargando()) {
   <div class="loading">
     <p>Cargando encuesta...</p>
   </div>
+
+<app-confirm-dialog
+  [isOpen]="mostrarModalGuardarObservacion"
+  title="Guardar observación"
+  [message]="'¿Deseas guardar la observación de la sección ' + obtenerEtiquetaSeccionFormulario(seccionGuardarObservacion()) + '?'"
+  confirmText="Guardar"
+  cancelText="Cancelar"
+  [isLoading]="guardandoObservacionModal"
+  (confirm)="confirmarGuardarObservacion()"
+  (cancel)="cerrarModalGuardarObservacion()">
+</app-confirm-dialog>
   } @else if (encuesta()) {
   <div class="form-header">
     <div class="header-content">
@@ -28,8 +41,28 @@
   }
 
   <div class="form-sections">
-    <!-- Sección 1: Datos Generales -->
-    <div class="seccion-card">
+    <!-- Panel de Observaciones -->
+    @if (mostrarPanelObservaciones() && panelObservacionesAbierto()) {
+      <app-observaciones-panel
+        [observaciones]="observaciones()"
+        [observacionesResueltas]="observacionesResueltas()"
+        [panelAbierto]="panelObservacionesAbierto()"
+        [sectionLabels]="seccionLabels"
+        [historialObservaciones]="historialObservaciones()"
+        (irASeccion)="irASeccion($event)"
+        (togglePanel)="panelObservacionesAbierto.set(!panelObservacionesAbierto())">
+      </app-observaciones-panel>
+    }
+
+    @if (mostrarPanelObservaciones() && !panelObservacionesAbierto()) {
+      <button
+        type="button"
+        class="btn-abrir-panel-observaciones"
+        (click)="panelObservacionesAbierto.set(true)">
+        Observaciones ({{ contarObservacionesVisibles() }})
+      </button>
+    }
+
       <div class="seccion-header" (click)="toggleSeccion('datosGenerales')"
         [class.expandida]="esSeccionExpandida('datosGenerales')">
         <h2>Datos Generales
@@ -70,7 +103,7 @@
 
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
+        <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('datos_encuesta')">
           <div class="observacion-header">
             <label>Observaciones de Validación - Datos Generales</label>
             <div class="observacion-header-actions">
@@ -90,8 +123,8 @@
             (input)="actualizarObservacionTexto('datos_encuesta', $any($event.target).value)"
             placeholder="Agregar observaciones sobre datos generales y empresa..." rows="3"></textarea>
           <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('datos_encuesta')"
-              [disabled]="estaGuardandoObservacion('datos_encuesta')">
+            <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('datos_encuesta')"
+              [disabled]="estaGuardandoObservacion('datos_encuesta') || !obtenerObservacionTexto('datos_encuesta').trim()">
               Guardar
             </button>
             @if (estaGuardandoObservacion('datos_encuesta')) {
@@ -100,21 +133,21 @@
           </div>
         </div>
         }
-        @if (puedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+        @if (puedeVerObservaciones() && tieneObservacionVisible('datos_encuesta')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>Observaciones de Validación - Datos Generales</label>
             <span class="badge-readonly">Solo lectura</span>
           </div>
-          <textarea [value]="obtenerObservacionTexto('datos_encuesta')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('datos_encuesta')" readonly rows="3"></textarea>
         </div>
         }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('datos_encuesta').trim()) {
+        @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('datos_encuesta')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>⚠️ Observaciones del Validador - Datos Generales</label>
           </div>
-          <textarea [value]="obtenerObservacionTexto('datos_encuesta')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('datos_encuesta')" readonly rows="3"></textarea>
         </div>
         }
 
@@ -374,7 +407,7 @@
 
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
+        <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('empresa')">
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             <div class="observacion-header-actions">
@@ -396,8 +429,8 @@
             (input)="actualizarObservacionTexto('empresa', $any($event.target).value)"
             placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
           <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('empresa')"
-              [disabled]="estaGuardandoObservacion('empresa')">
+            <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('empresa')"
+              [disabled]="estaGuardandoObservacion('empresa') || !obtenerObservacionTexto('empresa').trim()">
               Guardar
             </button>
             @if (estaGuardandoObservacion('empresa')) {
@@ -406,12 +439,12 @@
           </div>
         </div>
         }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('empresa').trim()) {
+        @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('empresa')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>⚠️ Observaciones del Validador - Empresa</label>
           </div>
-          <textarea [value]="obtenerObservacionTexto('empresa')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('empresa')" readonly rows="3"></textarea>
         </div>
         }
 
@@ -588,7 +621,7 @@
 
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
+        <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('encuestado')">
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             <div class="observacion-header-actions">
@@ -611,8 +644,8 @@
             placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
           <div class="observacion-actions">
             <button type="button" class="btn-guardar-observacion"
-              [disabled]="estaGuardandoObservacion('encuestado')"
-              (click)="guardarObservacion('encuestado')">
+              [disabled]="estaGuardandoObservacion('encuestado') || !obtenerObservacionTexto('encuestado').trim()"
+              (click)="abrirModalGuardarObservacion('encuestado')">
               Guardar
             </button>
             @if (estaGuardandoObservacion('encuestado')) {
@@ -621,12 +654,12 @@
           </div>
         </div>
         }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('encuestado').trim()) {
+        @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('encuestado')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>⚠️ Observaciones del Validador - Encuestado</label>
           </div>
-          <textarea [value]="obtenerObservacionTexto('encuestado')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('encuestado')" readonly rows="3"></textarea>
         </div>
         }
 
@@ -706,7 +739,7 @@
         </div>
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('fabricante')">
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             @if (obtenerObservacionTexto('productos').trim()) {
@@ -725,8 +758,8 @@
               (input)="actualizarObservacionTexto('productos', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
               rows="3"></textarea>
           <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('productos')"
-              [disabled]="estaGuardandoObservacion('productos')">
+            <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('productos')"
+              [disabled]="estaGuardandoObservacion('productos') || !obtenerObservacionTexto('productos').trim()">
               Guardar
             </button>
             @if (estaGuardandoObservacion('productos')) {
@@ -735,12 +768,12 @@
           </div>
         </div>
         }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('productos').trim()) {
+        @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('productos')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>⚠️ Observaciones del Validador - Productos</label>
           </div>
-          <textarea [value]="obtenerObservacionTexto('productos')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('productos')" readonly rows="3"></textarea>
         </div>
         }
 
@@ -882,7 +915,7 @@
         </div>
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
-        <div class="observacion-container">
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('uso')">
           <div class="observacion-header">
             <label>Observaciones de Validación</label>
             @if (obtenerObservacionTexto('fabricante').trim()) {
@@ -901,8 +934,8 @@
               (input)="actualizarObservacionTexto('fabricante', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
               rows="3"></textarea>
           <div class="observacion-actions">
-            <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('fabricante')"
-              [disabled]="estaGuardandoObservacion('fabricante')">
+            <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('fabricante')"
+              [disabled]="estaGuardandoObservacion('fabricante') || !obtenerObservacionTexto('fabricante').trim()">
               Guardar
             </button>
             @if (estaGuardandoObservacion('fabricante')) {
@@ -911,12 +944,12 @@
           </div>
         </div>
         }
-        @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('fabricante').trim()) {
+        @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('fabricante')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
             <label>⚠️ Observaciones del Validador - Fabricante</label>
           </div>
-          <textarea [value]="obtenerObservacionTexto('fabricante')" readonly rows="3"></textarea>
+          <textarea [value]="obtenerObservacionVisibleTexto('fabricante')" readonly rows="3"></textarea>
         </div>
         }
 
@@ -1035,22 +1068,78 @@
 
           <!-- Observación del Validador -->
           @if (puedeEditarObservaciones()) {
-          <div class="observacion-container">
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('compra')">
             <div class="observacion-header">
               <label>Observaciones de Validación - Información de Compra</label>
+            <div class="observacion-header-actions">
+              @if (obtenerObservacionTexto('compra').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('compra')"
+                title="Desestimar observación">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Desestimar
+              </button>
+              }
+            </div>
             </div>
             <textarea [value]="obtenerObservacionTexto('compra')"
               (input)="actualizarObservacionTexto('compra', $any($event.target).value)"
               placeholder="Agregar observaciones sobre información de compra..." rows="3"></textarea>
             <div class="observacion-actions">
-              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
-                 [disabled]="estaGuardandoObservacion('compra')">
+              <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('compra')"
+                 [disabled]="estaGuardandoObservacion('compra') || !obtenerObservacionTexto('compra').trim()">
                 Guardar
               </button>
               @if (estaGuardandoObservacion('compra')) {
                 <span class="guardando-observacion">Guardando...</span>
               }
             </div>
+          </div>
+          }
+          @if (puedeVerObservaciones() && tieneObservacionVisible('compra')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Información de Compra</label>
+              <span class="badge-readonly">Solo lectura</span>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('compra')" readonly rows="3"></textarea>
+          </div>
+          }
+          @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('compra')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>⚠️ Observaciones del Validador - Información de Compra</label>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('compra')" readonly rows="3"></textarea>
+          </div>
+          }
+
+          <!-- Historial de Observaciones -->
+          @if (tieneHistorial('compra')) {
+          <div class="historial-observaciones-container">
+            <div class="historial-header" (click)="toggleHistorialSeccion('compra')"
+              [class.expandido]="esHistorialExpandido('compra')">
+              <span class="historial-icono">📜</span>
+              <label>Historial de Observaciones Anteriores</label>
+              <span class="historial-toggle">{{ esHistorialExpandido('compra') ? '−' : '+' }}</span>
+            </div>
+            @if (esHistorialExpandido('compra')) {
+            <div class="historial-body">
+              @for (item of obtenerHistorialSeccion('compra'); track item.historialId) {
+              <div class="historial-item">
+                <div class="historial-meta">
+                  <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                  <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                  <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="historial-texto">{{ item.texto }}</div>
+              </div>
+              }
+            </div>
+            }
           </div>
           }
         </div>
@@ -1088,11 +1177,11 @@
 
           <!-- Observación del Validador -->
           @if (puedeEditarObservaciones()) {
-          <div class="observacion-container">
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('productos')">
             <div class="observacion-header">
               <label>Observaciones de Validación</label>
-              @if (obtenerObservacionTexto('compra').trim()) {
-              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('compra')"
+              @if (obtenerObservacionTexto('uso').trim()) {
+              <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('uso')"
                 title="Desestimar observación">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1103,41 +1192,41 @@
               </button>
               }
             </div>
-            <textarea [value]="obtenerObservacionTexto('compra')"
-              (input)="actualizarObservacionTexto('compra', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
+            <textarea [value]="obtenerObservacionTexto('uso')"
+              (input)="actualizarObservacionTexto('uso', $any($event.target).value)" placeholder="Agregar observaciones sobre esta sección..."
               rows="3"></textarea>
             <div class="observacion-actions">
-              <button type="button" class="btn-guardar-observacion" (click)="guardarObservacion('compra')"
-                [disabled]="!obtenerObservacionTexto('compra').trim() || estaGuardandoObservacion('compra')">
+              <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('uso')"
+                [disabled]="estaGuardandoObservacion('uso') || !obtenerObservacionTexto('uso').trim()">
                 Guardar
               </button>
-              @if (estaGuardandoObservacion('compra')) {
+              @if (estaGuardandoObservacion('uso')) {
                 <span class="guardando-observacion">Guardando...</span>
               }
             </div>
           </div>
           }
-          @if (encuestadorPuedeVerObservaciones() && obtenerObservacionTexto('compra').trim()) {
+          @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('uso')) {
           <div class="observacion-container observacion-readonly">
             <div class="observacion-header">
               <label>⚠️ Observaciones del Validador - Motivación de Compra</label>
             </div>
-            <textarea [value]="obtenerObservacionTexto('compra')" readonly rows="3"></textarea>
+            <textarea [value]="obtenerObservacionVisibleTexto('uso')" readonly rows="3"></textarea>
           </div>
           }
 
           <!-- Historial de Observaciones -->
-          @if (tieneHistorial('compra')) {
+          @if (tieneHistorial('uso')) {
           <div class="historial-observaciones-container">
-            <div class="historial-header" (click)="toggleHistorialSeccion('compra')"
-              [class.expandido]="esHistorialExpandido('compra')">
+            <div class="historial-header" (click)="toggleHistorialSeccion('uso')"
+              [class.expandido]="esHistorialExpandido('uso')">
               <span class="historial-icono">📜</span>
               <label>Historial de Observaciones Anteriores</label>
-              <span class="historial-toggle">{{ esHistorialExpandido('compra') ? '−' : '+' }}</span>
+              <span class="historial-toggle">{{ esHistorialExpandido('uso') ? '−' : '+' }}</span>
             </div>
-            @if (esHistorialExpandido('compra')) {
+            @if (esHistorialExpandido('uso')) {
             <div class="historial-body">
-              @for (item of obtenerHistorialSeccion('compra'); track item.historialId) {
+              @for (item of obtenerHistorialSeccion('uso'); track item.historialId) {
               <div class="historial-item">
                 <div class="historial-meta">
                   <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
@@ -1490,3 +1579,14 @@
         </div>
       </div>
       }
+
+<app-confirm-dialog
+  [isOpen]="mostrarModalGuardarObservacion"
+  title="Guardar observación"
+  [message]="'¿Deseas guardar la observación de la sección ' + obtenerEtiquetaSeccionFormulario(seccionGuardarObservacion()) + '?'"
+  confirmText="Guardar"
+  cancelText="Cancelar"
+  [isLoading]="guardandoObservacionModal"
+  (confirm)="confirmarGuardarObservacion()"
+  (cancel)="cerrarModalGuardarObservacion()">
+</app-confirm-dialog>

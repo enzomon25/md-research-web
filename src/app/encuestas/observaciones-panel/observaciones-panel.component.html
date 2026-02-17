@@ -1,0 +1,132 @@
+<div class="observaciones-panel" [class.panel-cerrado]="!panelAbierto()">
+  <!-- Header del panel -->
+  <div class="panel-header">
+    <div class="panel-title-container">
+      <h4 class="panel-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Observaciones
+      </h4>
+      <span class="observaciones-badge" [class.tiene-observaciones]="observacionesActivas().length > 0">
+        {{ observacionesActivas().length }}
+      </span>
+    </div>
+    <button class="btn-toggle-panel" (click)="togglePanel.emit()" title="Minimizar/Expandir">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline [attr.points]="panelAbierto() ? '9 18 15 12 9 6' : '15 18 9 12 15 6'"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Lista de observaciones -->
+  @if (panelAbierto()) {
+    <div class="observaciones-list">
+      @if (observacionesActivas().length === 0) {
+        <div class="observaciones-vacio">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+            <path d="M9 15.5l3-3 3 3"></path>
+            <path d="M9 9l3 3 3-3"></path>
+          </svg>
+          <p>Sin observaciones activas</p>
+        </div>
+
+        @if (seccionesConHistorial().length > 0) {
+          <div class="historial-disponible">
+            <p class="historial-disponible-texto">Hay historial en estas secciones</p>
+            <div class="historial-disponible-list">
+              @for (seccion of seccionesConHistorial(); track seccion) {
+                <button
+                  type="button"
+                  class="historial-disponible-item"
+                  title="Esta sección tiene historial. Puedes ver el detalle en la sección."
+                  (click)="onIrASeccion(seccion)">
+                  {{ obtenerEtiquetaSeccion(seccion) }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      } @else {
+        @for (item of observacionesActivas(); track item.seccion) {
+          <div class="observacion-item" [class.resuelta]="estaResuelta(item.seccion)">
+            <!-- Header de la observación -->
+            <button class="observacion-header" (click)="onIrASeccion(item.seccion)" type="button">
+              <div class="observacion-header-left">
+                <div class="observacion-status">
+                  @if (estaResuelta(item.seccion)) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"></path>
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                  }
+                </div>
+                <div class="observacion-texto">
+                  <div class="observacion-seccion">{{ obtenerEtiquetaSeccion(item.seccion) }}</div>
+                  <div class="observacion-preview">{{ truncarTexto(item.data.observacion || '') }}</div>
+                </div>
+              </div>
+              <div class="observacion-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  [class.expandido]="seccionExpandida === item.seccion">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </button>
+
+            <!-- Contenido expandido -->
+            @if (seccionExpandida === item.seccion) {
+              <div class="observacion-body">
+                <div class="observacion-contenido">
+                  <p>{{ item.data.observacion }}</p>
+                </div>
+                <div class="observacion-meta">
+                  <span class="meta-usuario">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    {{ item.data.usuarioCreacion }}
+                  </span>
+                  <span class="meta-fecha">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    {{ item.data.fechaCreacion | date: 'dd/MM/yyyy HH:mm' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+
+    @if (observacionesHistorialUltimoCiclo().length > 0) {
+      <div class="observaciones-historial">
+        <div class="observaciones-historial-header">
+          <span class="observaciones-historial-icono">🗂️</span>
+          <span>Historial reciente</span>
+        </div>
+        <div class="observaciones-historial-list">
+          @for (item of observacionesHistorialUltimoCiclo(); track item.seccion) {
+            <button
+              type="button"
+              class="observaciones-historial-item"
+              title="Observación archivada. Ver detalle en la sección."
+              (click)="onIrASeccion(item.seccion)">
+              <span class="observaciones-historial-seccion">{{ obtenerEtiquetaSeccion(item.seccion) }}</span>
+              <span class="observaciones-historial-texto">{{ truncarTexto(item.data.texto || '', 50) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>
