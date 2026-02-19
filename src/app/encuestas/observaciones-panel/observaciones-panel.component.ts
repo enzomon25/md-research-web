@@ -122,7 +122,7 @@ export class ObservacionesPanelComponent {
       'empresa': 'Empresa',
       'encuestado': 'Datos del Encuestado',
       'productos': 'Productos',
-      'fabricante': 'Fabricante',
+      'fabricante': 'Fabricante, Marca y Tipo de Cemento comprado',
       'compra': 'Información de Compra',
       'uso': 'Comentario Cualitativo',
       'marca': 'Marca/Cemento',

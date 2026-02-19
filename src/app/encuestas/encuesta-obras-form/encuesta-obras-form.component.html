@@ -522,8 +522,8 @@
             </div>
             <!-- Eliminado: Condición Contribuyente y Tamaño Empresa -->
             <div class="registro-form-group">
-              <label>Actividad Económica *</label>
-              <input type="text" [(ngModel)]="nuevaEmpresa().actividadEconomica" placeholder="Actividad" required>
+              <label>Actividad Económica</label>
+              <input type="text" [(ngModel)]="nuevaEmpresa().actividadEconomica" placeholder="Actividad (opcional)">
             </div>
           </div>
         <!-- Dirección de planta al mismo nivel -->
@@ -894,12 +894,12 @@
       </div>
       }
 
-    <!-- Sección 6: Fabricante -->
+    <!-- Sección 6: Fabricante, Marca y Tipo de Cemento comprado -->
 
     <div class="seccion-card">
       <div class="seccion-header" (click)="toggleSeccion('fabricante')"
         [class.expandida]="esSeccionExpandida('fabricante')">
-        <h2>Fabricante
+        <h2>Fabricante, Marca y Tipo de Cemento comprado
           <span class="seccion-tag"
             [ngStyle]="{ 'background': seccionCompleta('fabricante') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
             {{ seccionCompleta('fabricante') ? 'Completado' : 'Pendiente' }}
@@ -909,98 +909,112 @@
       </div>
       @if (esSeccionExpandida('fabricante')) {
       <div class="seccion-body">
-        <div class="form-grid">
-          <div class="form-group full-width">
-            <label>Fabricantes y Marcas</label>
-            <div class="marcas-multiline-container">
-              @for (marcaSeleccionada of marcasSeleccionadas(); track $index) {
-                <div style="margin-bottom: 1.5rem;">
-                  <!-- Fabricante -->
-                  <div class="fabricante-row-controls">
-                    <div class="fabricante-select-container fabricante-cell">
-                      <select class="form-control-bootstrap" style="width: 100%;"
-                        [(ngModel)]="marcaSeleccionada.fabricanteId"
-                        (change)="onFabricanteChange($index, $event)"
-                        [disabled]="camposDeshabilitados()">
-                        <option [value]="0">Seleccione un fabricante</option>
-                        @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
-                          <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
-                        }
-                      </select>
-                    </div>
-                    @if (!marcaSeleccionada.encuestaFabricanteId && (marcasSeleccionadas().length > 1 || marcaSeleccionada.completo)) {
-                      <button type="button" class="btn-eliminar-fila-fabricante" (click)="eliminarMarcaFabricante($index)" title="Eliminar fila">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
+        <!-- Lista de tarjetas de producto -->
+        <div class="productos-lista">
+          @for (marcaSeleccionada of marcasSeleccionadas(); track $index) {
+            <div class="producto-card"
+              [class.producto-card--con-observacion]="encuestadorPuedeVerObservaciones() && tieneObservacionVisible('fabricante')">
+              <!-- Header del producto -->
+              <div class="producto-header">
+                <span class="producto-numero">Producto {{ $index + 1 }}</span>
+                @if (marcaSeleccionada.completo) {
+                  <span class="producto-badge producto-badge--completo">✓ Completo</span>
+                } @else {
+                  <span class="producto-badge producto-badge--pendiente">Pendiente</span>
+                }
+                @if (!marcaSeleccionada.encuestaFabricanteId && marcasSeleccionadas().length > 1) {
+                  <button type="button" class="btn-eliminar-producto" (click)="eliminarMarcaFabricante($index)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Eliminar
+                  </button>
+                }
+              </div>
+
+              <!-- Campos del producto en grilla -->
+              <div class="producto-campos">
+                <!-- Fabricante -->
+                <div class="producto-campo">
+                  <label class="producto-campo-label">Fabricante</label>
+                  <select class="producto-select"
+                    [(ngModel)]="marcaSeleccionada.fabricanteId"
+                    (change)="onFabricanteChange($index, $event)"
+                    [disabled]="camposDeshabilitados()">
+                    <option [value]="0">— Seleccione fabricante —</option>
+                    @for (fabricante of fabricantes(); track fabricante.fabricanteId) {
+                      <option [value]="fabricante.fabricanteId">{{ fabricante.razonSocial }}</option>
                     }
-                  </div>
+                  </select>
+                </div>
 
-                  <div class="fabricante-grid">
-                    <div class="fabricante-field-container fabricante-cell">
-                      <select class="form-control-bootstrap"
-                        [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
-                        (change)="onMarcaChange($index, $event)"
-                        [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId">
-                        <option [value]="0">Seleccione una marca</option>
-                        @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
-                          <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
-                        }
-                      </select>
-                    </div>
+                <!-- Marca -->
+                <div class="producto-campo">
+                  <label class="producto-campo-label">Marca</label>
+                  <select class="producto-select"
+                    [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
+                    (change)="onMarcaChange($index, $event)"
+                    [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId">
+                    <option [value]="0">— Seleccione marca —</option>
+                    @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
+                      <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
+                    }
+                  </select>
+                </div>
 
-                    <div class="fabricante-field-container fabricante-cell">
-                      <select class="form-control-bootstrap"
-                        [(ngModel)]="marcaSeleccionada.tipoCemento"
-                        (change)="onTipoCementoChange($index, $event)"
-                        [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId || !marcaSeleccionada.marcaFabricanteId">
-                        <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">Seleccione tipo de cemento</option>
-                        @for (tipo of tiposCementoPorFila[$index]; track tipo) {
-                          <option [value]="tipo">{{ tipo }}</option>
-                        }
-                      </select>
-                    </div>
+                <!-- Tipo de Cemento -->
+                <div class="producto-campo">
+                  <label class="producto-campo-label">Tipo de Cemento</label>
+                  <select class="producto-select"
+                    [(ngModel)]="marcaSeleccionada.tipoCemento"
+                    (change)="onTipoCementoChange($index, $event)"
+                    [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId || !marcaSeleccionada.marcaFabricanteId">
+                    <option [value]="''" [selected]="!marcaSeleccionada.tipoCemento">— Seleccione tipo —</option>
+                    @for (tipo of tiposCementoPorFila[$index]; track tipo) {
+                      <option [value]="tipo">{{ tipo }}</option>
+                    }
+                  </select>
+                </div>
 
-                    <div class="fabricante-field-container fabricante-cell">
-                      <select class="form-control-bootstrap"
-                        [(ngModel)]="marcaSeleccionada.descFisica"
-                        (change)="onDescFisicaChange($index, $event)"
-                        [disabled]="camposDeshabilitados() || !marcaSeleccionada.fabricanteId || !marcaSeleccionada.marcaFabricanteId || !marcaSeleccionada.tipoCemento || (descripcionesFisicasPorFila[$index]?.length || 0) === 1">
-                        <option [ngValue]="null" [selected]="!marcaSeleccionada.descFisica">Seleccione descripción física</option>
-                        @for (desc of descripcionesFisicasPorFila[$index]; track desc) {
-                          <option [ngValue]="desc">{{ desc }}</option>
-                        }
-                      </select>
-                      @if ((descripcionesFisicasPorFila[$index]?.length || 0) === 1) {
-                        <small class="fabricante-autofill">Se completa automáticamente</small>
-                      }
-                    </div>
-                  </div>
+                <!-- Color de Bolsa -->
+                <div class="producto-campo">
+                  <label class="producto-campo-label">Color de Bolsa</label>
+                  <input type="text" class="producto-input"
+                    [value]="marcaSeleccionada.colorBolsa || ''"
+                    (input)="actualizarColorBolsa($index, $any($event.target).value)"
+                    [disabled]="camposDeshabilitados()"
+                    placeholder="Ej: rojo, azul, blanco...">
+                </div>
+              </div>
 
-                  <!-- Botón Desestimar para cada elemento completo y con encuestaFabricanteId -->
-                  @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {
-                    <button type="button" class="btn-eliminar-observacion btn-desestimar-fabricante"
-                      (click)="abrirModalDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
-                      [disabled]="estaGuardandoDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
-                      title="Desestimar observación de fabricante">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                      Desestimar
-                    </button>
-                  }
+              <!-- Desestimar (encuestador) -->
+              @if (marcaSeleccionada.completo && marcaSeleccionada.encuestaFabricanteId && esEncuestador() && (encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO || encuesta()?.estadoId === ESTADOS_ENCUESTA.EN_CORRECCION)) {
+                <div style="padding: 0.75rem 1.25rem; border-top: 1px solid #e3e6f0; display: flex; justify-content: flex-end;">
+                  <button type="button" class="btn-desestimar-producto"
+                    (click)="abrirModalDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)"
+                    [disabled]="estaGuardandoDesestimarFabricante(marcaSeleccionada.encuestaFabricanteId)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Desestimar este producto
+                  </button>
                 </div>
               }
             </div>
-            <button type="button" class="btn-guardar-empresa btn-add-marca mt-2" (click)="agregarMarcaFabricante()">
-              Agregar otra marca/fabricante
-            </button>
-          </div>
+          }
         </div>
+
+        <!-- Botón agregar producto -->
+        @if (!camposDeshabilitados()) {
+          <button type="button" class="btn-agregar-producto" (click)="agregarMarcaFabricante()">
+            + Agregar otro fabricante / marca
+          </button>
+        }
+
         <!-- Observación del Validador -->
         @if (puedeEditarObservaciones()) {
           <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('fabricante')">
@@ -1035,7 +1049,7 @@
         @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('fabricante')) {
         <div class="observacion-container observacion-readonly">
           <div class="observacion-header">
-            <label>⚠️ Observaciones del Validador - Fabricante</label>
+            <label>⚠️ Observaciones del Validador - Fabricante, Marca y Tipo de Cemento comprado</label>
           </div>
           <textarea [value]="obtenerObservacionVisibleTexto('fabricante')" readonly rows="3"></textarea>
         </div>
@@ -1150,7 +1164,8 @@
             <div class="form-group full-width">
               <label>Precio</label>
               <input type="text" maxlength="1000" [value]="encuesta()?.precio || ''"
-                (input)="actualizarPrecio($any($event.target).value)">
+                (input)="actualizarPrecio($any($event.target).value)"
+                placeholder="¿En el precio mencionado está incluido el IGV o es aparte?">
             </div>
             <div class="form-group full-width">
               <label>¿Cuál es el lugar de compra?</label>

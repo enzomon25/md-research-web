@@ -112,8 +112,8 @@ export class EncuestaFormComponent implements OnInit {
   descripcionesFisicasPorFila: string[][] = [[]];
 
   // Modelo extendido: ahora incluye encuestaFabricanteId, tipoCemento y descFisica (ambos string)
-  marcasSeleccionadas = signal<Array<{ encuestaFabricanteId: number; marcaFabricanteId: number; fabricanteId: 0; tipoCemento?: string; descFisica?: string; completo?: boolean }>>([
-    { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }
+  marcasSeleccionadas = signal<Array<{ encuestaFabricanteId: number; marcaFabricanteId: number; fabricanteId: 0; tipoCemento?: string; descFisica?: string; colorBolsa?: string; completo?: boolean }>>([
+    { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', colorBolsa: '', completo: false }
   ]);
 
   onFabricanteChange(index: number, event: Event) {
@@ -252,16 +252,20 @@ export class EncuestaFormComponent implements OnInit {
     this.verificarYActualizarCompletoFabricante(index);
   }
 
+  actualizarColorBolsa(index: number, valor: string): void {
+    this.actualizarMarcaFabricante(index, 'colorBolsa', valor);
+  }
+
   verificarYActualizarCompletoFabricante(index: number): void {
     const marca = this.marcasSeleccionadas()[index];
-    const completo = !!(marca.fabricanteId && marca.marcaFabricanteId && marca.tipoCemento && marca.descFisica);
+    const completo = !!(marca.fabricanteId && marca.marcaFabricanteId && marca.tipoCemento);
     this.actualizarMarcaFabricante(index, 'completo', completo);
   }
 
   agregarMarcaFabricante(): void {
     this.marcasSeleccionadas.set([
       ...this.marcasSeleccionadas(),
-      { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }
+      { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', colorBolsa: '', completo: false }
     ]);
     this.marcasPorFila.push([]);
     this.tiposCementoPorFila.push([]);
@@ -489,7 +493,7 @@ export class EncuestaFormComponent implements OnInit {
 
   actualizarMarcaFabricante(
     index: number,
-    campo: keyof { marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string; completo?: boolean },
+    campo: keyof { marcaFabricanteId: number; fabricanteId: number; tipoCemento?: string; descFisica?: string; colorBolsa?: string; completo?: boolean },
     valor: any
   ): void {
     const nuevas = [...this.marcasSeleccionadas()];
@@ -588,7 +592,7 @@ export class EncuestaFormComponent implements OnInit {
     empresa: 'Empresa',
     encuestado: 'Datos del Encuestado',
     productos: 'Productos',
-    fabricante: 'Fabricante',
+    fabricante: 'Fabricante, Marca y Tipo de Cemento comprado',
     compra: 'Información de Compra',
     uso: 'Comentario Cualitativo',
   };
@@ -863,13 +867,15 @@ export class EncuestaFormComponent implements OnInit {
       const marcasAdaptadas = encuesta.marcas.map((m: any) => {
         const tipoCemento = m.marcaFabricante?.tipoCemento || '';
         const descFisica = m.marcaFabricante?.descFisica || '';
-        const completo = !!(m.encuestaFabricanteId || m.encuesta_fabricante_id) && !!(m.marcaFabricanteId) && !!(m.fabricanteId) && !!tipoCemento && !!descFisica;
+        const colorBolsa = m.colorBolsa ?? m.color_bolsa ?? '';
+        const completo = !!(m.encuestaFabricanteId || m.encuesta_fabricante_id) && !!(m.marcaFabricanteId) && !!(m.fabricanteId) && !!tipoCemento;
         return {
           encuestaFabricanteId: m.encuestaFabricanteId || m.encuesta_fabricante_id || 0,
           marcaFabricanteId: m.marcaFabricanteId || 0,
           fabricanteId: m.fabricanteId || 0,
           tipoCemento,
           descFisica,
+          colorBolsa,
           completo
         };
       });
@@ -909,7 +915,7 @@ export class EncuestaFormComponent implements OnInit {
       });
     } else {
       // Si no hay marcas, dejar al menos una fila vacía
-      this.marcasSeleccionadas.set([{ encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', completo: false }]);
+      this.marcasSeleccionadas.set([{ encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', colorBolsa: '', completo: false }]);
       console.log('LOG-4: marcasSeleccionadas vacío', this.marcasSeleccionadas());
       this.marcasPorFila = [[]];
     }
@@ -1989,7 +1995,7 @@ export class EncuestaFormComponent implements OnInit {
     const empresa = this.nuevaEmpresa();
 
     // Validar que todos los campos obligatorios estén completos, incluyendo dirección
-    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || !empresa.actividadEconomica || !empresa.direccion) {
+    if (!empresa.razonSocial || !empresa.ruc || !empresa.tipoEmpresaId || !empresa.direccion) {
       this.mensajeModal.set('Todos los campos son obligatorios, incluyendo la dirección');
       this.mostrarModalError.set(true);
       return;
@@ -2395,7 +2401,7 @@ export class EncuestaFormComponent implements OnInit {
         }
         return true;
       case 'uso':
-        return this.encuesta()?.deseoRegalo != null;
+        return !!(this.encuesta()?.deseoRegalo != null && this.encuesta()?.comentarioCuantitativo?.trim());
       default:
         return false;
     }
