@@ -590,7 +590,7 @@ export class EncuestaFormComponent implements OnInit {
     productos: 'Productos',
     fabricante: 'Fabricante',
     compra: 'Información de Compra',
-    uso: 'Motivación de Compra',
+    uso: 'Comentario Cualitativo',
   };
 
   constructor(
@@ -1029,7 +1029,6 @@ export class EncuestaFormComponent implements OnInit {
       ...(encuestaActual.descCompra && { descCompra: encuestaActual.descCompra }),
       ...(encuestaActual.precio !== undefined && encuestaActual.precio !== null && { precio: encuestaActual.precio }),
       ...(encuestaActual.usoCemento && { usoCemento: encuestaActual.usoCemento }),
-      ...(encuestaActual.motivoCompra && { motivoCompra: encuestaActual.motivoCompra }),
       ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo }),
       ...(encuestaActual.audioUrl && encuestaActual.audioUrl.trim() !== '' && { audioUrl: encuestaActual.audioUrl }),
       ...(encuestaActual.comentarioCuantitativo && encuestaActual.comentarioCuantitativo.trim() !== '' && { comentarioCuantitativo: encuestaActual.comentarioCuantitativo }),
@@ -1203,15 +1202,6 @@ export class EncuestaFormComponent implements OnInit {
     }
   }
 
-  actualizarMotivoCompra(valor: string): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual) {
-      this.encuesta.set({
-        ...encuestaActual,
-        motivoCompra: valor.trim() || undefined
-      });
-    }
-  }
 
   actualizarDeseoRegalo(valor: string): void {
     const encuestaActual = this.encuesta();
@@ -2405,10 +2395,7 @@ export class EncuestaFormComponent implements OnInit {
         }
         return true;
       case 'uso':
-        return !!(
-          this.encuesta()?.motivoCompra &&
-          this.encuesta()?.deseoRegalo != null
-        );
+        return this.encuesta()?.deseoRegalo != null;
       default:
         return false;
     }
@@ -2452,7 +2439,6 @@ export class EncuestaFormComponent implements OnInit {
       original.comentarioCuantitativo !== actual.comentarioCuantitativo ||
       original.precio !== actual.precio ||
       original.usoCemento !== actual.usoCemento ||
-      original.motivoCompra !== actual.motivoCompra ||
       original.deseoRegalo !== actual.deseoRegalo ||
       original.descCompra !== actual.descCompra;
 

@@ -94,13 +94,6 @@
               (input)="actualizarAudioUrl($any($event.target).value)"
               [disabled]="camposDeshabilitados()"></textarea>
           </div>
-          <div class="form-group full-width">
-            <label>Comentario cuantitativo</label>
-            <textarea rows="3" placeholder="Ingrese el comentario cuantitativo" 
-              [value]="encuesta()?.comentarioCuantitativo || ''"
-              (input)="actualizarComentarioCuantitativo($any($event.target).value)"
-              [disabled]="camposDeshabilitados()"></textarea>
-          </div>
         </div>
 
         <!-- Observación del Validador -->
@@ -1249,6 +1242,110 @@
           }
         </div>
       }
+    </div>
+
+      <!-- Sección: Comentario Cualitativo -->
+      <div id="seccion-uso" class="seccion-card">
+        <div class="seccion-header" (click)="toggleSeccion('uso')" [class.expandida]="esSeccionExpandida('uso')">
+          <h2>Comentario Cualitativo
+            <span class="seccion-tag"
+              [ngStyle]="{ 'background': seccionCompleta('uso') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+              {{ seccionCompleta('uso') ? 'Completado' : 'Pendiente' }}
+            </span>
+          </h2>
+          <span class="toggle-icon">{{ esSeccionExpandida('uso') ? '−' : '+' }}</span>
+        </div>
+        @if (esSeccionExpandida('uso')) {
+        <div class="seccion-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Comentario cualitativo</label>
+              <textarea rows="3" placeholder="Ingrese el comentario cualitativo"
+                [value]="encuesta()?.comentarioCuantitativo || ''"
+                (input)="actualizarComentarioCuantitativo($any($event.target).value)"
+                [disabled]="camposDeshabilitados()"></textarea>
+            </div>
+          </div>
+
+          <!-- Observación del Validador -->
+          @if (puedeEditarObservaciones()) {
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('uso')">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Comentario Cualitativo</label>
+              <div class="observacion-header-actions">
+                @if (obtenerObservacionTexto('uso').trim()) {
+                <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('uso')"
+                  title="Desestimar observación">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Desestimar
+                </button>
+                }
+              </div>
+            </div>
+            <textarea [value]="obtenerObservacionTexto('uso')"
+              (input)="actualizarObservacionTexto('uso', $any($event.target).value)"
+              placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('uso')"
+                [disabled]="estaGuardandoObservacion('uso') || !obtenerObservacionTexto('uso').trim()">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('uso')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
+            </div>
+          </div>
+          }
+          @if (puedeVerObservaciones() && tieneObservacionVisible('uso')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Comentario Cualitativo</label>
+              <span class="badge-readonly">Solo lectura</span>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('uso')" readonly rows="3"></textarea>
+          </div>
+          }
+          @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('uso')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>⚠️ Observaciones del Validador - Comentario Cualitativo</label>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('uso')" readonly rows="3"></textarea>
+          </div>
+          }
+
+          <!-- Historial de Observaciones -->
+          @if (tieneHistorial('uso')) {
+          <div class="historial-observaciones-container">
+            <div class="historial-header" (click)="toggleHistorialSeccion('uso')"
+              [class.expandido]="esHistorialExpandido('uso')">
+              <span class="historial-icono">📜</span>
+              <label>Historial de Observaciones Anteriores</label>
+              <span class="historial-toggle">{{ esHistorialExpandido('uso') ? '−' : '+' }}</span>
+            </div>
+            @if (esHistorialExpandido('uso')) {
+            <div class="historial-body">
+              @for (item of obtenerHistorialSeccion('uso'); track item.historialId) {
+              <div class="historial-item">
+                <div class="historial-meta">
+                  <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                  <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                  <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="historial-texto">{{ item.texto }}</div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
     </div>
 
       <!-- Panel de Resumen de Revisión (visible para todos los usuarios) -->

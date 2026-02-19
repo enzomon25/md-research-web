@@ -124,7 +124,7 @@ export class ObservacionesPanelComponent {
       'productos': 'Productos',
       'fabricante': 'Fabricante',
       'compra': 'Información de Compra',
-      'uso': 'Motivación de Compra',
+      'uso': 'Comentario Cualitativo',
       'marca': 'Marca/Cemento',
       'ubicacion': 'Ubicación'
     };

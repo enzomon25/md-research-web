@@ -548,6 +548,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     encuestado: 'Datos del Encuestado',
     fabricante: 'Fabricante',
     compra: 'Información de Compra',
+    uso: 'Comentario Cualitativo',
   };
 
   constructor(
@@ -1227,8 +1228,6 @@ export class EncuestaObrasFormComponent implements OnInit {
       ...(encuestaActual.descCompra && { descCompra: encuestaActual.descCompra }),
       ...(encuestaActual.precio !== undefined && encuestaActual.precio !== null && { precio: encuestaActual.precio }),
       ...(encuestaActual.usoCemento && { usoCemento: encuestaActual.usoCemento }),
-      ...(encuestaActual.motivoCompra && { motivoCompra: encuestaActual.motivoCompra }),
-      ...(encuestaActual.deseoRegalo !== undefined && encuestaActual.deseoRegalo !== null && { deseoRegalo: encuestaActual.deseoRegalo }),
       ...(encuestaActual.audioUrl && encuestaActual.audioUrl.trim() !== '' && { audioUrl: encuestaActual.audioUrl }),
       ...(encuestaActual.comentarioCuantitativo && encuestaActual.comentarioCuantitativo.trim() !== '' && { comentarioCuantitativo: encuestaActual.comentarioCuantitativo }),
       marcas: marcasValidas
@@ -1448,25 +1447,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     }
   }
 
-  actualizarMotivoCompra(valor: string): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual) {
-      this.encuesta.set({
-        ...encuestaActual,
-        motivoCompra: valor.trim() || undefined
-      });
-    }
-  }
 
-  actualizarDeseoRegalo(valor: string): void {
-    const encuestaActual = this.encuesta();
-    if (encuestaActual) {
-      this.encuesta.set({
-        ...encuestaActual,
-        deseoRegalo: valor ? Number(valor) : undefined
-      });
-    }
-  }
 
   validarNumeroPositivo(event: KeyboardEvent): void {
     const char = event.key;
@@ -2685,10 +2666,7 @@ export class EncuestaObrasFormComponent implements OnInit {
         }
         return true;
       case 'uso':
-        return !!(
-          this.encuesta()?.motivoCompra &&
-          this.encuesta()?.deseoRegalo != null
-        );
+        return true;
       default:
         return false;
     }
@@ -2696,7 +2674,7 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   // Determina si todas las secciones están completas
   todasLasSeccionesCompletas(): boolean {
-    const secciones = ['datosGenerales', 'datosObra', 'encuestado', 'fabricante', 'compra'];
+    const secciones = ['datosGenerales', 'datosObra', 'encuestado', 'fabricante', 'compra', 'uso'];
     return secciones.every(seccion => this.seccionCompleta(seccion));
   }
 
@@ -2731,8 +2709,6 @@ export class EncuestaObrasFormComponent implements OnInit {
       original.comentarioCuantitativo !== actual.comentarioCuantitativo ||
       original.precio !== actual.precio ||
       original.usoCemento !== actual.usoCemento ||
-      original.motivoCompra !== actual.motivoCompra ||
-      original.deseoRegalo !== actual.deseoRegalo ||
       original.descCompra !== actual.descCompra;
 
     this.tieneCambiosSinGuardar.set(hayCambios);
