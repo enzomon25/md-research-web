@@ -432,6 +432,11 @@ export class EmpresasDetailComponent implements OnInit {
     return Number.isNaN(empresaId) || empresaId <= 0 ? null : empresaId;
   }
 
+  getEncuestadoPorId(id: number | undefined): Encuestado | null {
+    if (!id) return null;
+    return this.encuestados().find((e) => e.encuestadoId === id) ?? null;
+  }
+
   getEstadoClass(estadoId: number | undefined): string {
     if (!estadoId) {
       return 'estado-default';

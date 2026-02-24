@@ -264,21 +264,41 @@
               <table>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Tipo de Encuesta</th>
+                    <th>Encuestado</th>
                     <th>Fecha de Encuesta</th>
-                    <th>Fecha de Creación</th>
                     <th>Creado Por</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  @for (encuesta of encuestas(); track encuesta.encuestaId) {
-                    <tr>
-                      <td>{{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}</td>
-                      <td>{{ encuesta.fechaEncuesta || '-' }}</td>
-                      <td>{{ encuesta.fechaCreacion || '-' }}</td>
-                      <td>{{ encuesta.usuarioCreacion || '-' }}</td>
+                  @for (encuesta of encuestas(); track encuesta.encuestaId; let i = $index) {
+                    <tr [class.fila-par]="i % 2 === 0">
+                      <td class="col-num">{{ i + 1 }}</td>
+                      <td>
+                        <span class="tipo-encuesta-badge" [class.tipo-obras]="encuesta.tipoEncuesta === 'OBRAS'">
+                          {{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}
+                        </span>
+                      </td>
+                      <td>
+                        @if (getEncuestadoPorId(encuesta.encuestadoId); as enc) {
+                          <div class="encuestado-cell">
+                            <span class="encuestado-nombre">{{ enc.nombres }} {{ enc.apepat }}</span>
+                            @if (enc.cargo) {
+                              <span class="encuestado-cargo">{{ enc.cargo }}</span>
+                            }
+                            @if (enc.tipoContacto && enc.contacto) {
+                              <span class="encuestado-contacto">{{ enc.tipoContacto }}: {{ enc.contacto }}</span>
+                            }
+                          </div>
+                        } @else {
+                          <span class="sin-dato">—</span>
+                        }
+                      </td>
+                      <td>{{ encuesta.fechaEncuesta || '—' }}</td>
+                      <td>{{ encuesta.usuarioCreacion || '—' }}</td>
                       <td>
                         <div class="estado-badge" [ngClass]="getEstadoClass(encuesta.estadoId)">
                           {{ encuesta.estado?.descripcionEstado || encuesta.estadoId }}
@@ -335,7 +355,7 @@
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="6" class="empty-message">No hay encuestas registradas para esta empresa</td>
+                      <td colspan="7" class="empty-message">No hay encuestas registradas para esta empresa</td>
                     </tr>
                   }
                 </tbody>
