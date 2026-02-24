@@ -45,6 +45,10 @@ export class EmpresasService {
     return this.http.post<Empresa>(this.apiUrl, empresa);
   }
 
+  actualizar(id: number, dto: Partial<Empresa>): Observable<Empresa> {
+    return this.http.patch<Empresa>(`${this.apiUrl}/${id}`, dto);
+  }
+
   listarTipos(): Observable<TipoEmpresa[]> {
     return this.http.get<TipoEmpresa[]>(`${this.apiUrl}/tipos`);
   }

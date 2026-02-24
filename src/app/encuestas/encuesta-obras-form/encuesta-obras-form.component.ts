@@ -482,6 +482,7 @@ export class EncuestaObrasFormComponent implements OnInit {
       mostrarModalError = signal(false);
       mensajeModal = signal('');
       guardandoEmpresa = signal(false);
+      guardandoEncuesta = signal(false);
       errorRucRegistro = signal('');
       tiposEmpresa = signal<TipoEmpresa[]>([]);
       lugaresCompra = signal<Parametro[]>([]);
@@ -1239,6 +1240,7 @@ export class EncuestaObrasFormComponent implements OnInit {
       marcas: marcasValidas
     };
 
+    this.guardandoEncuesta.set(true);
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
         this.procesarEncuesta(encuestaGuardada);
@@ -1268,11 +1270,13 @@ export class EncuestaObrasFormComponent implements OnInit {
           
           this.obraEncuestaService.crear(obraDto).subscribe({
             next: (obraCreada) => {
+              this.guardandoEncuesta.set(false);
               console.log('Obra encuesta guardada exitosamente:', obraCreada);
               this.mensajeModal.set('Encuesta y datos de la obra guardados exitosamente');
               this.mostrarModalExito.set(true);
             },
             error: (errorObra) => {
+              this.guardandoEncuesta.set(false);
               console.error('Error al guardar datos de la obra:', errorObra);
               // La encuesta se guardó pero hubo error en la obra
               this.mensajeModal.set('Encuesta guardada, pero hubo un error al guardar los datos de la obra. Por favor, intente nuevamente.');
@@ -1280,11 +1284,13 @@ export class EncuestaObrasFormComponent implements OnInit {
             }
           });
         } else {
+          this.guardandoEncuesta.set(false);
           this.mensajeModal.set('Encuesta guardada exitosamente');
           this.mostrarModalExito.set(true);
         }
       },
       error: (error) => {
+        this.guardandoEncuesta.set(false);
         console.error('Error al guardar encuesta:', error);
         this.mensajeModal.set('Error al guardar la encuesta. Por favor, intente nuevamente.');
         this.mostrarModalError.set(true);

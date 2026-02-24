@@ -1,7 +1,7 @@
-// ✅ REGLA 10: Imports organizados
 // 1. Angular Core
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 // 2. Angular Router
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,10 +9,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 // 3. Services propios
 import { EmpresasService } from '../../core/services/empresas.service';
 import { EncuestasService } from '../../core/services/encuestas.service';
+import { EncuestadosService } from '../../core/services/encuestados.service';
 import { ObraEncuestaService } from '../../core/services/obra-encuesta.service';
+import { UbicacionService } from '../../core/services/ubicacion.service';
 
 // 4. Models e Interfaces
-import { Empresa, Direccion, TipoEmpresa, Encuesta, PaginacionRespuesta } from '../../core/models';
+import { Empresa, Direccion, TipoEmpresa, Encuesta, Encuestado, PaginacionRespuesta } from '../../core/models';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
@@ -27,17 +29,24 @@ type EmpresaDetalle = Empresa & {
   mediosContacto?: Array<{ tipoMedioContacto: string; valor: string }> | null;
 };
 
+type Pais = { paisId: number; descPais: string; codPais: string };
+type Departamento = { departamentoId: number; descDepartamento: string; codPais: string; codDepartamento: string };
+type Provincia = { provinciaId: number; descProvincia: string; codPais: string; codDepartamento: string; codProvincia: string };
+type Distrito = { distritoId: number; descDistrito: string; codPais: string; codDepartamento: string; codProvincia: string; codDistrito: string };
+
 @Component({
   selector: 'app-empresas-detail',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, UserMenuComponent, PageHeaderComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, SidebarComponent, UserMenuComponent, PageHeaderComponent, ConfirmDialogComponent],
   templateUrl: './empresas-detail.component.html',
   styleUrl: './empresas-detail.component.scss',
 })
 export class EmpresasDetailComponent implements OnInit {
   private empresasService = inject(EmpresasService);
   private encuestasService = inject(EncuestasService);
+  private encuestadosService = inject(EncuestadosService);
   private obraEncuestaService = inject(ObraEncuestaService);
+  private ubicacionService = inject(UbicacionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -55,10 +64,61 @@ export class EmpresasDetailComponent implements OnInit {
   encuestasTotal = signal(0);
   encuestasLimite = 10;
 
+  encuestados = signal<Encuestado[]>([]);
+  encuestadosCargando = signal(false);
+
   // Modal de confirmación de clonación
   mostrarModalClonar = signal(false);
   encuestaParaClonar = signal<Encuesta | null>(null);
   clonandoEncuesta = signal(false);
+
+  // Modo edición
+  modoEdicion = signal(false);
+  guardandoCambios = signal(false);
+  errorEdicion = signal<string | null>(null);
+  exitoEdicion = signal<string | null>(null);
+
+  formEdicion: {
+    razonSocial: string;
+    ruc: string;
+    tipoEmpresaId: number | null;
+    tamanoEmpresaTop10k: string;
+    actividadEconomica: string;
+    direccion: {
+      direc: string;
+      codPais: string;
+      codDepartamento: string;
+      codProvincia: string;
+      codDistrito: string;
+      tipoVia: string;
+      nombreVia: string;
+      numeroVia: string;
+      referencia: string;
+    };
+  } = {
+    razonSocial: '',
+    ruc: '',
+    tipoEmpresaId: null,
+    tamanoEmpresaTop10k: '',
+    actividadEconomica: '',
+    direccion: {
+      direc: '',
+      codPais: '',
+      codDepartamento: '',
+      codProvincia: '',
+      codDistrito: '',
+      tipoVia: '',
+      nombreVia: '',
+      numeroVia: '',
+      referencia: '',
+    },
+  };
+
+  // Catálogos de ubigeo para el formulario de edición
+  paises: Pais[] = [];
+  departamentos: Departamento[] = [];
+  provincias: Provincia[] = [];
+  distritos: Distrito[] = [];
 
   ngOnInit(): void {
     this.cargarTiposEmpresa();
@@ -109,6 +169,7 @@ export class EmpresasDetailComponent implements OnInit {
           this.encuestasTotalPaginas.set(respuesta.totalPaginas);
           this.encuestasTotal.set(respuesta.total);
           this.encuestasCargando.set(false);
+          this.cargarEncuestados(respuesta.data);
         },
         error: (err) => {
           console.error('Error al cargar encuestas de la empresa:', err);
@@ -116,6 +177,31 @@ export class EmpresasDetailComponent implements OnInit {
           this.encuestasCargando.set(false);
         },
       });
+  }
+
+  cargarEncuestados(encuestas: Encuesta[]): void {
+    const ids = [
+      ...new Set(
+        encuestas
+          .map((e) => e.encuestadoId)
+          .filter((id): id is number => !!id && id > 0),
+      ),
+    ];
+    if (ids.length === 0) {
+      this.encuestados.set([]);
+      return;
+    }
+    this.encuestadosCargando.set(true);
+    this.encuestadosService.obtenerPorIds(ids).subscribe({
+      next: (encuestados) => {
+        this.encuestados.set(encuestados);
+        this.encuestadosCargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar encuestados:', err);
+        this.encuestadosCargando.set(false);
+      },
+    });
   }
 
   cambiarPaginaEncuestas(pagina: number): void {
@@ -135,6 +221,200 @@ export class EmpresasDetailComponent implements OnInit {
       },
     });
   }
+
+  // --- Modo edición ---
+
+  activarEdicion(): void {
+    const emp = this.empresa();
+    if (!emp) return;
+    this.formEdicion = {
+      razonSocial: emp.razonSocial ?? '',
+      ruc: emp.ruc ?? '',
+      tipoEmpresaId: emp.tipoEmpresaId ?? null,
+      tamanoEmpresaTop10k: emp.tamanoEmpresaTop10k ?? '',
+      actividadEconomica: emp.actividadEconomica ?? '',
+      direccion: {
+        direc: emp.direccion?.direc ?? '',
+        codPais: emp.direccion?.codPais ?? '',
+        codDepartamento: emp.direccion?.codDepartamento ?? '',
+        codProvincia: emp.direccion?.codProvincia ?? '',
+        codDistrito: emp.direccion?.codDistrito ?? '',
+        tipoVia: emp.direccion?.tipoVia ?? '',
+        nombreVia: emp.direccion?.nombreVia ?? '',
+        numeroVia: emp.direccion?.numeroVia ?? '',
+        referencia: emp.direccion?.referencia ?? '',
+      },
+    };
+    this.errorEdicion.set(null);
+    this.exitoEdicion.set(null);
+    this.cargarPaises();
+    this.modoEdicion.set(true);
+  }
+
+  cancelarEdicion(): void {
+    this.modoEdicion.set(false);
+    this.errorEdicion.set(null);
+    this.exitoEdicion.set(null);
+    this.paises = [];
+    this.departamentos = [];
+    this.provincias = [];
+    this.distritos = [];
+  }
+
+  guardarCambios(): void {
+    const id = this.empresaId();
+    if (!id) return;
+
+    this.guardandoCambios.set(true);
+    this.errorEdicion.set(null);
+    this.exitoEdicion.set(null);
+
+    const payload: Record<string, unknown> = {};
+    const emp = this.empresa()!;
+
+    if (this.formEdicion.razonSocial !== emp.razonSocial) {
+      payload['razonSocial'] = this.formEdicion.razonSocial;
+    }
+    if (this.formEdicion.ruc !== emp.ruc) {
+      payload['ruc'] = this.formEdicion.ruc;
+    }
+    if (this.formEdicion.tipoEmpresaId !== emp.tipoEmpresaId) {
+      payload['tipoEmpresaId'] = this.formEdicion.tipoEmpresaId;
+    }
+    if (this.formEdicion.tamanoEmpresaTop10k !== (emp.tamanoEmpresaTop10k ?? '')) {
+      payload['tamanoEmpresaTop10k'] = this.formEdicion.tamanoEmpresaTop10k || null;
+    }
+    if (this.formEdicion.actividadEconomica !== (emp.actividadEconomica ?? '')) {
+      payload['actividadEconomica'] = this.formEdicion.actividadEconomica || null;
+    }
+
+    // Siempre enviar dirección si existe o si el formulario tiene datos
+    payload['direccion'] = { ...this.formEdicion.direccion };
+
+    if (Object.keys(payload).length === 1 && 'direccion' in payload) {
+      const dir = this.formEdicion.direccion;
+      const empDir = emp.direccion;
+      const sinCambios = empDir &&
+        dir.codPais === (empDir.codPais ?? '') &&
+        dir.codDepartamento === (empDir.codDepartamento ?? '') &&
+        dir.codProvincia === (empDir.codProvincia ?? '') &&
+        dir.codDistrito === (empDir.codDistrito ?? '') &&
+        dir.tipoVia === (empDir.tipoVia ?? '') &&
+        dir.nombreVia === (empDir.nombreVia ?? '') &&
+        dir.numeroVia === (empDir.numeroVia ?? '') &&
+        dir.referencia === (empDir.referencia ?? '') &&
+        dir.direc === (empDir.direc ?? '');
+      if (sinCambios) {
+        delete payload['direccion'];
+      }
+    }
+
+    if (Object.keys(payload).length === 0) {
+      this.guardandoCambios.set(false);
+      this.exitoEdicion.set('No se detectaron cambios.');
+      return;
+    }
+
+    this.empresasService.actualizar(id, payload as Partial<Empresa>).subscribe({
+      next: (empresaActualizada) => {
+        this.empresa.set(empresaActualizada as EmpresaDetalle);
+        this.guardandoCambios.set(false);
+        this.exitoEdicion.set('Empresa actualizada correctamente.');
+        this.modoEdicion.set(false);
+        this.paises = [];
+        this.departamentos = [];
+        this.provincias = [];
+        this.distritos = [];
+      },
+      error: (err) => {
+        this.guardandoCambios.set(false);
+        const mensaje = err?.error?.message ?? 'Error al actualizar la empresa. Intenta nuevamente.';
+        this.errorEdicion.set(mensaje);
+      },
+    });
+  }
+
+  // --- Ubigeo en edición ---
+
+  cargarPaises(): void {
+    this.ubicacionService.listarPaises().subscribe({
+      next: (data: Pais[]) => {
+        this.paises = data;
+        if (this.formEdicion.direccion.codPais) {
+          this.cargarDepartamentos(this.formEdicion.direccion.codPais);
+        }
+      },
+      error: () => { this.paises = []; },
+    });
+  }
+
+  onPaisChange(): void {
+    this.formEdicion.direccion.codDepartamento = '';
+    this.formEdicion.direccion.codProvincia = '';
+    this.formEdicion.direccion.codDistrito = '';
+    this.departamentos = [];
+    this.provincias = [];
+    this.distritos = [];
+    if (this.formEdicion.direccion.codPais) {
+      this.cargarDepartamentos(this.formEdicion.direccion.codPais);
+    }
+  }
+
+  cargarDepartamentos(codPais: string): void {
+    this.ubicacionService.listarDepartamentos(codPais).subscribe({
+      next: (data: Departamento[]) => {
+        this.departamentos = data;
+        if (this.formEdicion.direccion.codDepartamento) {
+          this.cargarProvincias(this.formEdicion.direccion.codDepartamento, codPais);
+        }
+      },
+      error: () => { this.departamentos = []; },
+    });
+  }
+
+  onDepartamentoChange(): void {
+    this.formEdicion.direccion.codProvincia = '';
+    this.formEdicion.direccion.codDistrito = '';
+    this.provincias = [];
+    this.distritos = [];
+    if (this.formEdicion.direccion.codDepartamento && this.formEdicion.direccion.codPais) {
+      this.cargarProvincias(this.formEdicion.direccion.codDepartamento, this.formEdicion.direccion.codPais);
+    }
+  }
+
+  cargarProvincias(codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
+      next: (data: Provincia[]) => {
+        this.provincias = data;
+        if (this.formEdicion.direccion.codProvincia) {
+          this.cargarDistritos(
+            this.formEdicion.direccion.codProvincia,
+            codDepartamento,
+            codPais,
+          );
+        }
+      },
+      error: () => { this.provincias = []; },
+    });
+  }
+
+  onProvinciaChange(): void {
+    this.formEdicion.direccion.codDistrito = '';
+    this.distritos = [];
+    const dir = this.formEdicion.direccion;
+    if (dir.codProvincia && dir.codDepartamento && dir.codPais) {
+      this.cargarDistritos(dir.codProvincia, dir.codDepartamento, dir.codPais);
+    }
+  }
+
+  cargarDistritos(codProvincia: string, codDepartamento: string, codPais: string): void {
+    this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
+      next: (data: Distrito[]) => { this.distritos = data; },
+      error: () => { this.distritos = []; },
+    });
+  }
+
+  // ---
 
   volverListado(): void {
     this.router.navigate(['/empresas']);

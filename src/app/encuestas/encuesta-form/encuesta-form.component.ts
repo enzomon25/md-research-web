@@ -524,6 +524,7 @@ export class EncuestaFormComponent implements OnInit {
       mostrarModalError = signal(false);
       mensajeModal = signal('');
       guardandoEmpresa = signal(false);
+      guardandoEncuesta = signal(false);
       errorRucRegistro = signal('');
       tiposEmpresa = signal<TipoEmpresa[]>([]);
       lugaresCompra = signal<Parametro[]>([]);
@@ -1041,14 +1042,17 @@ export class EncuestaFormComponent implements OnInit {
       marcas: marcasValidas
     };
 
+    this.guardandoEncuesta.set(true);
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
+        this.guardandoEncuesta.set(false);
         this.procesarEncuesta(encuestaGuardada);
         this.tieneCambiosSinGuardar.set(false);
         this.mensajeModal.set('Encuesta guardada exitosamente');
         this.mostrarModalExito.set(true);
       },
       error: (error) => {
+        this.guardandoEncuesta.set(false);
         console.error('Error al guardar encuesta:', error);
         this.mensajeModal.set('Error al guardar la encuesta. Por favor, intente nuevamente.');
         this.mostrarModalError.set(true);

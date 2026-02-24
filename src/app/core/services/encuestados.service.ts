@@ -39,6 +39,11 @@ export class EncuestadosService {
     return this.http.get<Encuestado>(`${this.apiUrl}/${id}`);
   }
 
+  obtenerPorIds(ids: number[]): Observable<Encuestado[]> {
+    const params = new HttpParams().set('ids', ids.join(','));
+    return this.http.get<Encuestado[]>(`${this.apiUrl}/por-ids`, { params });
+  }
+
   crear(encuestado: Partial<Encuestado>): Observable<Encuestado> {
     return this.http.post<Encuestado>(this.apiUrl, encuestado);
   }

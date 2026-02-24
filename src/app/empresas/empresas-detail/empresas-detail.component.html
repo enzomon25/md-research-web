@@ -6,11 +6,20 @@
       <app-page-header
         title="Detalle de Empresa"
         subtitle="Información completa de la empresa seleccionada">
+        @if (!modoEdicion()) {
+          <button type="button" class="btn btn-primary" (click)="activarEdicion()">
+            Editar empresa
+          </button>
+        }
         <button type="button" class="btn btn-outline" (click)="volverListado()">
           Volver al listado
         </button>
         <app-user-menu />
       </app-page-header>
+
+      @if (exitoEdicion()) {
+        <div class="alert alert-success">{{ exitoEdicion() }}</div>
+      }
 
       @if (error()) {
         <div class="alert alert-danger">
@@ -27,53 +36,188 @@
 
       @if (!cargando() && empresa()) {
         <div class="detail-sections">
-          <div class="detail-card">
-            <h2 class="detail-title">Datos Generales</h2>
-            <div class="detail-row">
-              <span class="detail-label">RUC</span>
-              <span class="detail-value">{{ empresa()!.ruc }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Razón Social</span>
-              <span class="detail-value">{{ empresa()!.razonSocial }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Tipo Empresa</span>
-              <span class="detail-value">{{ obtenerNombreTipoEmpresa(empresa()!.tipoEmpresaId) }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Actividad Económica</span>
-              <span class="detail-value">{{ empresa()!.actividadEconomica || 'N/A' }}</span>
-            </div>
-          </div>
 
-          <div class="detail-card">
-            <h2 class="detail-title">Dirección</h2>
-            @if (empresa()!.direccion) {
+          <!-- ═══ MODO VISTA ═══ -->
+          @if (!modoEdicion()) {
+            <div class="detail-card">
+              <h2 class="detail-title">Datos Generales</h2>
               <div class="detail-row">
-                <span class="detail-label">Dirección</span>
-                <span class="detail-value">{{ empresa()!.direccion!.direc || 'N/A' }}</span>
+                <span class="detail-label">RUC</span>
+                <span class="detail-value">{{ empresa()!.ruc }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">País</span>
-                <span class="detail-value">{{ empresa()!.direccion!.descPais || 'N/A' }}</span>
+                <span class="detail-label">Razón Social</span>
+                <span class="detail-value">{{ empresa()!.razonSocial }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Departamento</span>
-                <span class="detail-value">{{ empresa()!.direccion!.descDepartamento || 'N/A' }}</span>
+                <span class="detail-label">Tipo Empresa</span>
+                <span class="detail-value">{{ obtenerNombreTipoEmpresa(empresa()!.tipoEmpresaId) }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Provincia</span>
-                <span class="detail-value">{{ empresa()!.direccion!.descProvincia || 'N/A' }}</span>
+                <span class="detail-label">Tamaño Empresa</span>
+                <span class="detail-value">{{ empresa()!.tamanoEmpresaTop10k || 'N/A' }}</span>
               </div>
               <div class="detail-row">
-                <span class="detail-label">Distrito</span>
-                <span class="detail-value">{{ empresa()!.direccion!.descDistrito || 'N/A' }}</span>
+                <span class="detail-label">Actividad Económica</span>
+                <span class="detail-value">{{ empresa()!.actividadEconomica || 'N/A' }}</span>
               </div>
-            } @else {
-              <div class="detail-empty">Sin dirección registrada</div>
-            }
-          </div>
+            </div>
+
+            <div class="detail-card">
+              <h2 class="detail-title">Dirección</h2>
+              @if (empresa()!.direccion) {
+                <div class="detail-row">
+                  <span class="detail-label">Dirección</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.direc || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">País</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.descPais || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Departamento</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.descDepartamento || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Provincia</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.descProvincia || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Distrito</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.descDistrito || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Tipo Vía</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.tipoVia || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Nombre Vía</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.nombreVia || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Número Vía</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.numeroVia || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Referencia</span>
+                  <span class="detail-value">{{ empresa()!.direccion!.referencia || 'N/A' }}</span>
+                </div>
+              } @else {
+                <div class="detail-empty">Sin dirección registrada</div>
+              }
+            </div>
+          }
+
+          <!-- ═══ MODO EDICIÓN ═══ -->
+          @if (modoEdicion()) {
+            <div class="detail-card">
+              <h2 class="detail-title">Editar Empresa</h2>
+
+              @if (errorEdicion()) {
+                <div class="alert alert-danger">{{ errorEdicion() }}</div>
+              }
+
+              <div class="edit-form">
+                <div class="edit-section-title">Datos Generales</div>
+                <div class="edit-grid">
+                  <div class="edit-field">
+                    <label class="edit-label">RUC</label>
+                    <input class="edit-input" type="text" maxlength="20" [(ngModel)]="formEdicion.ruc" placeholder="RUC de la empresa" />
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Razón Social</label>
+                    <input class="edit-input" type="text" maxlength="250" [(ngModel)]="formEdicion.razonSocial" placeholder="Razón social" />
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Tipo de Empresa</label>
+                    <select class="edit-select" [(ngModel)]="formEdicion.tipoEmpresaId">
+                      <option [ngValue]="null">Seleccione tipo</option>
+                      @for (tipo of tiposEmpresa(); track tipo.tipoEmpresaId) {
+                        <option [ngValue]="tipo.tipoEmpresaId">{{ tipo.descripcionTipoEmpresa }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Tamaño Empresa</label>
+                    <input class="edit-input" type="text" maxlength="50" [(ngModel)]="formEdicion.tamanoEmpresaTop10k" placeholder="Ej: Top 10k" />
+                  </div>
+                  <div class="edit-field edit-field--full">
+                    <label class="edit-label">Actividad Económica</label>
+                    <input class="edit-input" type="text" maxlength="250" [(ngModel)]="formEdicion.actividadEconomica" placeholder="Actividad económica" />
+                  </div>
+                </div>
+
+                <div class="edit-section-title">Dirección</div>
+                <div class="edit-grid">
+                  <div class="edit-field edit-field--full">
+                    <label class="edit-label">Dirección</label>
+                    <input class="edit-input" type="text" maxlength="1000" [(ngModel)]="formEdicion.direccion.direc" placeholder="Dirección completa" />
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">País</label>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codPais" (change)="onPaisChange()">
+                      <option value="">Seleccione país</option>
+                      @for (pais of paises; track pais.paisId) {
+                        <option [value]="pais.codPais">{{ pais.descPais }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Departamento</label>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDepartamento" (change)="onDepartamentoChange()" [disabled]="!formEdicion.direccion.codPais">
+                      <option value="">Seleccione departamento</option>
+                      @for (dep of departamentos; track dep.departamentoId) {
+                        <option [value]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Provincia</label>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codProvincia" (change)="onProvinciaChange()" [disabled]="!formEdicion.direccion.codDepartamento">
+                      <option value="">Seleccione provincia</option>
+                      @for (prov of provincias; track prov.provinciaId) {
+                        <option [value]="prov.codProvincia">{{ prov.descProvincia }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Distrito</label>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDistrito" [disabled]="!formEdicion.direccion.codProvincia">
+                      <option value="">Seleccione distrito</option>
+                      @for (dist of distritos; track dist.distritoId) {
+                        <option [value]="dist.codDistrito">{{ dist.descDistrito }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Tipo Vía</label>
+                    <input class="edit-input" type="text" maxlength="20" [(ngModel)]="formEdicion.direccion.tipoVia" placeholder="Ej: AV, JR, CA" />
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Nombre Vía</label>
+                    <input class="edit-input" type="text" maxlength="500" [(ngModel)]="formEdicion.direccion.nombreVia" placeholder="Nombre de la vía" />
+                  </div>
+                  <div class="edit-field">
+                    <label class="edit-label">Número</label>
+                    <input class="edit-input" type="text" maxlength="50" [(ngModel)]="formEdicion.direccion.numeroVia" placeholder="Número" />
+                  </div>
+                  <div class="edit-field edit-field--full">
+                    <label class="edit-label">Referencia</label>
+                    <input class="edit-input" type="text" maxlength="500" [(ngModel)]="formEdicion.direccion.referencia" placeholder="Referencia adicional" />
+                  </div>
+                </div>
+
+                <div class="edit-actions">
+                  <button type="button" class="btn btn-outline" (click)="cancelarEdicion()" [disabled]="guardandoCambios()">
+                    Cancelar
+                  </button>
+                  <button type="button" class="btn btn-primary" (click)="guardarCambios()" [disabled]="guardandoCambios()">
+                    {{ guardandoCambios() ? 'Guardando...' : 'Guardar cambios' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
 
           <div class="detail-card">
             <h2 class="detail-title">Auditoría</h2>
@@ -96,7 +240,7 @@
           </div>
         </div>
 
-        <div class="detail-card">
+        <div class="detail-card" style="margin-top: 2rem;">
           <div class="table-header">
             <h2 class="detail-title">Encuestas de la empresa</h2>
             <span class="table-count">
@@ -213,6 +357,49 @@
                 </button>
               </div>
             }
+          }
+        </div>
+
+        <div class="detail-card" style="margin-top: 2rem;">
+          <div class="table-header">
+            <h2 class="detail-title">Encuestados asociados</h2>
+            <span class="table-count">{{ encuestados().length }} encuestado(s)</span>
+          </div>
+
+          @if (encuestadosCargando()) {
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Cargando encuestados...</p>
+            </div>
+          } @else if (encuestados().length === 0) {
+            <div class="empty-state">
+              <p>No hay encuestados registrados en las encuestas de esta empresa.</p>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nombres</th>
+                    <th>Apellido Paterno</th>
+                    <th>Cargo</th>
+                    <th>Medio de Contacto</th>
+                    <th>Contacto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (enc of encuestados(); track enc.encuestadoId) {
+                    <tr>
+                      <td>{{ enc.nombres }}</td>
+                      <td>{{ enc.apepat || '-' }}</td>
+                      <td>{{ enc.cargo || '-' }}</td>
+                      <td>{{ enc.tipoContacto || '-' }}</td>
+                      <td>{{ enc.contacto || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           }
         </div>
       }

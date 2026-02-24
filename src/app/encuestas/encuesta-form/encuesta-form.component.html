@@ -1310,8 +1310,8 @@
         <div class="form-actions">
           <button class="btn-cancelar" (click)="volver()">Cancelar</button>
           @if (!esValidador()) {
-            <button class="btn-guardar-empresa" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados()">
-              {{ camposDeshabilitados() ? 'Guardando...' : 'Guardar Encuesta' }}
+            <button class="btn-guardar-empresa" (click)="guardarEncuesta()" [disabled]="camposDeshabilitados() || guardandoEncuesta()">
+              {{ guardandoEncuesta() ? 'Guardando...' : 'Guardar Encuesta' }}
             </button>
           }
           @if (todasLasSeccionesCompletas() && esEditable()) {

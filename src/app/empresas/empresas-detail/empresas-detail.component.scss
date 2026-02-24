@@ -308,6 +308,112 @@ tbody tr:hover {
   color: $primary;
 }
 
+// Botón primario
+.btn-primary {
+  background-color: $primary;
+  color: $white;
+  border: none;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-base;
+  cursor: pointer;
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: $transition-base;
+  box-shadow: $shadow-sm;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+    box-shadow: $shadow-md;
+  }
+
+  &:disabled {
+    background-color: $gray-400;
+    cursor: not-allowed;
+  }
+}
+
+.alert-success {
+  background: rgba($success, 0.1);
+  color: $success-dark;
+  border: 1px solid rgba($success, 0.3);
+  padding: $spacing-md;
+  border-radius: $border-radius-base;
+  margin-bottom: $spacing-lg;
+}
+
+// Formulario de edición
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.edit-section-title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: $gray-700;
+  padding-bottom: $spacing-xs;
+  border-bottom: 2px solid $gray-200;
+  margin-bottom: $spacing-xs;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.edit-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $gray-600;
+}
+
+.edit-input,
+.edit-select {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-base;
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  color: $gray-800;
+  background-color: $white;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.15);
+  }
+
+  &:disabled {
+    background-color: $gray-100;
+    color: $gray-500;
+    cursor: not-allowed;
+  }
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid $gray-200;
+}
+
 @media (max-width: 768px) {
   .detail-row {
     flex-direction: column;
@@ -321,5 +427,13 @@ tbody tr:hover {
   .table-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-field--full {
+    grid-column: 1;
   }
 }
