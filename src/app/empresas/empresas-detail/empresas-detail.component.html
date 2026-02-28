@@ -306,17 +306,6 @@
                       </td>
                       <td>
                         <div class="acciones-container">
-                          @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('registro')) {
-                            <button
-                              class="btn-accion"
-                              (click)="reanudarEncuesta(encuesta.encuestaId!)"
-                              title="Reanudar encuesta">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M5 12h14"></path>
-                                <path d="m12 5 7 7-7 7"></path>
-                              </svg>
-                            </button>
-                          }
                           @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('observ')) {
                             <button
                               class="btn-accion"
@@ -328,7 +317,7 @@
                               </svg>
                             </button>
                           }
-                          @if (encuesta.estado?.descripcionEstado && !(encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('registro')) && !(encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('observ'))) {
+                          @if (puedeVerEncuesta(encuesta.estadoId)) {
                             <button
                               class="btn-accion"
                               (click)="revisarEncuesta(encuesta.encuestaId!)"

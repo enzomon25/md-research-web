@@ -203,11 +203,12 @@ export class EncuestaObrasFormComponent implements OnInit {
   marcasDisponiblesParaFila(index: number): any[] {
     const seleccionadas = this.marcasSeleccionadas().map((m, i) => i !== index ? m.marcaFabricanteId : 0).filter(id => !!id);
     const marcas = (this.marcasPorFila[index] || []).filter(m => !seleccionadas.includes(m.marcaFabricanteId));
-    // Filtrar duplicados por fabricanteId y nombreMarca
+    const selectedId = this.marcasSeleccionadas()[index]?.marcaFabricanteId;
+    // Filtrar duplicados por fabricanteId y nombreMarca, priorizando el registro actualmente seleccionado
     const unicos = new Map<string, any>();
     for (const marca of marcas) {
       const key = `${marca.fabricanteId}-${marca.nombreMarca}`;
-      if (!unicos.has(key)) {
+      if (!unicos.has(key) || marca.marcaFabricanteId === selectedId) {
         unicos.set(key, marca);
       }
     }

@@ -12,6 +12,7 @@ import { EncuestasService } from '../../core/services/encuestas.service';
 import { EncuestadosService } from '../../core/services/encuestados.service';
 import { ObraEncuestaService } from '../../core/services/obra-encuesta.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
+import { AuthService } from '../../core/services/auth.service';
 
 // 4. Models e Interfaces
 import { Empresa, Direccion, TipoEmpresa, Encuesta, Encuestado, PaginacionRespuesta } from '../../core/models';
@@ -19,6 +20,7 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 import { ESTADOS_ENCUESTA } from '../../core/constants';
+import { ROLES } from '../../core/constants/roles.constants';
 import { TIPO_REFERENCIA } from '../../core/constants/tipo-referencia.constant';
 
 // 5. Modales
@@ -47,6 +49,7 @@ export class EmpresasDetailComponent implements OnInit {
   private encuestadosService = inject(EncuestadosService);
   private obraEncuestaService = inject(ObraEncuestaService);
   private ubicacionService = inject(UbicacionService);
+  private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -66,6 +69,15 @@ export class EmpresasDetailComponent implements OnInit {
 
   encuestados = signal<Encuestado[]>([]);
   encuestadosCargando = signal(false);
+
+  get esEncuestador(): boolean {
+    return this.authService.getRolDescripcion() === ROLES.ENCUESTADOR;
+  }
+
+  puedeVerEncuesta(estadoId: number): boolean {
+    if (!this.esEncuestador) return true;
+    return estadoId === ESTADOS_ENCUESTA.APROBADO || estadoId === ESTADOS_ENCUESTA.TRANSFERIDO;
+  }
 
   // Modal de confirmación de clonación
   mostrarModalClonar = signal(false);
@@ -161,15 +173,17 @@ export class EmpresasDetailComponent implements OnInit {
     this.encuestasService
       .listar(this.encuestasPagina(), this.encuestasLimite, {
         empresaId,
-        estadoId: ESTADOS_ENCUESTA.APROBADO.toString(),
       })
       .subscribe({
         next: (respuesta: PaginacionRespuesta<Encuesta>) => {
-          this.encuestas.set(respuesta.data);
+          const sinEnRegistro = respuesta.data.filter(
+            (e) => e.estadoId !== ESTADOS_ENCUESTA.EN_REGISTRO,
+          );
+          this.encuestas.set(sinEnRegistro);
           this.encuestasTotalPaginas.set(respuesta.totalPaginas);
           this.encuestasTotal.set(respuesta.total);
           this.encuestasCargando.set(false);
-          this.cargarEncuestados(respuesta.data);
+          this.cargarEncuestados(sinEnRegistro);
         },
         error: (err) => {
           console.error('Error al cargar encuestas de la empresa:', err);
