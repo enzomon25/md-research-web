@@ -519,6 +519,15 @@ export class EmpresasDetailComponent implements OnInit {
     this.clonandoEncuesta.set(false);
   }
 
+  private fechaHoyPeru(): string {
+    const ahora = new Date();
+    const enPeru = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+    const y = enPeru.getFullYear();
+    const m = String(enPeru.getMonth() + 1).padStart(2, '0');
+    const d = String(enPeru.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   confirmarClonar(): void {
     const encuesta = this.encuestaParaClonar();
     if (!encuesta || !encuesta.encuestaId) {
@@ -560,7 +569,7 @@ export class EmpresasDetailComponent implements OnInit {
           ...(detalle.motivoCompra && { motivoCompra: detalle.motivoCompra }),
           ...(detalle.deseoRegalo !== undefined &&
             detalle.deseoRegalo !== null && { deseoRegalo: detalle.deseoRegalo }),
-          ...(detalle.fechaEncuesta && { fechaEncuesta: detalle.fechaEncuesta }),
+          fechaEncuesta: this.fechaHoyPeru(),
           ...(detalle.precio !== undefined && detalle.precio !== null && {
             precio: detalle.precio,
           }),

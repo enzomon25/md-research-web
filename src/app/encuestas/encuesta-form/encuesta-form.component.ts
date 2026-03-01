@@ -845,13 +845,20 @@ export class EncuestaFormComponent implements OnInit {
   procesarEncuesta(encuesta: Encuesta): void {
     console.log('LOG-1: Encuesta cargada del backend', encuesta);
     
-    // Convertir fechaEncuesta de ISO a formato YYYY-MM-DD si existe
+    // Convertir fechaEncuesta a formato YYYY-MM-DD sin pasar por Date (evita desfase UTC vs Lima)
     if (encuesta.fechaEncuesta) {
-      const fecha = new Date(encuesta.fechaEncuesta);
-      const año = fecha.getFullYear();
-      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-      const dia = String(fecha.getDate()).padStart(2, '0');
-      encuesta.fechaEncuesta = `${año}-${mes}-${dia}`;
+      const raw = encuesta.fechaEncuesta as string;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+        // Ya está en formato correcto, no transformar
+      } else {
+        // Tiene componente de hora (ISO): extraer la parte de fecha en zona Lima
+        const fecha = new Date(raw);
+        const enLima = new Date(fecha.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+        const año = enLima.getFullYear();
+        const mes = String(enLima.getMonth() + 1).padStart(2, '0');
+        const dia = String(enLima.getDate()).padStart(2, '0');
+        encuesta.fechaEncuesta = `${año}-${mes}-${dia}`;
+      }
     }
     
     // Guardar copia original para detectar cambios
