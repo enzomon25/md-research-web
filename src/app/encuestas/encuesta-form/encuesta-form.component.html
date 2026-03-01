@@ -1009,7 +1009,7 @@
                 (change)="seleccionarTipoCompraCemento($any($event.target).value)">
                 <option value="" disabled>Seleccione un tipo de compra</option>
                 @for (tipo of tiposCompraCemento(); track tipo.llave) {
-                <option [value]="tipo.llave">{{ tipo.valor }}</option>
+                <option [value]="tipo.llave" [selected]="tipo.llave === encuesta()?.tipoCompra">{{ tipo.valor }}</option>
                 }
               </select>
             </div>
@@ -1021,7 +1021,7 @@
                 (change)="seleccionarPresentacionCompra($any($event.target).value)">
                 <option value="" disabled>Seleccione una presentación</option>
                 @for (presentacion of tiposPresentacionGranel(); track presentacion.llave) {
-                <option [value]="presentacion.llave">{{ presentacion.valor }}</option>
+                <option [value]="presentacion.llave" [selected]="presentacion.llave === encuesta()?.presentacionCompra">{{ presentacion.valor }}</option>
                 }
               </select>
             </div>
@@ -1034,7 +1034,7 @@
                 (change)="seleccionarCantidadPresentacion($any($event.target).value)">
                 <option value="" disabled>Seleccione una cantidad</option>
                 @for (cantidad of cantidadPresentacionBolsa(); track cantidad.llave) {
-                <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                <option [value]="cantidad.llave" [selected]="cantidad.llave === encuesta()?.cantidadPresentacionCompra">{{ cantidad.valor }}</option>
                 }
               </select>
             </div>
@@ -1049,12 +1049,12 @@
                   @if (encuesta()?.presentacionCompra?.includes('BOMBON') ||
                   encuesta()?.presentacionCompra?.includes('Bombona')) {
                   @for (cantidad of cantidadPresentacionBombona(); track cantidad.llave) {
-                  <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                  <option [value]="cantidad.llave" [selected]="cantidad.llave === encuesta()?.cantidadPresentacionCompra">{{ cantidad.valor }}</option>
                   }
                   }
                   @if (encuesta()?.presentacionCompra?.includes('BIGBAG') || encuesta()?.presentacionCompra?.includes('BIG_BAG') || encuesta()?.presentacionCompra?.includes('Big Bag')) {
                     @for (cantidad of cantidadPresentacionBigbag(); track cantidad.llave) {
-                      <option [value]="cantidad.llave">{{ cantidad.valor }}</option>
+                      <option [value]="cantidad.llave" [selected]="cantidad.llave === encuesta()?.cantidadPresentacionCompra">{{ cantidad.valor }}</option>
                     }
                   }
                 </select>
