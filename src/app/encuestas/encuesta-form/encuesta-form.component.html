@@ -913,8 +913,8 @@
           }
         </div>
 
-        <!-- Botón agregar producto -->
-        @if (!camposDeshabilitados()) {
+        <!-- Botón agregar producto (máximo 3 marcas) -->
+        @if (!camposDeshabilitados() && marcasSeleccionadas().length < 3) {
           <button type="button" class="btn-agregar-producto" (click)="agregarMarcaFabricante()">
             + Agregar otro fabricante / marca
           </button>
