@@ -16,7 +16,8 @@ export class EmpresasService {
     limite: number = 10,
     razonSocial?: string,
     ruc?: string,
-    tipoEmpresaId?: number | null
+    tipoEmpresaId?: number | null,
+    direccion?: string,
   ): Observable<PaginacionRespuesta<Empresa>> {
     let params = new HttpParams()
       .set('pagina', pagina.toString())
@@ -32,6 +33,10 @@ export class EmpresasService {
 
     if (tipoEmpresaId !== undefined && tipoEmpresaId !== null) {
       params = params.set('tipoEmpresaId', tipoEmpresaId.toString());
+    }
+
+    if (direccion) {
+      params = params.set('direccion', direccion);
     }
 
     return this.http.get<PaginacionRespuesta<Empresa>>(this.apiUrl, { params });

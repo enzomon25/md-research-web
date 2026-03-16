@@ -47,6 +47,7 @@ export class EmpresasListComponent implements OnInit {
   filtroRazonSocial = signal('');
   filtroRuc = signal('');
   filtroTipoEmpresa = signal<number | null>(null);
+  filtroDireccion = signal('');
 
   ngOnInit(): void {
     this.cargarTiposEmpresa();
@@ -64,7 +65,8 @@ export class EmpresasListComponent implements OnInit {
     const filtros = {
       razonSocial: this.filtroRazonSocial() || undefined,
       ruc: this.filtroRuc() || undefined,
-      tipoEmpresaId: this.filtroTipoEmpresa()
+      tipoEmpresaId: this.filtroTipoEmpresa(),
+      direccion: this.filtroDireccion() || undefined,
     };
 
     this.empresasService.listar(
@@ -72,7 +74,8 @@ export class EmpresasListComponent implements OnInit {
       this.limite(),
       filtros.razonSocial,
       filtros.ruc,
-      filtros.tipoEmpresaId
+      filtros.tipoEmpresaId,
+      filtros.direccion,
     ).subscribe({
       next: (respuesta) => {
         this.empresas.set(respuesta.data);
@@ -108,6 +111,7 @@ export class EmpresasListComponent implements OnInit {
     this.filtroRazonSocial.set('');
     this.filtroRuc.set('');
     this.filtroTipoEmpresa.set(null);
+    this.filtroDireccion.set('');
     this.paginaActual.set(1);
     this.cargarEmpresas();
   }

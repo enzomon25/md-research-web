@@ -576,6 +576,17 @@ nav ul {
   }
 }
 
+.direccion-text {
+  font-size: $font-size-sm;
+  color: $gray-700;
+}
+
+.sin-dato-badge {
+  font-size: $font-size-xs;
+  color: $gray-400;
+  font-style: italic;
+}
+
 // ==============================================
 // PAGINATION
 // ==============================================

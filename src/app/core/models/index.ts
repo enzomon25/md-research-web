@@ -131,6 +131,7 @@ export interface ObraEncuesta {
 
 export interface Empresa {
   direccion: Direccion;
+  direccionConcatenada?: string | null;
   empresaId: number;
   razonSocial: string;
   ruc: string;
