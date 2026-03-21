@@ -901,8 +901,8 @@
         [class.expandida]="esSeccionExpandida('fabricante')">
         <h2>Fabricante, Marca y Tipo de Cemento comprado
           <span class="seccion-tag"
-            [ngStyle]="{ 'background': seccionCompleta('fabricante') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
-            {{ seccionCompleta('fabricante') ? 'Completado' : 'Pendiente' }}
+            [ngStyle]="{ 'background': fabricanteSinDatos() ? '#858796' : seccionCompleta('fabricante') ? '#1cc88a' : '#e74a3b', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            {{ fabricanteSinDatos() ? 'Opcional' : seccionCompleta('fabricante') ? 'Completado' : 'Pendiente' }}
           </span>
         </h2>
         <span class="toggle-icon">{{ esSeccionExpandida('fabricante') ? '−' : '+' }}</span>

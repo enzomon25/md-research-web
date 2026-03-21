@@ -263,6 +263,10 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.actualizarMarcaFabricante(index, 'completo', completo);
   }
 
+  fabricanteSinDatos(): boolean {
+    return !this.marcasSeleccionadas().some(m => m.fabricanteId || m.marcaFabricanteId || m.tipoCemento);
+  }
+
   agregarMarcaFabricante(): void {
     this.marcasSeleccionadas.set([
       ...this.marcasSeleccionadas(),
@@ -1198,13 +1202,7 @@ export class EncuestaObrasFormComponent implements OnInit {
       return;
     }
 
-    // Validar que al menos una marca/fabricante esté seleccionada
     const marcasValidas = this.marcasSeleccionadas().filter(m => m.marcaFabricanteId && m.fabricanteId);
-    if (marcasValidas.length === 0) {
-      this.mensajeModal.set('Debe seleccionar al menos un fabricante y marca.');
-      this.mostrarModalError.set(true);
-      return;
-    }
 
     // VALIDACIÓN PREVIA: Verificar datos de obra ANTES de guardar la encuesta
     const datosObra = this.datosObra();
@@ -2665,12 +2663,10 @@ export class EncuestaObrasFormComponent implements OnInit {
       case 'encuestado':
         return !!this.encuestadoSeleccionado();
       case 'fabricante':
-        // Requiere al menos una marca/fabricante válida con todos los campos obligatorios
-        return this.marcasSeleccionadas().some(m => 
-          m.marcaFabricanteId && 
-          m.fabricanteId && 
-          m.tipoCemento && 
-          m.descFisica
+        // La sección es válida si no hay filas parcialmente completadas (fabricante es opcional)
+        return !this.marcasSeleccionadas().some(m =>
+          (m.fabricanteId || m.marcaFabricanteId || m.tipoCemento) &&
+          !(m.fabricanteId && m.marcaFabricanteId && m.tipoCemento && m.descFisica)
         );
       case 'compra':
         const enc = this.encuesta();
