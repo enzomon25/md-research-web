@@ -234,6 +234,9 @@ export class EncuestaFormComponent implements OnInit {
     const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
     const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
     const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCemento);
+    if (marcasFiltradasPorTipo.length > 0) {
+      this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcasFiltradasPorTipo[0].marcaFabricanteId);
+    }
     let descripcionesFisicas = Array.from(new Set(
       marcasFiltradasPorTipo.map(m => m.descFisica).filter(Boolean)
     ));
