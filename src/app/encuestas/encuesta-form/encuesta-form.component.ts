@@ -108,6 +108,7 @@ export class EncuestaFormComponent implements OnInit {
 
   // --- Lógica clásica para cascada de marcas/tipoCemento/descFisica por fila ---
   marcasPorFila: any[][] = [[/* primer fila */]];
+  cargandoMarcasPorFila: boolean[] = [false];
   tiposCementoPorFila: string[][] = [[]];
   descripcionesFisicasPorFila: string[][] = [[]];
 
@@ -136,18 +137,24 @@ export class EncuestaFormComponent implements OnInit {
       this.descripcionesFisicasPorFila[index] = [];
       return;
     }
+    // Marcar carga en curso para deshabilitar el dropdown de Marca hasta tener las opciones
+    this.cargandoMarcasPorFila[index] = true;
     // Llamar al endpoint de marcas inmediatamente
     this.fabricantesService.obtenerMarcasPorFabricante(fabricanteId).subscribe({
       next: (marcas: any[]) => {
         this.marcasPorFila[index] = marcas || [];
-        // Forzar actualización del binding para el dropdown de marca
         this.tiposCementoPorFila[index] = [];
         this.descripcionesFisicasPorFila[index] = [];
+        this.cargandoMarcasPorFila[index] = false;
+        // Forzar re-render del dropdown de Marca con las opciones ya listas
+        this.marcasSeleccionadas.set([...this.marcasSeleccionadas()]);
       },
       error: (error: any) => {
         this.marcasPorFila[index] = [];
         this.tiposCementoPorFila[index] = [];
         this.descripcionesFisicasPorFila[index] = [];
+        this.cargandoMarcasPorFila[index] = false;
+        this.marcasSeleccionadas.set([...this.marcasSeleccionadas()]);
         console.error('Error al cargar marcas del fabricante', fabricanteId, error);
       }
     });
@@ -235,15 +242,14 @@ export class EncuestaFormComponent implements OnInit {
     descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
     this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
 
-    // Verificar el estado de descripciones físicas antes de autoselección
+    // Auto-seleccionar descFisica si hay exactamente una opción disponible
     if (descripcionesFisicas && descripcionesFisicas.length === 1 && tipoCemento) {
       this.actualizarMarcaFabricante(index, 'descFisica', descripcionesFisicas[0]);
-      // Verificar si la fila está completa y actualizar flag
-      this.verificarYActualizarCompletoFabricante(index);
     } else {
       this.actualizarMarcaFabricante(index, 'descFisica', '');
-      this.actualizarMarcaFabricante(index, 'completo', false);
     }
+    // Siempre verificar completo independientemente de la cantidad de descFisica disponibles
+    this.verificarYActualizarCompletoFabricante(index);
   }
 
   onDescFisicaChange(index: number, event: Event) {
@@ -273,6 +279,7 @@ export class EncuestaFormComponent implements OnInit {
       { encuestaFabricanteId: 0, marcaFabricanteId: 0, fabricanteId: 0, tipoCemento: '', descFisica: '', colorBolsa: '', completo: false }
     ]);
     this.marcasPorFila.push([]);
+    this.cargandoMarcasPorFila.push(false);
     this.tiposCementoPorFila.push([]);
     this.descripcionesFisicasPorFila.push([]);
   }
@@ -283,6 +290,7 @@ export class EncuestaFormComponent implements OnInit {
       nuevas.splice(index, 1);
       this.marcasSeleccionadas.set(nuevas);
       this.marcasPorFila.splice(index, 1);
+      this.cargandoMarcasPorFila.splice(index, 1);
       this.tiposCementoPorFila.splice(index, 1);
       this.descripcionesFisicasPorFila.splice(index, 1);
     } else {
@@ -297,6 +305,7 @@ export class EncuestaFormComponent implements OnInit {
         },
       ]);
       this.marcasPorFila[0] = [];
+      this.cargandoMarcasPorFila[0] = false;
       this.tiposCementoPorFila[0] = [];
       this.descripcionesFisicasPorFila[0] = [];
     }

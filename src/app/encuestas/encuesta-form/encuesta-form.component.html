@@ -861,7 +861,7 @@
                   <select class="producto-select"
                     [(ngModel)]="marcaSeleccionada.marcaFabricanteId"
                     (change)="onMarcaChange($index, $event)"
-                    [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo || !marcaSeleccionada.fabricanteId">
+                    [disabled]="camposDeshabilitados() || !!marcaSeleccionada.completo || !marcaSeleccionada.fabricanteId || cargandoMarcasPorFila[$index]">
                     <option [value]="0">— Seleccione marca —</option>
                     @for (marca of marcasDisponiblesParaFila($index); track marca.marcaFabricanteId) {
                       <option [value]="marca.marcaFabricanteId">{{ marca.nombreMarca }}</option>
