@@ -1103,12 +1103,15 @@ export class EncuestaObrasFormComponent implements OnInit {
       this.mostrarModalEncuestaObservada.set(true);
     }
 
-    // VALIDADOR y ADMINISTRADOR: nunca pueden editar campos del formulario (solo lectura)
+    // ADMINISTRADOR: puede editar en cualquier estado
     // ENCUESTADOR: solo puede editar en estados EN_REGISTRO (1) y EN_CORRECCION (4)
+    // VALIDADOR: solo lectura
     const esAdministrador = rolUsuario === ROLES.ADMINISTRADOR;
 
-    if (esValidador || esAdministrador) {
+    if (esValidador) {
       this.esEditable.set(false);
+    } else if (esAdministrador) {
+      this.esEditable.set(true);
     } else if (esEncuestador) {
       const puedeEditar =
         encuesta.estadoId === ESTADOS_ENCUESTA.EN_REGISTRO ||
@@ -1179,8 +1182,8 @@ export class EncuestaObrasFormComponent implements OnInit {
       }
     }
 
-    // Cargar observaciones si es VALIDADOR o ENCUESTADOR con encuesta observada/en corrección
-    if ((esValidador || esEncuestador) && encuesta.encuestaId) {
+    // Cargar observaciones si es VALIDADOR, ADMINISTRADOR o ENCUESTADOR con encuesta observada/en corrección
+    if ((esValidador || esAdministrador || esEncuestador) && encuesta.encuestaId) {
       this.cargarObservaciones(encuesta.encuestaId);
     }
   }

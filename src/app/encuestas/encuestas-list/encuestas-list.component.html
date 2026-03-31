@@ -327,4 +327,26 @@
       </div>
     </div>
   }
+
+  @if (mostrarModalSinPermiso()) {
+    <div class="modal-overlay" (click)="cerrarModalSinPermiso()">
+      <div class="modal-content modal-sin-permiso" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Acción no permitida</h2>
+          <button class="btn-close" (click)="cerrarModalSinPermiso()">×</button>
+        </div>
+        <div class="modal-body modal-body-sin-permiso">
+          <div class="sin-permiso-icono">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+            </svg>
+          </div>
+          <p class="sin-permiso-titulo">No tienes permiso para realizar esta acción</p>
+          <p class="sin-permiso-descripcion">El rol de <strong>Validador</strong> no permite crear nuevas encuestas. Si necesitas realizar esta acción, comunícate con un administrador.</p>
+          <button class="btn-cerrar-sin-permiso" (click)="cerrarModalSinPermiso()">Entendido</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

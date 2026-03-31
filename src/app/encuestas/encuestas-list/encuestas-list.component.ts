@@ -30,6 +30,7 @@ export class EncuestasListComponent implements OnInit {
   totalPaginas = signal(0);
   cargando = signal(false);
   mostrarModalTipo = signal(false);
+  mostrarModalSinPermiso = signal(false);
   mostrarDrawer = signal(false);
   mostrarMenuExportar = signal(false);
   tiposEncuesta = signal<Parametro[]>([]);
@@ -153,6 +154,10 @@ export class EncuestasListComponent implements OnInit {
   }
 
   nuevaEncuesta(): void {
+    if (this.esValidador()) {
+      this.mostrarModalSinPermiso.set(true);
+      return;
+    }
     this.mostrarModalTipo.set(true);
     this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.TIPO_ENCUESTA).subscribe({
       next: (tipos: Parametro[]) => {
@@ -166,6 +171,10 @@ export class EncuestasListComponent implements OnInit {
 
   cerrarModal(): void {
     this.mostrarModalTipo.set(false);
+  }
+
+  cerrarModalSinPermiso(): void {
+    this.mostrarModalSinPermiso.set(false);
   }
 
   seleccionarTipo(tipo: Parametro): void {
@@ -225,6 +234,11 @@ export class EncuestasListComponent implements OnInit {
   esEncuestador(): boolean {
     const rol = this.authService.obtenerRol();
     return rol === 'ENCUESTADOR';
+  }
+
+  esValidador(): boolean {
+    const rol = this.authService.obtenerRol();
+    return rol === 'VALIDADOR';
   }
 
   toggleMenuExportar(): void {

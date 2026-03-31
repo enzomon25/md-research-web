@@ -1078,3 +1078,54 @@ tbody tr:hover {
   height: 16px;
   flex-shrink: 0;
 }
+
+/* Modal sin permiso */
+.modal-sin-permiso {
+  max-width: 420px;
+}
+
+.modal-body-sin-permiso {
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  gap: 1rem;
+}
+
+.sin-permiso-icono {
+  color: #e74a3b;
+  margin-bottom: 0.5rem;
+}
+
+.sin-permiso-titulo {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #5a5c69;
+  margin: 0;
+}
+
+.sin-permiso-descripcion {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.875rem;
+  color: #858796;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.btn-cerrar-sin-permiso {
+  margin-top: 0.5rem;
+  padding: 0.5rem 2rem;
+  background-color: #4e73df;
+  color: white;
+  border: none;
+  border-radius: 0.35rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.btn-cerrar-sin-permiso:hover {
+  background-color: #2e59d9;
+}
