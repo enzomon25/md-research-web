@@ -1258,21 +1258,21 @@ export class EncuestaObrasFormComponent implements OnInit {
     this.guardandoEncuesta.set(true);
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
-        this.procesarEncuesta(encuestaGuardada);
         this.tieneCambiosSinGuardar.set(false);
-        
-        // Ahora guardar los datos de la obra si están completos
+
+        // Leer el estado actual del formulario antes de cualquier recarga
         const datosObra = this.datosObra();
-        if (datosObra.etapaObra && datosObra.fechaFinalizacionObra && encuestaGuardada.encuestaId) {
+        const encuestaId = encuestaGuardada.encuestaId!;
+
+        if (datosObra.etapaObra && datosObra.fechaFinalizacionObra && encuestaId) {
           const obraDto: any = {
-            encuestaId: encuestaGuardada.encuestaId!,
+            encuestaId,
             etapaObra: datosObra.etapaObra,
             fechaFinalizacionObra: datosObra.fechaFinalizacionObra,
             ...(datosObra.mixer && { mixer: datosObra.mixer }),
             ...(datosObra.metraje && { metraje: datosObra.metraje }),
             ...(datosObra.resistencia && { resistencia: datosObra.resistencia }),
             tipoReferencia: TIPO_REFERENCIA.OBRA,
-            // Datos de dirección (ya validados antes de guardar la encuesta)
             codPais: this.direccionObra.codPais,
             codDepartamento: this.direccionObra.codDepartamento,
             codProvincia: this.direccionObra.codProvincia,
@@ -1282,26 +1282,17 @@ export class EncuestaObrasFormComponent implements OnInit {
             numeroVia: this.direccionObra.numeroVia,
             referencia: this.direccionObra.referencia,
           };
-          
+
           this.obraEncuestaService.crear(obraDto).subscribe({
-            next: (obraCreada) => {
-              this.guardandoEncuesta.set(false);
-              console.log('Obra encuesta guardada exitosamente:', obraCreada);
-              this.mensajeModal.set('Encuesta y datos de la obra guardados exitosamente');
-              this.mostrarModalExito.set(true);
+            next: () => {
+              this.recargarDespuesDeGuardar(encuestaId, 'Encuesta y datos de la obra guardados exitosamente');
             },
-            error: (errorObra) => {
-              this.guardandoEncuesta.set(false);
-              console.error('Error al guardar datos de la obra:', errorObra);
-              // La encuesta se guardó pero hubo error en la obra
-              this.mensajeModal.set('Encuesta guardada, pero hubo un error al guardar los datos de la obra. Por favor, intente nuevamente.');
-              this.mostrarModalExito.set(true);
+            error: () => {
+              this.recargarDespuesDeGuardar(encuestaId, 'Encuesta guardada, pero hubo un error al guardar los datos de la obra. Por favor, intente nuevamente.');
             }
           });
         } else {
-          this.guardandoEncuesta.set(false);
-          this.mensajeModal.set('Encuesta guardada exitosamente');
-          this.mostrarModalExito.set(true);
+          this.recargarDespuesDeGuardar(encuestaId, 'Encuesta guardada exitosamente');
         }
       },
       error: (error) => {
@@ -1309,6 +1300,22 @@ export class EncuestaObrasFormComponent implements OnInit {
         console.error('Error al guardar encuesta:', error);
         this.mensajeModal.set('Error al guardar la encuesta. Por favor, intente nuevamente.');
         this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  private recargarDespuesDeGuardar(encuestaId: number, mensaje: string): void {
+    this.encuestasService.obtenerPorId(encuestaId).subscribe({
+      next: (encuesta) => {
+        this.procesarEncuesta(encuesta);
+        this.guardandoEncuesta.set(false);
+        this.mensajeModal.set(mensaje);
+        this.mostrarModalExito.set(true);
+      },
+      error: () => {
+        this.guardandoEncuesta.set(false);
+        this.mensajeModal.set(mensaje);
+        this.mostrarModalExito.set(true);
       }
     });
   }

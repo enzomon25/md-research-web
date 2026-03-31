@@ -10,7 +10,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EmpresasService } from '../../core/services/empresas.service';
 import { EncuestasService } from '../../core/services/encuestas.service';
 import { EncuestadosService } from '../../core/services/encuestados.service';
-import { ObraEncuestaService } from '../../core/services/obra-encuesta.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -21,8 +20,6 @@ import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 import { ESTADOS_ENCUESTA } from '../../core/constants';
 import { ROLES } from '../../core/constants/roles.constants';
-import { TIPO_REFERENCIA } from '../../core/constants/tipo-referencia.constant';
-
 // 5. Modales
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 
@@ -47,7 +44,6 @@ export class EmpresasDetailComponent implements OnInit {
   private empresasService = inject(EmpresasService);
   private encuestasService = inject(EncuestasService);
   private encuestadosService = inject(EncuestadosService);
-  private obraEncuestaService = inject(ObraEncuestaService);
   private ubicacionService = inject(UbicacionService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -519,15 +515,6 @@ export class EmpresasDetailComponent implements OnInit {
     this.clonandoEncuesta.set(false);
   }
 
-  private fechaHoyPeru(): string {
-    const ahora = new Date();
-    const enPeru = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Lima' }));
-    const y = enPeru.getFullYear();
-    const m = String(enPeru.getMonth() + 1).padStart(2, '0');
-    const d = String(enPeru.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
   confirmarClonar(): void {
     const encuesta = this.encuestaParaClonar();
     if (!encuesta || !encuesta.encuestaId) {
@@ -536,120 +523,11 @@ export class EmpresasDetailComponent implements OnInit {
 
     this.clonandoEncuesta.set(true);
 
-    this.encuestasService.obtenerPorId(encuesta.encuestaId).subscribe({
-      next: (detalle) => {
-        const marcasValidas = (detalle.marcas || [])
-          .map((marca: any) => ({
-            marcaFabricanteId: marca.marcaFabricanteId,
-            fabricanteId: marca.fabricanteId,
-          }))
-          .filter((marca: any) => marca.marcaFabricanteId && marca.fabricanteId);
-
-        const payload: Partial<Encuesta> = {
-          ...(detalle.encuestadoId && { encuestadoId: detalle.encuestadoId }),
-          ...(detalle.empresaId && { empresaId: detalle.empresaId }),
-          ...(detalle.tipoEncuesta && { tipoEncuesta: detalle.tipoEncuesta }),
-          ...(detalle.concretoPremezclado !== undefined &&
-            detalle.concretoPremezclado !== null && {
-              concretoPremezclado: detalle.concretoPremezclado,
-            }),
-          ...(detalle.articulosConcreto !== undefined &&
-            detalle.articulosConcreto !== null && {
-              articulosConcreto: detalle.articulosConcreto,
-            }),
-          ...(detalle.tipoLugarCompra && { tipoLugarCompra: detalle.tipoLugarCompra }),
-          ...(detalle.tipoCompra && { tipoCompra: detalle.tipoCompra }),
-          ...(detalle.presentacionCompra && { presentacionCompra: detalle.presentacionCompra }),
-          ...(detalle.cantidadPresentacionCompra &&
-            detalle.cantidadPresentacionCompra.trim() !== '' && {
-              cantidadPresentacionCompra: detalle.cantidadPresentacionCompra,
-            }),
-          ...(detalle.descCompra && { descCompra: detalle.descCompra }),
-          ...(detalle.usoCemento && { usoCemento: detalle.usoCemento }),
-          ...(detalle.motivoCompra && { motivoCompra: detalle.motivoCompra }),
-          ...(detalle.deseoRegalo !== undefined &&
-            detalle.deseoRegalo !== null && { deseoRegalo: detalle.deseoRegalo }),
-          fechaEncuesta: this.fechaHoyPeru(),
-          ...(detalle.precio !== undefined && detalle.precio !== null && {
-            precio: detalle.precio,
-          }),
-          ...(detalle.comentarioCuantitativo &&
-            detalle.comentarioCuantitativo.trim() !== '' && {
-              comentarioCuantitativo: detalle.comentarioCuantitativo,
-            }),
-          ...(detalle.audioUrl && detalle.audioUrl.trim() !== '' && {
-            audioUrl: detalle.audioUrl,
-          }),
-          marcas: marcasValidas,
-        };
-
-        this.encuestasService.guardar(payload).subscribe({
-          next: (nuevaEncuesta) => {
-            const obra = detalle.obra;
-            const direccion = obra?.direccion;
-            const puedeClonarObra =
-              detalle.tipoEncuesta === 'CONSTRUCTORA' &&
-              obra?.etapaObra &&
-              obra?.fechaFinalizacionObra &&
-              !!direccion?.codPais &&
-              !!direccion?.codDepartamento &&
-              !!direccion?.codProvincia &&
-              !!direccion?.codDistrito &&
-              !!nuevaEncuesta.encuestaId;
-
-            if (puedeClonarObra) {
-              const obraDto = {
-                encuestaId: nuevaEncuesta.encuestaId!,
-                etapaObra: obra!.etapaObra,
-                fechaFinalizacionObra: obra!.fechaFinalizacionObra,
-                ...(obra?.mixer && { mixer: obra.mixer }),
-                ...(obra?.metraje && { metraje: obra.metraje }),
-                ...(obra?.resistencia && { resistencia: obra.resistencia }),
-                tipoReferencia: TIPO_REFERENCIA.OBRA,
-                codPais: direccion!.codPais,
-                codDepartamento: direccion!.codDepartamento,
-                codProvincia: direccion!.codProvincia,
-                codDistrito: direccion!.codDistrito,
-                ...(direccion?.tipoVia && { tipoVia: direccion.tipoVia }),
-                ...(direccion?.nombreVia && { nombreVia: direccion.nombreVia }),
-                ...(direccion?.numeroVia && { numeroVia: direccion.numeroVia }),
-                ...(direccion?.referencia && { referencia: direccion.referencia }),
-              };
-
-              this.obraEncuestaService.crear(obraDto).subscribe({
-                next: () => {
-                  this.finalizarClonado(nuevaEncuesta);
-                },
-                error: (errorObra) => {
-                  console.error('Error al clonar datos de la obra:', errorObra);
-                  this.finalizarClonado(nuevaEncuesta);
-                  alert(
-                    'Encuesta clonada, pero hubo un error al clonar los datos de la obra.',
-                  );
-                },
-              });
-              return;
-            }
-
-            if (detalle.tipoEncuesta === 'CONSTRUCTORA' && obra) {
-              console.warn(
-                'No se clonó la obra porque faltan datos de dirección o campos obligatorios.',
-              );
-            }
-
-            this.finalizarClonado(nuevaEncuesta);
-          },
-          error: (err) => {
-            this.clonandoEncuesta.set(false);
-            console.error('Error al clonar encuesta:', err);
-            alert('Error al clonar la encuesta. Por favor, intenta de nuevo.');
-          },
-        });
-      },
-      error: (err) => {
+    this.encuestasService.clonar(encuesta.encuestaId).subscribe({
+      next: (nuevaEncuesta) => this.finalizarClonado(nuevaEncuesta),
+      error: () => {
         this.clonandoEncuesta.set(false);
-        console.error('Error al obtener detalles para clonar:', err);
-        alert('Error al obtener la encuesta para clonar. Por favor, intenta de nuevo.');
+        alert('Error al clonar la encuesta. Por favor, intenta de nuevo.');
       },
     });
   }

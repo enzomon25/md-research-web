@@ -76,6 +76,10 @@ export class EncuestasService {
     return this.http.patch<Encuesta>(`${this.apiUrl}/${id}/estados`, { estadoId });
   }
 
+  clonar(id: number): Observable<Encuesta> {
+    return this.http.post<Encuesta>(`${this.apiUrl}/${id}/clonar`, {});
+  }
+
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

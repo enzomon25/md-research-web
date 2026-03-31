@@ -1063,17 +1063,30 @@ export class EncuestaFormComponent implements OnInit {
     this.guardandoEncuesta.set(true);
     this.encuestasService.guardar(encuestaParaGuardar).subscribe({
       next: (encuestaGuardada) => {
-        this.guardandoEncuesta.set(false);
-        this.procesarEncuesta(encuestaGuardada);
         this.tieneCambiosSinGuardar.set(false);
-        this.mensajeModal.set('Encuesta guardada exitosamente');
-        this.mostrarModalExito.set(true);
+        this.recargarDespuesDeGuardar(encuestaGuardada.encuestaId!, 'Encuesta guardada exitosamente');
       },
       error: (error) => {
         this.guardandoEncuesta.set(false);
         console.error('Error al guardar encuesta:', error);
         this.mensajeModal.set('Error al guardar la encuesta. Por favor, intente nuevamente.');
         this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  private recargarDespuesDeGuardar(encuestaId: number, mensaje: string): void {
+    this.encuestasService.obtenerPorId(encuestaId).subscribe({
+      next: (encuesta) => {
+        this.procesarEncuesta(encuesta);
+        this.guardandoEncuesta.set(false);
+        this.mensajeModal.set(mensaje);
+        this.mostrarModalExito.set(true);
+      },
+      error: () => {
+        this.guardandoEncuesta.set(false);
+        this.mensajeModal.set(mensaje);
+        this.mostrarModalExito.set(true);
       }
     });
   }
