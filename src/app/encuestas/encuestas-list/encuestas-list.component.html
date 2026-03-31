@@ -168,35 +168,35 @@
           <table>
             <thead>
               <tr>
-                <th>Tipo de Encuesta</th>
+                <th class="col-tipo">Tipo de Encuesta</th>
                 <th class="col-razon-social">Razón Social</th>
-                <th>RUC</th>
-                <th>Fecha de Encuesta</th>
-                <th>Fecha de Creación</th>
+                <th class="col-ruc">RUC</th>
+                <th class="col-fecha-encuesta">Fecha de Encuesta</th>
+                <th class="col-fecha-creacion">Fecha de Creación</th>
                 @if (mostrarColumnaUsuarioCreador()) {
-                  <th>Creado Por</th>
+                  <th class="col-creado-por">Creado Por</th>
                 }
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th class="col-estado">Estado</th>
+                <th class="col-acciones">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (encuesta of encuestas(); track encuesta.encuestaId) {
                 <tr>
-                  <td>{{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}</td>
+                  <td class="col-tipo">{{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}</td>
                   <td class="col-razon-social" [title]="encuesta.empresa?.razonSocial || '-'">{{ encuesta.empresa?.razonSocial || '-' }}</td>
-                  <td>{{ encuesta.empresa?.ruc || '-' }}</td>
-                  <td>{{ encuesta.fechaEncuesta || '-' }}</td>
-                  <td>{{ encuesta.fechaCreacion || '-' }}</td>
+                  <td class="col-ruc">{{ encuesta.empresa?.ruc || '-' }}</td>
+                  <td class="col-fecha-encuesta">{{ encuesta.fechaEncuesta || '-' }}</td>
+                  <td class="col-fecha-creacion">{{ encuesta.fechaCreacion || '-' }}</td>
                   @if (mostrarColumnaUsuarioCreador()) {
-                    <td>{{ encuesta.usuarioCreacion || '-' }}</td>
+                    <td class="col-creado-por">{{ encuesta.usuarioCreacion || '-' }}</td>
                   }
-                  <td>
+                  <td class="col-estado">
                     <div class="estado-badge" [ngClass]="getEstadoClass(encuesta.estadoId)">
                       {{ encuesta.estado?.descripcionEstado || encuesta.estadoId }}
                     </div>
                   </td>
-                  <td>
+                  <td class="col-acciones">
                     <div class="acciones-container">
                       @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('registro')) {
                         <button 

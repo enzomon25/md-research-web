@@ -186,7 +186,7 @@
 }
 
 .encuestas-page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
 }
@@ -531,21 +531,9 @@ thead {
 }
 
 th, td {
-  padding: 0.75rem;
-  min-width: 70px;
-  max-width: 140px;
+  padding: 0.85rem 1.25rem;
   text-align: center;
   white-space: nowrap;
-}
-
-/* Estilo especial para columnas con texto largo (como Razón Social) */
-th.col-razon-social,
-td.col-razon-social {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: left;
 }
 
 th {
@@ -557,18 +545,73 @@ th {
   font-size: 0.7rem;
   letter-spacing: 0.05rem;
   vertical-align: middle;
+  padding: 1rem 1.25rem;
 }
 
 td {
-  padding: 0.75rem;
+  padding: 0.85rem 1.25rem;
   border-bottom: 1px solid #e3e6f0;
   font-weight: 400;
   color: #5a5c69;
   vertical-align: middle;
+  line-height: 1.5;
 }
 
 tbody tr:hover {
-  background-color: #f8f9fc;
+  background-color: #eef2ff;
+}
+
+/* Columnas con ancho controlado */
+th.col-tipo,
+td.col-tipo {
+  min-width: 120px;
+  width: 140px;
+}
+
+th.col-razon-social,
+td.col-razon-social {
+  min-width: 220px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  padding-left: 1.5rem;
+}
+
+th.col-ruc,
+td.col-ruc {
+  min-width: 110px;
+  width: 120px;
+}
+
+th.col-fecha-encuesta,
+td.col-fecha-encuesta {
+  min-width: 130px;
+  width: 140px;
+}
+
+th.col-fecha-creacion,
+td.col-fecha-creacion {
+  min-width: 150px;
+  width: 160px;
+}
+
+th.col-creado-por,
+td.col-creado-por {
+  min-width: 120px;
+  width: 140px;
+}
+
+th.col-estado,
+td.col-estado {
+  min-width: 120px;
+}
+
+th.col-acciones,
+td.col-acciones {
+  min-width: 80px;
+  width: 80px;
 }
 
 .empty-message {
