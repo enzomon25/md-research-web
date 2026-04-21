@@ -10,16 +10,11 @@
   display: flex;
   min-height: 100vh;
   background: $gray-100;
-  animation: fadeInContent 0.5s ease-in;
 }
 
 @keyframes fadeInContent {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.layout-container.fade-out {
-  animation: fadeOutContent 0.3s ease-out forwards;
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOutContent {
@@ -185,6 +180,7 @@
   flex: 1;
   padding: 0;
   min-width: 0;
+  animation: fadeInContent 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .usuarios-page {

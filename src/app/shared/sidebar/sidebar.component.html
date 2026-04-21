@@ -20,21 +20,31 @@
   <nav>
     <div class="sidebar-heading">Módulos</div>
     <ul>
-      @for (modulo of modulos(); track modulo.llave) {
-        <li
-          class="sidebar-item"
-          [class.active]="esModuloActivo(modulo.ruta!)"
-          (click)="navegarAModulo(modulo.ruta!)">
-          {{ modulo.valor }}
-        </li>
-      }
-      @empty {
+      @if (cargandoModulos()) {
+        @for (s of [1, 2, 3, 4]; track s) {
+          <li class="sidebar-item-skeleton"></li>
+        }
+      } @else if (modulos().length === 0) {
         <li class="sidebar-item disabled">No hay módulos disponibles</li>
-      }
-      @if (esAdministrador()) {
-        <li class="sidebar-item" (click)="navegarACargaMasiva()">
-          Carga Masiva
-        </li>
+      } @else {
+        @for (modulo of modulos(); track modulo.llave; let i = $index) {
+          <li
+            class="sidebar-item"
+            [class.active]="esModuloActivo(modulo.ruta!)"
+            [style.animation-delay]="(i * 50) + 'ms'"
+            (click)="navegarAModulo(modulo.ruta!)">
+            {{ modulo.valor }}
+          </li>
+        }
+        @if (esAdministrador()) {
+          <li
+            class="sidebar-item"
+            [class.active]="esModuloActivo('/carga-masiva')"
+            [style.animation-delay]="(modulos().length * 50) + 'ms'"
+            (click)="navegarACargaMasiva()">
+            Carga Masiva
+          </li>
+        }
       }
     </ul>
   </nav>

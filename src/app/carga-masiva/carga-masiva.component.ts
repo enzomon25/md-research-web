@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 import { CargaMasivaService, CargaMasiva, RespuestaUpload } from '../core/services/carga-masiva.service';
 import { ParametrosService } from '../core/services/parametros.service';
 import { AuthService } from '../core/services/auth.service';
-import { ModulosService, Modulo } from '../core/services/modulos.service';
 import { Parametro } from '../core/models';
+import { SidebarComponent } from '../shared/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-carga-masiva',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent],
   templateUrl: './carga-masiva.component.html',
   styleUrl: './carga-masiva.component.css'
 })
@@ -23,7 +23,6 @@ export class CargaMasivaComponent implements OnInit {
   subiendo = signal(false);
   mostrarMenuUsuario = signal(false);
   tiposEncuesta = signal<Parametro[]>([]);
-  modulos = signal<Modulo[]>([]);
   
   // Archivo seleccionado
   archivoSeleccionado: File | null = null;
@@ -52,25 +51,12 @@ export class CargaMasivaComponent implements OnInit {
     private cargaMasivaService: CargaMasivaService,
     private parametrosService: ParametrosService,
     private authService: AuthService,
-    private modulosService: ModulosService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.cargarCargas();
     this.cargarTiposEncuesta();
-    this.cargarModulos();
-  }
-
-  cargarModulos(): void {
-    this.modulosService.obtenerModulosDisponibles().subscribe({
-      next: (modulos: Modulo[]) => {
-        this.modulos.set(modulos);
-      },
-      error: (error: unknown) => {
-        console.error('Error al cargar módulos:', error);
-      }
-    });
   }
 
   cargarTiposEncuesta(): void {
@@ -287,26 +273,6 @@ export class CargaMasivaComponent implements OnInit {
 
   toggleMenuUsuario(): void {
     this.mostrarMenuUsuario.set(!this.mostrarMenuUsuario());
-  }
-
-  navegarAEncuestas(): void {
-    this.router.navigate(['/encuestas']);
-  }
-
-  navegarACargaMasiva(): void {
-    // Ya estamos en carga masiva, no hacer nada
-  }
-
-  navegarAModulo(ruta: string): void {
-    this.router.navigate([ruta]);
-  }
-
-  esModuloActivo(ruta: string): boolean {
-    return this.router.url === ruta;
-  }
-
-  esRutaActiva(ruta: string): boolean {
-    return this.router.url === ruta;
   }
 
   esEncuestador(): boolean {

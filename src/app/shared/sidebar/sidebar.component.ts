@@ -18,15 +18,23 @@ export class SidebarComponent implements OnInit {
   private router = inject(Router);
 
   modulos = signal<Modulo[]>([]);
+  cargandoModulos = signal(true);
 
   ngOnInit(): void {
     this.cargarModulos();
   }
 
   cargarModulos(): void {
+    this.cargandoModulos.set(true);
     this.modulosService.obtenerModulosDisponibles().subscribe({
-      next: (modulos: Modulo[]) => this.modulos.set(modulos),
-      error: (error: unknown) => console.error('Error al cargar módulos:', error),
+      next: (modulos: Modulo[]) => {
+        this.modulos.set(modulos);
+        this.cargandoModulos.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Error al cargar módulos:', error);
+        this.cargandoModulos.set(false);
+      },
     });
   }
 
