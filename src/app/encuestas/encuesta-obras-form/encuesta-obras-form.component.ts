@@ -230,6 +230,7 @@ export class EncuestaObrasFormComponent implements OnInit {
 
     // Filtrar descripciones físicas por tipoCemento seleccionado
     const marcas = this.marcasPorFila[index] || [];
+    // Usar el marcaFabricanteId actual como representativo para identificar el nombreMarca
     const marcaObj = marcas.find(m => m.marcaFabricanteId === this.marcasSeleccionadas()[index].marcaFabricanteId);
     const nombreMarcaSeleccionada = marcaObj ? marcaObj.nombreMarca : '';
     const marcasSeleccionadas = marcas.filter(m => m.nombreMarca === nombreMarcaSeleccionada);
@@ -242,11 +243,21 @@ export class EncuestaObrasFormComponent implements OnInit {
     descripcionesFisicas = descripcionesFisicas.filter(df => !descsSeleccionadas.includes(df));
     this.descripcionesFisicasPorFila[index] = descripcionesFisicas;
 
-    // Auto-seleccionar descFisica si hay exactamente una opción disponible
+    // Auto-seleccionar descFisica si hay exactamente una opción y resolver marcaFabricanteId correcto
     if (descripcionesFisicas && descripcionesFisicas.length === 1 && tipoCemento) {
       this.actualizarMarcaFabricante(index, 'descFisica', descripcionesFisicas[0]);
+      const marcaResuelta = marcasFiltradasPorTipo.find(m => m.descFisica === descripcionesFisicas[0]);
+      if (marcaResuelta) {
+        this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaResuelta.marcaFabricanteId);
+      }
+    } else if (marcasFiltradasPorTipo.length === 1) {
+      // Un único registro sin descFisica distinguible: asignar directamente
+      this.actualizarMarcaFabricante(index, 'descFisica', '');
+      this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcasFiltradasPorTipo[0].marcaFabricanteId);
     } else {
       this.actualizarMarcaFabricante(index, 'descFisica', '');
+      // Múltiples opciones de descFisica: mantener marcaFabricanteId representativo
+      // para que onDescFisicaChange pueda identificar el nombreMarca al resolver el ID correcto
     }
     // Siempre verificar completo independientemente de la cantidad de descFisica disponibles
     this.verificarYActualizarCompletoFabricante(index);
@@ -256,6 +267,21 @@ export class EncuestaObrasFormComponent implements OnInit {
     if (!event.target) return;
     const descFisica = (event.target as HTMLSelectElement).value;
     this.actualizarMarcaFabricante(index, 'descFisica', descFisica);
+
+    // Resolver el marcaFabricanteId exacto según nombreMarca + tipoCemento + descFisica seleccionada
+    const marcas = this.marcasPorFila[index] || [];
+    const marcaActual = this.marcasSeleccionadas()[index];
+    const marcaObj = marcas.find(m => m.marcaFabricanteId === marcaActual.marcaFabricanteId);
+    const nombreMarca = marcaObj ? marcaObj.nombreMarca : '';
+    const marcaResuelta = marcas.find(
+      m => m.nombreMarca === nombreMarca &&
+           m.tipoCemento === marcaActual.tipoCemento &&
+           m.descFisica === descFisica
+    );
+    if (marcaResuelta) {
+      this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaResuelta.marcaFabricanteId);
+    }
+
     this.verificarYActualizarCompletoFabricante(index);
   }
 
