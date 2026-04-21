@@ -29,6 +29,36 @@ export interface MarcaFabricante {
   indActivo: number;
 }
 
+export interface FabricanteDetalle {
+  fabricante: Fabricante;
+  marcas: MarcaFabricante[];
+}
+
+export interface ToggleEstadoResult {
+  fabricante: Fabricante;
+  marcasAfectadas: number;
+}
+
+export interface CrearFabricantePayload {
+  razonSocial: string;
+  ruc?: string | null;
+}
+
+export interface UpsertMarcaPayload {
+  marcaFabricanteId?: number;
+  nombreMarca?: string | null;
+  tipoCemento: string;
+  marca: string;
+  subMarca?: string | null;
+  descFisica?: string | null;
+}
+
+export interface UpsertFabricantePayload {
+  razonSocial?: string;
+  ruc?: string | null;
+  marcas?: UpsertMarcaPayload[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -41,8 +71,35 @@ export class FabricantesService {
     return this.http.get<Fabricante[]>(this.apiUrl);
   }
 
+  listarTodos(): Observable<Fabricante[]> {
+    return this.http.get<Fabricante[]>(this.apiUrl, { params: { todos: 'true' } });
+  }
+
   obtenerMarcasPorFabricante(fabricanteId: number): Observable<MarcaFabricante[]> {
     return this.http.get<MarcaFabricante[]>(`${this.apiUrl}/${fabricanteId}`);
+  }
+
+  obtenerDetalle(fabricanteId: number): Observable<FabricanteDetalle> {
+    return this.http.get<FabricanteDetalle>(`${this.apiUrl}/${fabricanteId}/detalle`);
+  }
+
+  crear(payload: CrearFabricantePayload): Observable<Fabricante> {
+    return this.http.post<Fabricante>(this.apiUrl, payload);
+  }
+
+  upsert(fabricanteId: number, payload: UpsertFabricantePayload): Observable<FabricanteDetalle> {
+    return this.http.put<FabricanteDetalle>(`${this.apiUrl}/${fabricanteId}`, payload);
+  }
+
+  toggleEstadoFabricante(fabricanteId: number): Observable<ToggleEstadoResult> {
+    return this.http.patch<ToggleEstadoResult>(`${this.apiUrl}/${fabricanteId}/estado`, {});
+  }
+
+  toggleEstadoMarca(fabricanteId: number, marcaFabricanteId: number): Observable<MarcaFabricante> {
+    return this.http.patch<MarcaFabricante>(
+      `${this.apiUrl}/${fabricanteId}/marcas/${marcaFabricanteId}/estado`,
+      {},
+    );
   }
 
   eliminarMarcaFabricante(marcaFabricanteId: number): Observable<void> {

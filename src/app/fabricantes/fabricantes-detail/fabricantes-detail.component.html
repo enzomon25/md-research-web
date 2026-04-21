@@ -1,0 +1,254 @@
+<div class="layout-container">
+  <app-sidebar />
+
+  <main class="main-content">
+    <div class="fabricantes-detail-page">
+
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner-large"></div>
+          <p>Cargando fabricante...</p>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <p>{{ error() }}</p>
+          <button class="btn-reintentar" (click)="cargarDetalle()">Reintentar</button>
+          <button class="btn-volver-secondary" (click)="volver()">Volver al listado</button>
+        </div>
+      } @else if (fabricante()) {
+
+        <app-page-header [title]="fabricante()!.razonSocial">
+          <div class="header-actions">
+            @if (!modoEdicion()) {
+              <button class="btn-editar" (click)="activarEdicion()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Editar
+              </button>
+            }
+            <button class="btn-volver" (click)="volver()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Volver
+            </button>
+          </div>
+          <app-user-menu />
+        </app-page-header>
+
+        <!-- Ficha del fabricante -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <h3 class="detail-card-title">Datos del Fabricante</h3>
+            <span class="badge" [class.badge-activo]="esActivo(fabricante()!.indActivo)"
+              [class.badge-inactivo]="!esActivo(fabricante()!.indActivo)">
+              {{ esActivo(fabricante()!.indActivo) ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+
+          @if (modoEdicion()) {
+            <div class="edit-form">
+              @if (errorGuardado()) {
+                <div class="alert-error">{{ errorGuardado() }}</div>
+              }
+              <div class="edit-grid">
+                <div class="form-group">
+                  <label>Razón Social <span class="required">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="formFabricante.razonSocial"
+                    [disabled]="guardando()" />
+                </div>
+                <div class="form-group">
+                  <label>RUC</label>
+                  <input type="text" class="form-control" [(ngModel)]="formFabricante.ruc"
+                    [disabled]="guardando()" />
+                </div>
+              </div>
+              <div class="edit-actions">
+                <button class="btn-cancelar" (click)="cancelarEdicion()" [disabled]="guardando()">Cancelar</button>
+                <button class="btn-guardar" (click)="guardarCambios()" [disabled]="guardando()">
+                  @if (guardando()) {
+                    <span class="spinner"></span> Guardando...
+                  } @else {
+                    Guardar cambios
+                  }
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Razón Social</span>
+                <span class="detail-value">{{ fabricante()!.razonSocial }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">RUC</span>
+                <span class="detail-value">{{ fabricante()!.ruc || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Creado por</span>
+                <span class="detail-value">{{ fabricante()!.usuarioCreacion }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Fecha Creación</span>
+                <span class="detail-value">{{ formatearFecha(fabricante()!.fechaCreacion) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Modificado por</span>
+                <span class="detail-value">{{ fabricante()!.usuarioModificacion }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Última modificación</span>
+                <span class="detail-value">{{ formatearFecha(fabricante()!.fechaModificacion) }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Tabla de marcas -->
+        <div class="detail-card marcas-card">
+          <div class="detail-card-header">
+            <h3 class="detail-card-title">Marcas Asociadas</h3>
+            <button class="btn-nueva-marca" (click)="abrirModalNuevaMarca()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Nueva Marca
+            </button>
+          </div>
+
+          @if (marcas().length === 0) {
+            <div class="empty-marcas">
+              <p>No hay marcas asociadas a este fabricante.</p>
+              <button class="btn-nueva-marca-empty" (click)="abrirModalNuevaMarca()">Agregar primera marca</button>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre Marca</th>
+                    <th>Tipo Cemento</th>
+                    <th>Marca</th>
+                    <th>SubMarca</th>
+                    <th>Desc. Física</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (marca of marcas(); track marca.marcaFabricanteId) {
+                    <tr [class.row-inactivo]="!esActivo(marca.indActivo)">
+                      <td>{{ marca.nombreMarca || '-' }}</td>
+                      <td>{{ marca.tipoCemento }}</td>
+                      <td class="td-marca">{{ marca.marca }}</td>
+                      <td>{{ marca.subMarca || '-' }}</td>
+                      <td>{{ marca.descFisica || '-' }}</td>
+                      <td>
+                        <span class="badge"
+                          [class.badge-activo]="esActivo(marca.indActivo)"
+                          [class.badge-inactivo]="!esActivo(marca.indActivo)">
+                          {{ esActivo(marca.indActivo) ? 'Activa' : 'Inactiva' }}
+                        </span>
+                      </td>
+                      <td class="td-acciones-marca">
+                        <button
+                          class="btn-editar-marca"
+                          [disabled]="procesandoToggleMarca() === marca.marcaFabricanteId"
+                          (click)="abrirModalEditarMarca(marca)"
+                          title="Editar marca">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Editar
+                        </button>
+                        <button
+                          class="btn-toggle-marca"
+                          [class.btn-desactivar]="esActivo(marca.indActivo)"
+                          [class.btn-activar]="!esActivo(marca.indActivo)"
+                          [disabled]="procesandoToggleMarca() === marca.marcaFabricanteId"
+                          (click)="toggleEstadoMarca(marca)">
+                          @if (procesandoToggleMarca() === marca.marcaFabricanteId) {
+                            <span class="spinner-sm"></span>
+                          } @else if (esActivo(marca.indActivo)) {
+                            Desactivar
+                          } @else {
+                            Activar
+                          }
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+      }
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Nueva / Editar Marca -->
+@if (mostrarModalMarca()) {
+  <div class="modal-overlay" (click)="cerrarModalMarca()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editandoMarca() ? 'Editar Marca' : 'Nueva Marca' }}</h2>
+        <button class="btn-close" (click)="cerrarModalMarca()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (errorMarca()) {
+          <div class="alert-error">{{ errorMarca() }}</div>
+        }
+        <div class="modal-grid">
+          <div class="form-group">
+            <label>Tipo de Cemento <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="formMarca.tipoCemento"
+              placeholder="Ej: PORTLAND" [disabled]="guardandoMarca()" />
+          </div>
+          <div class="form-group">
+            <label>Marca <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="formMarca.marca"
+              placeholder="Nombre de la marca" [disabled]="guardandoMarca()" />
+          </div>
+          <div class="form-group">
+            <label>Nombre Marca</label>
+            <input type="text" class="form-control" [(ngModel)]="formMarca.nombreMarca"
+              placeholder="Nombre descriptivo (opcional)" [disabled]="guardandoMarca()" />
+          </div>
+          <div class="form-group">
+            <label>SubMarca</label>
+            <input type="text" class="form-control" [(ngModel)]="formMarca.subMarca"
+              placeholder="SubMarca (opcional)" [disabled]="guardandoMarca()" />
+          </div>
+          <div class="form-group form-group-full">
+            <label>Descripción Física</label>
+            <input type="text" class="form-control" [(ngModel)]="formMarca.descFisica"
+              placeholder="Descripción física (opcional)" [disabled]="guardandoMarca()" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModalMarca()" [disabled]="guardandoMarca()">Cancelar</button>
+        <button class="btn-guardar" (click)="guardarMarca()" [disabled]="guardandoMarca()">
+          @if (guardandoMarca()) {
+            <span class="spinner"></span> Guardando...
+          } @else if (editandoMarca()) {
+            Actualizar Marca
+          } @else {
+            Guardar Marca
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

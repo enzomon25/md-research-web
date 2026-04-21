@@ -1,0 +1,190 @@
+<div class="layout-container">
+  <app-sidebar />
+
+  <main class="main-content">
+    <div class="fabricantes-page">
+      <app-page-header
+        title="Mantenimiento de Fabricantes"
+        subtitle="Gestiona el catálogo de fabricantes y sus marcas asociadas">
+        <button class="btn-nuevo" (click)="abrirModalCrear()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nuevo Fabricante
+        </button>
+        <app-user-menu />
+      </app-page-header>
+
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner-large"></div>
+          <p>Cargando fabricantes...</p>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <p>{{ error() }}</p>
+          <button class="btn-reintentar" (click)="cargarFabricantes()">Reintentar</button>
+        </div>
+      } @else {
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Razón Social</th>
+                <th>RUC</th>
+                <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fab of fabricantes(); track fab.fabricanteId) {
+                <tr
+                  class="table-row"
+                  [class.row-inactivo]="!esActivo(fab)"
+                  (click)="verDetalle(fab)">
+                  <td class="td-razon-social">{{ fab.razonSocial }}</td>
+                  <td>{{ fab.ruc || '-' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-activo]="esActivo(fab)" [class.badge-inactivo]="!esActivo(fab)">
+                      {{ esActivo(fab) ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>{{ formatearFecha(fab.fechaCreacion) }}</td>
+                  <td class="td-acciones" (click)="$event.stopPropagation()">
+                    <button
+                      class="btn-toggle"
+                      [class.btn-desactivar]="esActivo(fab)"
+                      [class.btn-activar]="!esActivo(fab)"
+                      (click)="solicitarToggleEstado(fab, $event)"
+                      [title]="esActivo(fab) ? 'Desactivar fabricante' : 'Activar fabricante'">
+                      {{ esActivo(fab) ? 'Desactivar' : 'Activar' }}
+                    </button>
+                    <button class="btn-detalle" (click)="verDetalle(fab)">Ver detalle</button>
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr>
+                  <td colspan="5" class="empty-cell">No hay fabricantes registrados.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Nuevo Fabricante -->
+@if (mostrarModalCrear()) {
+  <div class="modal-overlay" (click)="cerrarModalCrear()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Nuevo Fabricante</h2>
+        <button class="btn-close" (click)="cerrarModalCrear()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (errorModal()) {
+          <div class="alert-error">{{ errorModal() }}</div>
+        }
+        <div class="form-group">
+          <label for="razonSocial">Razón Social <span class="required">*</span></label>
+          <input
+            id="razonSocial"
+            type="text"
+            class="form-control"
+            [(ngModel)]="formCrear.razonSocial"
+            placeholder="Ingrese la razón social"
+            [disabled]="guardando()" />
+        </div>
+        <div class="form-group">
+          <label for="ruc">RUC</label>
+          <input
+            id="ruc"
+            type="text"
+            class="form-control"
+            [(ngModel)]="formCrear.ruc"
+            placeholder="Ingrese el RUC (opcional)"
+            [disabled]="guardando()" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModalCrear()" [disabled]="guardando()">Cancelar</button>
+        <button class="btn-guardar" (click)="guardarNuevoFabricante()" [disabled]="guardando()">
+          @if (guardando()) {
+            <span class="spinner"></span> Guardando...
+          } @else {
+            Guardar
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Confirmar Toggle Estado -->
+@if (mostrarModalToggle()) {
+  <div class="modal-overlay" (click)="cerrarModalToggle()">
+    <div class="modal-content modal-advertencia" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          @if (esActivo(fabricanteToggle()!)) {
+            Desactivar Fabricante
+          } @else {
+            Activar Fabricante
+          }
+        </h2>
+        <button class="btn-close" (click)="cerrarModalToggle()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (esActivo(fabricanteToggle()!)) {
+          <div class="advertencia-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <p class="advertencia-texto">
+            ¿Está seguro de que desea <strong>desactivar</strong> el fabricante
+            <strong>{{ fabricanteToggle()?.razonSocial }}</strong>?
+          </p>
+          <p class="advertencia-detalle">
+            Esta acción también <strong>desactivará todas las marcas</strong> asociadas a este fabricante.
+          </p>
+        } @else {
+          <p class="advertencia-texto">
+            ¿Está seguro de que desea <strong>activar</strong> el fabricante
+            <strong>{{ fabricanteToggle()?.razonSocial }}</strong>?
+          </p>
+          <p class="advertencia-detalle">
+            Las marcas previamente desactivadas por cascade no se activarán automáticamente.
+            Podrá activarlas individualmente desde el detalle del fabricante.
+          </p>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModalToggle()" [disabled]="procesandoToggle()">Cancelar</button>
+        <button
+          class="btn-confirmar"
+          [class.btn-confirmar-danger]="esActivo(fabricanteToggle()!)"
+          [class.btn-confirmar-success]="!esActivo(fabricanteToggle()!)"
+          (click)="confirmarToggleEstado()"
+          [disabled]="procesandoToggle()">
+          @if (procesandoToggle()) {
+            <span class="spinner"></span> Procesando...
+          } @else if (esActivo(fabricanteToggle()!)) {
+            Desactivar
+          } @else {
+            Activar
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

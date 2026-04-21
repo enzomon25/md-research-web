@@ -36,6 +36,17 @@ export const routes: Routes = [
     path: 'empresas/:id',
     loadComponent: () => import('./empresas/empresas-detail/empresas-detail.component').then(m => m.EmpresasDetailComponent)
   },
+  // Fabricantes (Solo ADMINISTRADOR)
+  {
+    path: 'fabricantes',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./fabricantes/fabricantes-list/fabricantes-list.component').then(m => m.FabricantesListComponent)
+  },
+  {
+    path: 'fabricantes/:id',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./fabricantes/fabricantes-detail/fabricantes-detail.component').then(m => m.FabricantesDetailComponent)
+  },
   // ✅ REGLA 5: Ruta protegida con Guard (Solo ADMINISTRADOR)
   {
     path: 'usuarios',
