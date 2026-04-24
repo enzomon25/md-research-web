@@ -145,6 +145,28 @@ export interface Empresa {
   indActivo: number;
 }
 
+export interface ObraEmpresa {
+  obraEncuestaId: number;
+  encuestaId: number;
+  etapaObra: string;
+  fechaFinalizacionObra: string;
+  direccionId?: number | null;
+  direc?: string | null;
+  codPais: string;
+  codDepartamento: string;
+  codProvincia: string;
+  codDistrito: string;
+  tipoVia: string;
+  nombreVia: string;
+  numeroVia: string;
+  referencia?: string | null;
+  descPais?: string | null;
+  descDepartamento?: string | null;
+  descProvincia?: string | null;
+  descDistrito?: string | null;
+  fechaCreacionEncuesta?: string | null;
+}
+
 export interface TipoEmpresa {
   tipoEmpresaId: number;
   descripcionTipoEmpresa: string;

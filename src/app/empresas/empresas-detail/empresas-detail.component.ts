@@ -14,7 +14,7 @@ import { UbicacionService } from '../../core/services/ubicacion.service';
 import { AuthService } from '../../core/services/auth.service';
 
 // 4. Models e Interfaces
-import { Empresa, Direccion, TipoEmpresa, Encuesta, Encuestado, PaginacionRespuesta } from '../../core/models';
+import { Empresa, Direccion, TipoEmpresa, Encuesta, Encuestado, ObraEmpresa, PaginacionRespuesta } from '../../core/models';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
@@ -65,6 +65,10 @@ export class EmpresasDetailComponent implements OnInit {
 
   encuestados = signal<Encuestado[]>([]);
   encuestadosCargando = signal(false);
+
+  obrasEmpresa = signal<ObraEmpresa[]>([]);
+  obrasCargando = signal(false);
+  obrasError = signal<string | null>(null);
 
   get esEncuestador(): boolean {
     return this.authService.getRolDescripcion() === ROLES.ENCUESTADOR;
@@ -138,6 +142,7 @@ export class EmpresasDetailComponent implements OnInit {
     this.empresaId.set(empresaId);
     this.cargarDetalle(empresaId);
     this.cargarEncuestasEmpresa();
+    this.cargarObrasEmpresa();
   }
 
   cargarDetalle(empresaId: number): void {
@@ -210,6 +215,28 @@ export class EmpresasDetailComponent implements OnInit {
       error: (err) => {
         console.error('Error al cargar encuestados:', err);
         this.encuestadosCargando.set(false);
+      },
+    });
+  }
+
+  cargarObrasEmpresa(): void {
+    const empresaId = this.empresaId();
+    if (!empresaId) {
+      return;
+    }
+
+    this.obrasCargando.set(true);
+    this.obrasError.set(null);
+
+    this.empresasService.obtenerObrasPorEmpresaId(empresaId).subscribe({
+      next: (obras) => {
+        this.obrasEmpresa.set(obras);
+        this.obrasCargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar obras de la empresa:', err);
+        this.obrasError.set('No se pudo cargar el listado de obras.');
+        this.obrasCargando.set(false);
       },
     });
   }

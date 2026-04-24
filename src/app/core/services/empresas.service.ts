@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Empresa, PaginacionRespuesta, TipoEmpresa } from '../models';
+import { Empresa, ObraEmpresa, PaginacionRespuesta, TipoEmpresa } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -56,5 +56,9 @@ export class EmpresasService {
 
   listarTipos(): Observable<TipoEmpresa[]> {
     return this.http.get<TipoEmpresa[]>(`${this.apiUrl}/tipos`);
+  }
+
+  obtenerObrasPorEmpresaId(id: number): Observable<ObraEmpresa[]> {
+    return this.http.get<ObraEmpresa[]>(`${this.apiUrl}/${id}/obras`);
   }
 }

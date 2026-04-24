@@ -411,6 +411,67 @@
             </div>
           }
         </div>
+
+        <div class="detail-card" style="margin-top: 2rem;">
+          <div class="table-header">
+            <h2 class="detail-title">Direcciones de obras</h2>
+            <span class="table-count">{{ obrasEmpresa().length }} obra(s)</span>
+          </div>
+
+          @if (obrasCargando()) {
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Cargando obras...</p>
+            </div>
+          } @else if (obrasError()) {
+            <div class="empty-state">
+              <p>{{ obrasError() }}</p>
+            </div>
+          } @else if (obrasEmpresa().length === 0) {
+            <div class="empty-state">
+              <p>Todavía no hay obras registradas para esta empresa.</p>
+            </div>
+          } @else {
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>N° Encuesta</th>
+                    <th>Fecha encuesta</th>
+                    <th>Dirección</th>
+                    <th>País</th>
+                    <th>Departamento</th>
+                    <th>Provincia</th>
+                    <th>Distrito</th>
+                    <th>Tipo vía</th>
+                    <th>Nombre vía</th>
+                    <th>Número vía</th>
+                    <th>Referencia</th>
+                    <th>Etapa obra</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (obra of obrasEmpresa(); track obra.obraEncuestaId) {
+                    <tr>
+                      <td>{{ obra.encuestaId }}</td>
+                      <td>{{ obra.fechaCreacionEncuesta || '-' }}</td>
+                      <td>{{ obra.direc || '-' }}</td>
+                      <td>{{ obra.descPais || '-' }}</td>
+                      <td>{{ obra.descDepartamento || '-' }}</td>
+                      <td>{{ obra.descProvincia || '-' }}</td>
+                      <td>{{ obra.descDistrito || '-' }}</td>
+                      <td>{{ obra.tipoVia || '-' }}</td>
+                      <td>{{ obra.nombreVia || '-' }}</td>
+                      <td>{{ obra.numeroVia || '-' }}</td>
+                      <td>{{ obra.referencia || '-' }}</td>
+                      <td>{{ obra.etapaObra || '-' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
       }
     </div>
   </main>

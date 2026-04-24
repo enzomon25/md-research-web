@@ -3264,6 +3264,78 @@ ng test                      # Tests (alternativa)
 
 ---
 
+## 🏭 Cascada de Selección Fabricante → Marca → Tipo de Cemento → Descripción Física
+
+### Patrón obligatorio para cascadas de `marcaFabricanteId`
+
+La tabla `marca_fabricante` puede tener **múltiples registros para una misma marca** (mismo `nombreMarca`), diferenciados por `tipoCemento` y `descFisica`. El dropdown de marcas debe mostrarlas **agrupadas/deduplicadas** por `fabricanteId + nombreMarca`, usando un ID representativo. El `marcaFabricanteId` **definitivo** se resuelve sólo al completar la cascada.
+
+**Regla: nunca enviar el ID representativo como ID final. Siempre resolverlo.**
+
+```typescript
+// ✅ BIEN — deduplicar por fabricanteId+nombreMarca en el dropdown
+marcasDisponiblesParaFila(index: number): any[] {
+  const unicos = new Map<string, any>();
+  for (const marca of marcas) {
+    const key = `${marca.fabricanteId}-${marca.nombreMarca}`;
+    // Priorizar el registro actualmente seleccionado para no perder la selección
+    if (!unicos.has(key) || marca.marcaFabricanteId === selectedId) {
+      unicos.set(key, marca);
+    }
+  }
+  return Array.from(unicos.values());
+}
+
+// ✅ BIEN — al cambiar tipoCemento, resolver el marcaFabricanteId correcto
+onTipoCementoChange(index: number, event: Event) {
+  const tipoCemento = (event.target as HTMLSelectElement).value;
+  this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
+  const marcasFiltradasPorTipo = marcasSeleccionadas.filter(m => m.tipoCemento === tipoCemento);
+  // Auto-resolver si hay un único registro
+  if (marcasFiltradasPorTipo.length === 1) {
+    this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcasFiltradasPorTipo[0].marcaFabricanteId);
+  }
+}
+
+// ✅ BIEN — al cambiar descFisica, resolver el marcaFabricanteId exacto
+onDescFisicaChange(index: number, event: Event) {
+  const descFisica = (event.target as HTMLSelectElement).value;
+  const marcaResuelta = marcas.find(
+    m => m.nombreMarca === nombreMarca &&
+         m.tipoCemento === marcaActual.tipoCemento &&
+         m.descFisica === descFisica
+  );
+  if (marcaResuelta) {
+    this.actualizarMarcaFabricante(index, 'marcaFabricanteId', marcaResuelta.marcaFabricanteId);
+  }
+}
+```
+
+```typescript
+// ❌ MAL — usar el ID representativo del dropdown como ID final sin resolver
+onTipoCementoChange(index: number, event: Event) {
+  const tipoCemento = (event.target as HTMLSelectElement).value;
+  this.actualizarMarcaFabricante(index, 'tipoCemento', tipoCemento);
+  // ❌ No se actualiza marcaFabricanteId → queda el ID del primer registro del grupo
+}
+```
+
+### Flujo completo de la cascada
+
+```
+Fabricante seleccionado
+  └─> onFabricanteChange: carga marcasPorFila[index] desde API
+        └─> marcasDisponiblesParaFila: deduplica por fabricanteId+nombreMarca
+              └─> onMarcaChange: extrae tiposCementoPorFila únicos (por nombreMarca)
+                    └─> onTipoCementoChange: filtra descripcionesFisicasPorFila
+                          └─> onDescFisicaChange: resuelve marcaFabricanteId exacto
+                                                  (nombreMarca + tipoCemento + descFisica)
+```
+
+**Regla crítica**: El `marcaFabricanteId` almacenado en el modelo de la fila **debe ser siempre el ID real** del registro que coincide con los tres criterios (`nombreMarca`, `tipoCemento`, `descFisica`), no el ID representativo del primer elemento del grupo.
+
+---
+
 ## 🎉 Conclusión
 
 Esta estructura estándar está diseñada para:
