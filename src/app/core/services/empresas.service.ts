@@ -18,6 +18,9 @@ export class EmpresasService {
     ruc?: string,
     tipoEmpresaId?: number | null,
     direccion?: string,
+    codDepartamento?: string | null,
+    codProvincia?: string | null,
+    codDistrito?: string | null,
   ): Observable<PaginacionRespuesta<Empresa>> {
     let params = new HttpParams()
       .set('pagina', pagina.toString())
@@ -37,6 +40,18 @@ export class EmpresasService {
 
     if (direccion) {
       params = params.set('direccion', direccion);
+    }
+
+    if (codDepartamento) {
+      params = params.set('codDepartamento', codDepartamento);
+    }
+
+    if (codProvincia) {
+      params = params.set('codProvincia', codProvincia);
+    }
+
+    if (codDistrito) {
+      params = params.set('codDistrito', codDistrito);
     }
 
     return this.http.get<PaginacionRespuesta<Empresa>>(this.apiUrl, { params });

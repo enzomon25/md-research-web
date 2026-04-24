@@ -68,6 +68,53 @@
               />
             </div>
 
+            <div class="form-group">
+              <label for="filtroDepartamento">Departamento</label>
+              <select
+                id="filtroDepartamento"
+                class="form-control"
+                [ngModel]="filtroCodDepartamento()"
+                (ngModelChange)="onDepartamentoChange($event)"
+              >
+                <option [ngValue]="null">Todos los departamentos</option>
+                @for (dep of departamentos(); track dep.codDepartamento) {
+                  <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filtroProvincia">Provincia</label>
+              <select
+                id="filtroProvincia"
+                class="form-control"
+                [ngModel]="filtroCodProvincia()"
+                (ngModelChange)="onProvinciaChange($event)"
+                [disabled]="!filtroCodDepartamento()"
+              >
+                <option [ngValue]="null">Todas las provincias</option>
+                @for (prov of provincias(); track prov.codProvincia) {
+                  <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="filtroDistrito">Distrito</label>
+              <select
+                id="filtroDistrito"
+                class="form-control"
+                [ngModel]="filtroCodDistrito()"
+                (ngModelChange)="onDistritoChange($event)"
+                [disabled]="!filtroCodProvincia()"
+              >
+                <option [ngValue]="null">Todos los distritos</option>
+                @for (dist of distritos(); track dist.codDistrito) {
+                  <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
+                }
+              </select>
+            </div>
+
           </div>
 
           <div class="filters-actions">

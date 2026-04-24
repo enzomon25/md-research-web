@@ -9,12 +9,15 @@ import { Router } from '@angular/router';
 
 // 3. Services propios
 import { EmpresasService } from '../../core/services/empresas.service';
+import { UbicacionService } from '../../core/services/ubicacion.service';
 
 // 4. Models e Interfaces
 import { Empresa, TipoEmpresa } from '../../core/models';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
+
+const COD_PAIS_PERU = '428';
 
 /**
  * Component para listar empresas
@@ -29,6 +32,7 @@ import { PageHeaderComponent } from '../../shared/page-header/page-header.compon
 })
 export class EmpresasListComponent implements OnInit {
   private empresasService = inject(EmpresasService);
+  private ubicacionService = inject(UbicacionService);
   private router = inject(Router);
 
   // ✅ REGLA 4: Usar Signals
@@ -43,14 +47,25 @@ export class EmpresasListComponent implements OnInit {
   totalPaginas = signal(0);
   totalRegistros = signal(0);
 
-  // Filtros
+  // Filtros generales
   filtroRazonSocial = signal('');
   filtroRuc = signal('');
   filtroTipoEmpresa = signal<number | null>(null);
   filtroDireccion = signal('');
 
+  // Filtros ubigeo
+  filtroCodDepartamento = signal<string | null>(null);
+  filtroCodProvincia = signal<string | null>(null);
+  filtroCodDistrito = signal<string | null>(null);
+
+  // Listas para selects ubigeo
+  departamentos = signal<any[]>([]);
+  provincias = signal<any[]>([]);
+  distritos = signal<any[]>([]);
+
   ngOnInit(): void {
     this.cargarTiposEmpresa();
+    this.cargarDepartamentos();
     this.cargarEmpresas();
   }
 
@@ -62,20 +77,16 @@ export class EmpresasListComponent implements OnInit {
     this.cargando.set(true);
     this.error.set(null);
 
-    const filtros = {
-      razonSocial: this.filtroRazonSocial() || undefined,
-      ruc: this.filtroRuc() || undefined,
-      tipoEmpresaId: this.filtroTipoEmpresa(),
-      direccion: this.filtroDireccion() || undefined,
-    };
-
     this.empresasService.listar(
       this.paginaActual(),
       this.limite(),
-      filtros.razonSocial,
-      filtros.ruc,
-      filtros.tipoEmpresaId,
-      filtros.direccion,
+      this.filtroRazonSocial() || undefined,
+      this.filtroRuc() || undefined,
+      this.filtroTipoEmpresa(),
+      this.filtroDireccion() || undefined,
+      this.filtroCodDepartamento(),
+      this.filtroCodProvincia(),
+      this.filtroCodDistrito(),
     ).subscribe({
       next: (respuesta) => {
         this.empresas.set(respuesta.data);
@@ -102,6 +113,54 @@ export class EmpresasListComponent implements OnInit {
     });
   }
 
+  // ========================================
+  // MÉTODOS DE UBIGEO (CASCADA)
+  // ========================================
+
+  cargarDepartamentos(): void {
+    this.ubicacionService.listarDepartamentos(COD_PAIS_PERU).subscribe({
+      next: (data) => this.departamentos.set(data),
+      error: (err) => console.error('Error al cargar departamentos:', err),
+    });
+  }
+
+  onDepartamentoChange(codDepartamento: string | null): void {
+    this.filtroCodDepartamento.set(codDepartamento || null);
+    this.filtroCodProvincia.set(null);
+    this.filtroCodDistrito.set(null);
+    this.provincias.set([]);
+    this.distritos.set([]);
+
+    if (codDepartamento) {
+      this.ubicacionService.listarProvincias(codDepartamento, COD_PAIS_PERU).subscribe({
+        next: (data) => this.provincias.set(data),
+        error: (err) => console.error('Error al cargar provincias:', err),
+      });
+    }
+  }
+
+  onProvinciaChange(codProvincia: string | null): void {
+    this.filtroCodProvincia.set(codProvincia || null);
+    this.filtroCodDistrito.set(null);
+    this.distritos.set([]);
+
+    const codDep = this.filtroCodDepartamento();
+    if (codProvincia && codDep) {
+      this.ubicacionService.listarDistritos(codProvincia, codDep, COD_PAIS_PERU).subscribe({
+        next: (data) => this.distritos.set(data),
+        error: (err) => console.error('Error al cargar distritos:', err),
+      });
+    }
+  }
+
+  onDistritoChange(codDistrito: string | null): void {
+    this.filtroCodDistrito.set(codDistrito || null);
+  }
+
+  // ========================================
+  // MÉTODOS DE FILTRADO Y PAGINACIÓN
+  // ========================================
+
   aplicarFiltros(): void {
     this.paginaActual.set(1);
     this.cargarEmpresas();
@@ -112,6 +171,11 @@ export class EmpresasListComponent implements OnInit {
     this.filtroRuc.set('');
     this.filtroTipoEmpresa.set(null);
     this.filtroDireccion.set('');
+    this.filtroCodDepartamento.set(null);
+    this.filtroCodProvincia.set(null);
+    this.filtroCodDistrito.set(null);
+    this.provincias.set([]);
+    this.distritos.set([]);
     this.paginaActual.set(1);
     this.cargarEmpresas();
   }
