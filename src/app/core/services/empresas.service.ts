@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Empresa, ObraEmpresa, PaginacionRespuesta, TipoEmpresa } from '../models';
+import { Empresa, EncuestadoEmpresa, ObraEmpresa, PaginacionRespuesta, TipoEmpresa } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -60,5 +60,9 @@ export class EmpresasService {
 
   obtenerObrasPorEmpresaId(id: number): Observable<ObraEmpresa[]> {
     return this.http.get<ObraEmpresa[]>(`${this.apiUrl}/${id}/obras`);
+  }
+
+  obtenerEncuestadosPorEmpresaId(id: number): Observable<EncuestadoEmpresa[]> {
+    return this.http.get<EncuestadoEmpresa[]>(`${this.apiUrl}/${id}/encuestados`);
   }
 }

@@ -389,6 +389,8 @@
               <table>
                 <thead>
                   <tr>
+                    <th>N° Encuesta</th>
+                    <th>Fecha encuesta</th>
                     <th>Nombres</th>
                     <th>Apellido Paterno</th>
                     <th>Cargo</th>
@@ -397,9 +399,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (enc of encuestados(); track enc.encuestadoId) {
+                  @for (enc of encuestados(); track enc.encuestaId) {
                     <tr>
-                      <td>{{ enc.nombres }}</td>
+                      <td>{{ enc.encuestaId }}</td>
+                      <td>{{ enc.fechaCreacionEncuesta || '-' }}</td>
+                      <td>{{ enc.nombres || '-' }}</td>
                       <td>{{ enc.apepat || '-' }}</td>
                       <td>{{ enc.cargo || '-' }}</td>
                       <td>{{ enc.tipoContacto || '-' }}</td>

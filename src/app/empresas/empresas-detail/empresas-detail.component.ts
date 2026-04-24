@@ -9,12 +9,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 // 3. Services propios
 import { EmpresasService } from '../../core/services/empresas.service';
 import { EncuestasService } from '../../core/services/encuestas.service';
-import { EncuestadosService } from '../../core/services/encuestados.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
 import { AuthService } from '../../core/services/auth.service';
 
 // 4. Models e Interfaces
-import { Empresa, Direccion, TipoEmpresa, Encuesta, Encuestado, ObraEmpresa, PaginacionRespuesta } from '../../core/models';
+import { Empresa, Direccion, TipoEmpresa, Encuesta, EncuestadoEmpresa, ObraEmpresa, PaginacionRespuesta } from '../../core/models';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
@@ -43,7 +42,6 @@ type Distrito = { distritoId: number; descDistrito: string; codPais: string; cod
 export class EmpresasDetailComponent implements OnInit {
   private empresasService = inject(EmpresasService);
   private encuestasService = inject(EncuestasService);
-  private encuestadosService = inject(EncuestadosService);
   private ubicacionService = inject(UbicacionService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -63,7 +61,7 @@ export class EmpresasDetailComponent implements OnInit {
   encuestasTotal = signal(0);
   encuestasLimite = 10;
 
-  encuestados = signal<Encuestado[]>([]);
+  encuestados = signal<EncuestadoEmpresa[]>([]);
   encuestadosCargando = signal(false);
 
   obrasEmpresa = signal<ObraEmpresa[]>([]);
@@ -142,6 +140,7 @@ export class EmpresasDetailComponent implements OnInit {
     this.empresaId.set(empresaId);
     this.cargarDetalle(empresaId);
     this.cargarEncuestasEmpresa();
+    this.cargarEncuestados();
     this.cargarObrasEmpresa();
   }
 
@@ -184,7 +183,6 @@ export class EmpresasDetailComponent implements OnInit {
           this.encuestasTotalPaginas.set(respuesta.totalPaginas);
           this.encuestasTotal.set(respuesta.total);
           this.encuestasCargando.set(false);
-          this.cargarEncuestados(sinEnRegistro);
         },
         error: (err) => {
           console.error('Error al cargar encuestas de la empresa:', err);
@@ -194,20 +192,15 @@ export class EmpresasDetailComponent implements OnInit {
       });
   }
 
-  cargarEncuestados(encuestas: Encuesta[]): void {
-    const ids = [
-      ...new Set(
-        encuestas
-          .map((e) => e.encuestadoId)
-          .filter((id): id is number => !!id && id > 0),
-      ),
-    ];
-    if (ids.length === 0) {
-      this.encuestados.set([]);
+  cargarEncuestados(): void {
+    const empresaId = this.empresaId();
+    if (!empresaId) {
       return;
     }
+
     this.encuestadosCargando.set(true);
-    this.encuestadosService.obtenerPorIds(ids).subscribe({
+
+    this.empresasService.obtenerEncuestadosPorEmpresaId(empresaId).subscribe({
       next: (encuestados) => {
         this.encuestados.set(encuestados);
         this.encuestadosCargando.set(false);
@@ -469,7 +462,7 @@ export class EmpresasDetailComponent implements OnInit {
     return Number.isNaN(empresaId) || empresaId <= 0 ? null : empresaId;
   }
 
-  getEncuestadoPorId(id: number | undefined): Encuestado | null {
+  getEncuestadoPorId(id: number | undefined): EncuestadoEmpresa | null {
     if (!id) return null;
     return this.encuestados().find((e) => e.encuestadoId === id) ?? null;
   }
