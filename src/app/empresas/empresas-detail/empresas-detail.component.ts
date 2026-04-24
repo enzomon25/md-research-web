@@ -13,7 +13,7 @@ import { UbicacionService } from '../../core/services/ubicacion.service';
 import { AuthService } from '../../core/services/auth.service';
 
 // 4. Models e Interfaces
-import { Empresa, Direccion, TipoEmpresa, Encuesta, EncuestadoEmpresa, ObraEmpresa, PaginacionRespuesta } from '../../core/models';
+import { Empresa, Direccion, TipoEmpresa, Encuesta, EncuestaEmpresa, EncuestadoEmpresa, ObraEmpresa } from '../../core/models';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
@@ -53,13 +53,9 @@ export class EmpresasDetailComponent implements OnInit {
   error = signal<string | null>(null);
   empresaId = signal<number | null>(null);
 
-  encuestas = signal<Encuesta[]>([]);
+  encuestas = signal<EncuestaEmpresa[]>([]);
   encuestasCargando = signal(false);
   encuestasError = signal<string | null>(null);
-  encuestasPagina = signal(1);
-  encuestasTotalPaginas = signal(0);
-  encuestasTotal = signal(0);
-  encuestasLimite = 10;
 
   encuestados = signal<EncuestadoEmpresa[]>([]);
   encuestadosCargando = signal(false);
@@ -77,9 +73,17 @@ export class EmpresasDetailComponent implements OnInit {
     return estadoId === ESTADOS_ENCUESTA.APROBADO || estadoId === ESTADOS_ENCUESTA.TRANSFERIDO;
   }
 
+  encuestaSeleccionada = signal<number | null>(null);
+
+  seleccionarEncuesta(encuestaId: number): void {
+    this.encuestaSeleccionada.set(
+      this.encuestaSeleccionada() === encuestaId ? null : encuestaId,
+    );
+  }
+
   // Modal de confirmación de clonación
   mostrarModalClonar = signal(false);
-  encuestaParaClonar = signal<Encuesta | null>(null);
+  encuestaParaClonar = signal<EncuestaEmpresa | null>(null);
   clonandoEncuesta = signal(false);
 
   // Modo edición
@@ -170,26 +174,17 @@ export class EmpresasDetailComponent implements OnInit {
     this.encuestasCargando.set(true);
     this.encuestasError.set(null);
 
-    this.encuestasService
-      .listar(this.encuestasPagina(), this.encuestasLimite, {
-        empresaId,
-      })
-      .subscribe({
-        next: (respuesta: PaginacionRespuesta<Encuesta>) => {
-          const sinEnRegistro = respuesta.data.filter(
-            (e) => e.estadoId !== ESTADOS_ENCUESTA.EN_REGISTRO,
-          );
-          this.encuestas.set(sinEnRegistro);
-          this.encuestasTotalPaginas.set(respuesta.totalPaginas);
-          this.encuestasTotal.set(respuesta.total);
-          this.encuestasCargando.set(false);
-        },
-        error: (err) => {
-          console.error('Error al cargar encuestas de la empresa:', err);
-          this.encuestasError.set('No se pudo cargar el listado de encuestas.');
-          this.encuestasCargando.set(false);
-        },
-      });
+    this.empresasService.obtenerEncuestasPorEmpresaId(empresaId).subscribe({
+      next: (encuestas) => {
+        this.encuestas.set(encuestas);
+        this.encuestasCargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar encuestas de la empresa:', err);
+        this.encuestasError.set('No se pudo cargar el listado de encuestas.');
+        this.encuestasCargando.set(false);
+      },
+    });
   }
 
   cargarEncuestados(): void {
@@ -232,13 +227,6 @@ export class EmpresasDetailComponent implements OnInit {
         this.obrasCargando.set(false);
       },
     });
-  }
-
-  cambiarPaginaEncuestas(pagina: number): void {
-    if (pagina >= 1 && pagina <= this.encuestasTotalPaginas()) {
-      this.encuestasPagina.set(pagina);
-      this.cargarEncuestasEmpresa();
-    }
   }
 
   cargarTiposEmpresa(): void {
@@ -524,7 +512,7 @@ export class EmpresasDetailComponent implements OnInit {
     this.router.navigate(ruta);
   }
 
-  abrirDialogoClonar(encuesta: Encuesta): void {
+  abrirDialogoClonar(encuesta: EncuestaEmpresa): void {
     this.encuestaParaClonar.set(encuesta);
     this.mostrarModalClonar.set(true);
   }

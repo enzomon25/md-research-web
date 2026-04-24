@@ -186,6 +186,28 @@ tbody tr:hover {
   text-align: center;
 }
 
+.fila-resaltada {
+  background-color: rgba($primary, 0.08) !important;
+  outline: 2px solid rgba($primary, 0.35);
+  outline-offset: -2px;
+}
+
+.encuesta-id-btn {
+  background: none;
+  border: none;
+  font-family: $font-family-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline dotted;
+
+  &:hover {
+    color: $primary-dark;
+  }
+}
+
 .encuestado-cell {
   display: flex;
   flex-direction: column;

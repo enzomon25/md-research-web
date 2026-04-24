@@ -145,6 +145,17 @@ export interface Empresa {
   indActivo: number;
 }
 
+export interface EncuestaEmpresa {
+  encuestaId: number;
+  estadoId: number;
+  estadoDescripcion?: string | null;
+  tipoEncuesta: string;
+  tipoEncuestaValor?: string | null;
+  fechaEncuesta?: string | null;
+  fechaCreacion: string;
+  usuarioCreacion: string;
+}
+
 export interface EncuestadoEmpresa {
   encuestadoId: number;
   nombres?: string | null;

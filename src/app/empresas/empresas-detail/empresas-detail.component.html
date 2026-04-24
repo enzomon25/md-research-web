@@ -242,10 +242,8 @@
 
         <div class="detail-card" style="margin-top: 2rem;">
           <div class="table-header">
-            <h2 class="detail-title">Encuestas de la empresa</h2>
-            <span class="table-count">
-              {{ encuestasTotal() }} encuestas encontradas
-            </span>
+            <h2 class="detail-title">Encuestas asociadas</h2>
+            <span class="table-count">{{ encuestas().length }} encuestas encontradas</span>
           </div>
 
           @if (encuestasError()) {
@@ -259,15 +257,19 @@
               <div class="spinner"></div>
               <p>Cargando encuestas...</p>
             </div>
+          } @else if (encuestas().length === 0) {
+            <div class="empty-state">
+              <p>No hay encuestas registradas para esta empresa.</p>
+            </div>
           } @else {
             <div class="table-container">
               <table>
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th>N° Encuesta</th>
                     <th>Tipo de Encuesta</th>
-                    <th>Encuestado</th>
                     <th>Fecha de Encuesta</th>
+                    <th>Fecha de Creación</th>
                     <th>Creado Por</th>
                     <th>Estado</th>
                     <th>Acciones</th>
@@ -275,41 +277,31 @@
                 </thead>
                 <tbody>
                   @for (encuesta of encuestas(); track encuesta.encuestaId; let i = $index) {
-                    <tr [class.fila-par]="i % 2 === 0">
-                      <td class="col-num">{{ i + 1 }}</td>
+                    <tr [class.fila-par]="i % 2 === 0"
+                        [class.fila-resaltada]="encuesta.encuestaId === encuestaSeleccionada()"
+                        (click)="seleccionarEncuesta(encuesta.encuestaId)">
+                      <td>
+                        <button class="encuesta-id-btn">{{ encuesta.encuestaId }}</button>
+                      </td>
                       <td>
                         <span class="tipo-encuesta-badge" [class.tipo-obras]="encuesta.tipoEncuesta === 'OBRAS'">
                           {{ encuesta.tipoEncuestaValor || encuesta.tipoEncuesta }}
                         </span>
                       </td>
-                      <td>
-                        @if (getEncuestadoPorId(encuesta.encuestadoId); as enc) {
-                          <div class="encuestado-cell">
-                            <span class="encuestado-nombre">{{ enc.nombres }} {{ enc.apepat }}</span>
-                            @if (enc.cargo) {
-                              <span class="encuestado-cargo">{{ enc.cargo }}</span>
-                            }
-                            @if (enc.tipoContacto && enc.contacto) {
-                              <span class="encuestado-contacto">{{ enc.tipoContacto }}: {{ enc.contacto }}</span>
-                            }
-                          </div>
-                        } @else {
-                          <span class="sin-dato">—</span>
-                        }
-                      </td>
                       <td>{{ encuesta.fechaEncuesta || '—' }}</td>
+                      <td>{{ encuesta.fechaCreacion || '—' }}</td>
                       <td>{{ encuesta.usuarioCreacion || '—' }}</td>
                       <td>
                         <div class="estado-badge" [ngClass]="getEstadoClass(encuesta.estadoId)">
-                          {{ encuesta.estado?.descripcionEstado || encuesta.estadoId }}
+                          {{ encuesta.estadoDescripcion || encuesta.estadoId }}
                         </div>
                       </td>
                       <td>
                         <div class="acciones-container">
-                          @if (encuesta.estado?.descripcionEstado?.toLowerCase()?.includes('observ')) {
+                          @if (encuesta.estadoDescripcion?.toLowerCase()?.includes('observ')) {
                             <button
                               class="btn-accion"
-                              (click)="editarEncuesta(encuesta.encuestaId!)"
+                              (click)="editarEncuesta(encuesta.encuestaId)"
                               title="Editar encuesta">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -320,7 +312,7 @@
                           @if (puedeVerEncuesta(encuesta.estadoId)) {
                             <button
                               class="btn-accion"
-                              (click)="revisarEncuesta(encuesta.encuestaId!)"
+                              (click)="revisarEncuesta(encuesta.encuestaId)"
                               title="Revisar encuesta">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -342,30 +334,10 @@
                         </div>
                       </td>
                     </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="7" class="empty-message">No hay encuestas registradas para esta empresa</td>
-                    </tr>
                   }
                 </tbody>
               </table>
             </div>
-
-            @if (encuestasTotalPaginas() > 1) {
-              <div class="pagination">
-                <button
-                  [disabled]="encuestasPagina() === 1"
-                  (click)="cambiarPaginaEncuestas(encuestasPagina() - 1)">
-                  Anterior
-                </button>
-                <span>Página {{ encuestasPagina() }} de {{ encuestasTotalPaginas() }}</span>
-                <button
-                  [disabled]="encuestasPagina() === encuestasTotalPaginas()"
-                  (click)="cambiarPaginaEncuestas(encuestasPagina() + 1)">
-                  Siguiente
-                </button>
-              </div>
-            }
           }
         </div>
 
@@ -400,7 +372,7 @@
                 </thead>
                 <tbody>
                   @for (enc of encuestados(); track enc.encuestaId) {
-                    <tr>
+                    <tr [class.fila-resaltada]="enc.encuestaId === encuestaSeleccionada()">
                       <td>{{ enc.encuestaId }}</td>
                       <td>{{ enc.fechaCreacionEncuesta || '-' }}</td>
                       <td>{{ enc.nombres || '-' }}</td>
@@ -456,7 +428,7 @@
                 </thead>
                 <tbody>
                   @for (obra of obrasEmpresa(); track obra.obraEncuestaId) {
-                    <tr>
+                    <tr [class.fila-resaltada]="obra.encuestaId === encuestaSeleccionada()">
                       <td>{{ obra.encuestaId }}</td>
                       <td>{{ obra.fechaCreacionEncuesta || '-' }}</td>
                       <td>{{ obra.direc || '-' }}</td>
