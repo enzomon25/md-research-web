@@ -173,7 +173,7 @@
                 </tr>
               </thead>
               <tbody>
-                @if (empresas().length === 0) {
+                @if (empresasAgrupadas().length === 0) {
                   <tr>
                     <td colspan="8" class="text-center empty-state">
                       <i class="fas fa-building"></i>
@@ -181,57 +181,128 @@
                     </td>
                   </tr>
                 } @else {
-                  @for (empresa of empresas(); track empresa.empresaId) {
-                    <tr>
-                      <td>
-                        <span class="ruc-badge">{{ empresa.ruc }}</span>
-                      </td>
-                      <td>
-                        <strong>{{ empresa.razonSocial }}</strong>
-                      </td>
-                      <td>
-                        <span class="tipo-badge">
-                          {{ obtenerNombreTipoEmpresa(empresa.tipoEmpresaId) }}
-                        </span>
-                      </td>
-                      <td>{{ empresa.actividadEconomica || 'N/A' }}</td>
-                      <td>
-                        @if (empresa.tamanoEmpresaTop10k) {
-                          <span class="tamano-badge top10k">{{ empresa.tamanoEmpresaTop10k }}</span>
-                        } @else {
-                          <span class="tamano-badge">N/A</span>
-                        }
-                      </td>
-                      <td>
-                        @if (empresa.direccionConcatenada) {
-                          <span class="direccion-text">{{ empresa.direccionConcatenada }}</span>
-                        } @else {
-                          <span class="sin-dato-badge">Sin dirección registrada</span>
-                        }
-                      </td>
-                      <td>
-                        @if (empresa.tipoDireccion) {
-                          <span class="tipo-dir-badge">{{ obtenerLabelDireccion(empresa.tipoDireccion) }}</span>
-                        } @else {
-                          <span class="sin-dato-badge">—</span>
-                        }
-                      </td>
-                      <td class="text-center">
-                        <div class="acciones-container">
-                          <button
-                            type="button"
-                            class="btn-icon btn-icon-primary"
-                            (click)="verDetalleEmpresa(empresa.empresaId)"
-                            title="Ver detalle"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                              <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke-width="2"/>
-                              <circle cx="8" cy="8" r="2" stroke-width="2"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                  @for (empresa of empresasAgrupadas(); track $index) {
+                    @switch (empresa.tipoFila) {
+
+                      @case ('empresa-header') {
+                        <tr class="fila-empresa-header">
+                          <td><span class="ruc-badge">{{ empresa.ruc }}</span></td>
+                          <td><strong>{{ empresa.razonSocial }}</strong></td>
+                          <td>
+                            <span class="tipo-badge">{{ obtenerNombreTipoEmpresa(empresa.tipoEmpresaId) }}</span>
+                          </td>
+                          <td>{{ empresa.actividadEconomica || 'N/A' }}</td>
+                          <td>
+                            @if (empresa.tamanoEmpresaTop10k) {
+                              <span class="tamano-badge top10k">{{ empresa.tamanoEmpresaTop10k }}</span>
+                            } @else {
+                              <span class="tamano-badge">N/A</span>
+                            }
+                          </td>
+                          <td>
+                            <span class="dir-count-badge">
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5z"/>
+                                <circle cx="8" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                              </svg>
+                              {{ empresa.totalDirecciones }}
+                              {{ empresa.totalDirecciones === 1 ? 'dirección' : 'direcciones' }}
+                            </span>
+                          </td>
+                          <td></td>
+                          <td class="text-center">
+                            <div class="acciones-container">
+                              <button
+                                type="button"
+                                class="btn-icon btn-icon-primary"
+                                (click)="verDetalleEmpresa(empresa.empresaId)"
+                                title="Ver detalle"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                                  <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke-width="2"/>
+                                  <circle cx="8" cy="8" r="2" stroke-width="2"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+
+                      @case ('direccion') {
+                        <tr class="fila-direccion">
+                          <td colspan="5" class="fila-direccion__spacer"></td>
+                          <td class="fila-direccion__dir">
+                            <span class="dir-sublabel">
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 2v7h8"/>
+                                <path d="M7 7l3 2-3 2"/>
+                              </svg>
+                              {{ empresa.direccionConcatenada || 'Sin dirección registrada' }}
+                            </span>
+                          </td>
+                          <td>
+                            @if (empresa.tipoDireccion) {
+                              <span class="tipo-dir-badge">{{ obtenerLabelDireccion(empresa.tipoDireccion) }}</span>
+                            } @else {
+                              <span class="sin-dato-badge">—</span>
+                            }
+                          </td>
+                          <td></td>
+                        </tr>
+                      }
+
+                      @case ('normal') {
+                        <tr>
+                          <td>
+                            <span class="ruc-badge">{{ empresa.ruc }}</span>
+                          </td>
+                          <td>
+                            <strong>{{ empresa.razonSocial }}</strong>
+                          </td>
+                          <td>
+                            <span class="tipo-badge">{{ obtenerNombreTipoEmpresa(empresa.tipoEmpresaId) }}</span>
+                          </td>
+                          <td>{{ empresa.actividadEconomica || 'N/A' }}</td>
+                          <td>
+                            @if (empresa.tamanoEmpresaTop10k) {
+                              <span class="tamano-badge top10k">{{ empresa.tamanoEmpresaTop10k }}</span>
+                            } @else {
+                              <span class="tamano-badge">N/A</span>
+                            }
+                          </td>
+                          <td>
+                            @if (empresa.direccionConcatenada) {
+                              <span class="direccion-text">{{ empresa.direccionConcatenada }}</span>
+                            } @else {
+                              <span class="sin-dato-badge">Sin dirección registrada</span>
+                            }
+                          </td>
+                          <td>
+                            @if (empresa.tipoDireccion) {
+                              <span class="tipo-dir-badge">{{ obtenerLabelDireccion(empresa.tipoDireccion) }}</span>
+                            } @else {
+                              <span class="sin-dato-badge">—</span>
+                            }
+                          </td>
+                          <td class="text-center">
+                            <div class="acciones-container">
+                              <button
+                                type="button"
+                                class="btn-icon btn-icon-primary"
+                                (click)="verDetalleEmpresa(empresa.empresaId)"
+                                title="Ver detalle"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
+                                  <path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z" stroke-width="2"/>
+                                  <circle cx="8" cy="8" r="2" stroke-width="2"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+
+                    }
                   }
                 }
               </tbody>

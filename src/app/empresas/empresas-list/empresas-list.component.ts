@@ -1,6 +1,6 @@
 // ✅ REGLA 10: Imports organizados
 // 1. Angular Core
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -18,6 +18,9 @@ import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
 
 const COD_PAIS_PERU = '428';
+
+type TipoFila = 'normal' | 'empresa-header' | 'direccion';
+type FilaTabla = Empresa & { tipoFila: TipoFila; totalDirecciones?: number };
 
 /**
  * Component para listar empresas
@@ -57,6 +60,39 @@ export class EmpresasListComponent implements OnInit {
   filtroCodDepartamento = signal<string | null>(null);
   filtroCodProvincia = signal<string | null>(null);
   filtroCodDistrito = signal<string | null>(null);
+
+  // Modo expandido: activo cuando cualquier filtro de dirección está en uso
+  filtroDireccionActivo = computed(() =>
+    !!this.filtroDireccion() ||
+    !!this.filtroCodDepartamento() ||
+    !!this.filtroCodProvincia() ||
+    !!this.filtroCodDistrito()
+  );
+
+  // Filas enriquecidas con tipo y conteo para el renderizado jerárquico
+  empresasAgrupadas = computed((): FilaTabla[] => {
+    if (!this.filtroDireccionActivo()) {
+      return this.empresas().map(e => ({ ...e, tipoFila: 'normal' as TipoFila }));
+    }
+
+    const conteo = new Map<number, number>();
+    for (const e of this.empresas()) {
+      conteo.set(e.empresaId, (conteo.get(e.empresaId) ?? 0) + 1);
+    }
+
+    const filas: FilaTabla[] = [];
+    let lastId: number | null = null;
+
+    for (const empresa of this.empresas()) {
+      if (empresa.empresaId !== lastId) {
+        filas.push({ ...empresa, tipoFila: 'empresa-header', totalDirecciones: conteo.get(empresa.empresaId) });
+        lastId = empresa.empresaId;
+      }
+      filas.push({ ...empresa, tipoFila: 'direccion' });
+    }
+
+    return filas;
+  });
 
   // Listas para selects ubigeo
   departamentos = signal<any[]>([]);
