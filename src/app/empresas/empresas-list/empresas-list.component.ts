@@ -246,4 +246,13 @@ export class EmpresasListComponent implements OnInit {
   get rangoFin(): number {
     return Math.min(this.paginaActual() * this.limite(), this.totalRegistros());
   }
+
+  obtenerLabelDireccion(tipo?: string | null): string {
+    const labels: Record<string, string> = {
+      'EMPRESA': 'Dirección fiscal',
+      'CONSTRUCTORA': 'Dirección de planta',
+      'OBRA': 'Dirección de obra',
+    };
+    return tipo ? (labels[tipo] ?? tipo) : '';
+  }
 }

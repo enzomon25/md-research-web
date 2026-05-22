@@ -579,6 +579,19 @@ nav ul {
 .direccion-text {
   font-size: $font-size-sm;
   color: $gray-700;
+  display: block;
+}
+
+.tipo-dir-badge {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  background-color: $gray-100;
+  color: $gray-600;
+  border: 1px solid $gray-200;
 }
 
 .sin-dato-badge {

@@ -62,7 +62,7 @@
                 type="text"
                 id="filtroDireccion"
                 class="form-control"
-                placeholder="Buscar por dirección..."
+                placeholder="Buscar por dirección (aplica a todos los tipos)..."
                 [ngModel]="filtroDireccion()"
                 (ngModelChange)="filtroDireccion.set($event)"
               />
@@ -168,13 +168,14 @@
                   <th>ACTIVIDAD ECONÓMICA</th>
                   <th>TAMAÑO</th>
                   <th>DIRECCIÓN</th>
+                  <th>TIPO DIRECCIÓN</th>
                   <th class="text-center">ACCIONES</th>
                 </tr>
               </thead>
               <tbody>
                 @if (empresas().length === 0) {
                   <tr>
-                    <td colspan="7" class="text-center empty-state">
+                    <td colspan="8" class="text-center empty-state">
                       <i class="fas fa-building"></i>
                       <p>No se encontraron empresas con los filtros aplicados</p>
                     </td>
@@ -206,6 +207,13 @@
                           <span class="direccion-text">{{ empresa.direccionConcatenada }}</span>
                         } @else {
                           <span class="sin-dato-badge">Sin dirección registrada</span>
+                        }
+                      </td>
+                      <td>
+                        @if (empresa.tipoDireccion) {
+                          <span class="tipo-dir-badge">{{ obtenerLabelDireccion(empresa.tipoDireccion) }}</span>
+                        } @else {
+                          <span class="sin-dato-badge">—</span>
                         }
                       </td>
                       <td class="text-center">

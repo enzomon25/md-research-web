@@ -64,10 +64,10 @@
             </div>
 
             <div class="detail-card">
-              <h2 class="detail-title">Dirección</h2>
               @if (empresa()!.direccion) {
+                <h2 class="detail-title">{{ obtenerLabelDireccion(empresa()!.direccion!.tipoDireccion) }}</h2>
                 <div class="detail-row">
-                  <span class="detail-label">Dirección</span>
+                  <span class="detail-label">{{ obtenerLabelDireccion(empresa()!.direccion!.tipoDireccion) }}</span>
                   <span class="detail-value">{{ empresa()!.direccion!.direc || 'N/A' }}</span>
                 </div>
                 <div class="detail-row">
@@ -103,6 +103,7 @@
                   <span class="detail-value">{{ empresa()!.direccion!.referencia || 'N/A' }}</span>
                 </div>
               } @else {
+                <h2 class="detail-title">Dirección</h2>
                 <div class="detail-empty">Sin dirección registrada</div>
               }
             </div>
@@ -147,10 +148,10 @@
                   </div>
                 </div>
 
-                <div class="edit-section-title">Dirección</div>
+                <div class="edit-section-title">{{ obtenerLabelDireccion(empresa()?.direccion?.tipoDireccion) }}</div>
                 <div class="edit-grid">
                   <div class="edit-field edit-field--full">
-                    <label class="edit-label">Dirección</label>
+                    <label class="edit-label">{{ obtenerLabelDireccion(empresa()?.direccion?.tipoDireccion) }}</label>
                     <input class="edit-input" type="text" maxlength="1000" [(ngModel)]="formEdicion.direccion.direc" placeholder="Dirección completa" />
                   </div>
                   <div class="edit-field">

@@ -553,4 +553,13 @@ export class EmpresasDetailComponent implements OnInit {
       this.router.navigate(ruta);
     }
   }
+
+  obtenerLabelDireccion(tipo?: string | null): string {
+    const labels: Record<string, string> = {
+      'EMPRESA': 'Dirección Fiscal',
+      'CONSTRUCTORA': 'Dirección de Planta',
+      'OBRA': 'Dirección de Obra',
+    };
+    return labels[tipo ?? ''] ?? 'Dirección';
+  }
 }
