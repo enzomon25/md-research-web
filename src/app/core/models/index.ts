@@ -35,6 +35,22 @@ export interface Encuestado {
   contacto?: string;
 }
 
+export interface ParticipacionEncuestado {
+  participacionId?: number;
+  encuestaId?: number;
+  encuestadoId: number;
+  empresaId: number;
+  nombres?: string;
+  apepat?: string;
+  apemat?: string;
+  cargo?: string;
+  numdoc?: string;
+  tipodoc?: string;
+  tipoContacto?: string;
+  contacto?: string;
+  encuestado?: Encuestado;
+}
+
 export interface Estado {
   estadoId: number;
   descripcionEstado: string;
@@ -47,8 +63,6 @@ export interface Estado {
 
 export interface Encuesta {
   encuestaId?: number;
-  encuestadoId?: number;
-  encuestado?: Encuestado;
   empresaId?: number;
   nombreMarca?: string;
   tipoCemento?: string;
@@ -93,6 +107,7 @@ export interface Encuesta {
     indActivo: number;
   }>;
   marcas?: Array<{ marcaFabricanteId: number; fabricanteId: number }>;
+  participaciones?: ParticipacionEncuestado[];
   editable?: boolean;
 }
 

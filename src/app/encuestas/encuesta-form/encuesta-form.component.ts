@@ -7,7 +7,7 @@ import { EmpresasService } from '../../core/services/empresas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
 import { FabricantesService } from '../../core/services/fabricantes.service';
-import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, EncuestaObservacion, EncuestaObservacionHistorial, Direccion } from '../../core/models';
+import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, ParticipacionEncuestado, EncuestaObservacion, EncuestaObservacionHistorial, Direccion } from '../../core/models';
 import { EncuestadosService } from '../../core/services/encuestados.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EncuestaObservacionService } from '../../core/services/encuesta-observacion.service';
@@ -349,6 +349,9 @@ export class EncuestaFormComponent implements OnInit {
       departamentos: { departamentoId: number, descDepartamento: string, codPais: string, codDepartamento: string }[] = [];
       provincias: { provinciaId: number, descProvincia: string, codPais: string, codDepartamento: string, codProvincia: string }[] = [];
       distritos: { distritoId: number, descDistrito: string, codPais: string, codDepartamento: string, codProvincia: string, codDistrito: string }[] = [];
+      isLoadingDepartamentos = false;
+      isLoadingProvincias = false;
+      isLoadingDistritos = false;
       tiposVia: string[] = [
         'Avenida',
         'Calle',
@@ -368,21 +371,24 @@ export class EncuestaFormComponent implements OnInit {
         });
       }
       cargarDepartamentos(codPais: string): void {
+        this.isLoadingDepartamentos = true;
         this.ubicacionService.listarDepartamentos(codPais).subscribe({
-          next: (data: any[]) => { this.departamentos = data; },
-          error: () => { this.departamentos = []; }
+          next: (data: any[]) => { this.departamentos = data; this.isLoadingDepartamentos = false; },
+          error: () => { this.departamentos = []; this.isLoadingDepartamentos = false; }
         });
       }
       cargarProvincias(codDepartamento: string, codPais: string): void {
+        this.isLoadingProvincias = true;
         this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
-          next: (data: any[]) => { this.provincias = data; },
-          error: () => { this.provincias = []; }
+          next: (data: any[]) => { this.provincias = data; this.isLoadingProvincias = false; },
+          error: () => { this.provincias = []; this.isLoadingProvincias = false; }
         });
       }
       cargarDistritos(codProvincia: string, codDepartamento: string, codPais: string): void {
+        this.isLoadingDistritos = true;
         this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
-          next: (data: any[]) => { this.distritos = data; },
-          error: () => { this.distritos = []; }
+          next: (data: any[]) => { this.distritos = data; this.isLoadingDistritos = false; },
+          error: () => { this.distritos = []; this.isLoadingDistritos = false; }
         });
       }
 
@@ -408,14 +414,14 @@ export class EncuestaFormComponent implements OnInit {
         const direccion = this.nuevaEmpresa().direccion;
         if (!direccion) return;
         const codPais = direccion.codPais;
+        this.departamentos = [];
+        this.provincias = [];
+        this.distritos = [];
+        direccion.codDepartamento = '';
+        direccion.codProvincia = '';
+        direccion.codDistrito = '';
         if (codPais) {
           this.cargarDepartamentos(codPais);
-          this.departamentos = [];
-          this.provincias = [];
-          this.distritos = [];
-          direccion.codDepartamento = '';
-          direccion.codProvincia = '';
-          direccion.codDistrito = '';
         }
       }
       onDepartamentoChange(): void {
@@ -426,12 +432,12 @@ export class EncuestaFormComponent implements OnInit {
         if (!direccion) return;
         const codDepartamento = direccion.codDepartamento;
         const codPais = direccion.codPais;
+        this.provincias = [];
+        this.distritos = [];
+        direccion.codProvincia = '';
+        direccion.codDistrito = '';
         if (codDepartamento) {
           this.cargarProvincias(codDepartamento, codPais);
-          this.provincias = [];
-          this.distritos = [];
-          direccion.codProvincia = '';
-          direccion.codDistrito = '';
         }
       }
       onProvinciaChange(): void {
@@ -443,11 +449,10 @@ export class EncuestaFormComponent implements OnInit {
         const codProvincia = direccion.codProvincia;
         const codDepartamento = direccion.codDepartamento;
         const codPais = direccion.codPais;
-
+        this.distritos = [];
+        direccion.codDistrito = '';
         if (codProvincia) {
           this.cargarDistritos(codProvincia, codDepartamento, codPais);
-          this.distritos = [];
-          direccion.codDistrito = '';
         }
       }
 
@@ -501,12 +506,14 @@ export class EncuestaFormComponent implements OnInit {
 
   // Búsqueda de encuestados (solo por nombres)
   terminoBusquedaEncuestado = signal('');
-  encuestadosEncontrados = signal<Encuestado[]>([]);
+  encuestadosEncontrados = signal<any[]>([]);
   buscandoEncuestado = signal(false);
   mostrarResultadosEncuestado = signal(false);
-  encuestadoSeleccionado = signal<Encuestado | null>(null);
   errorBusquedaEncuestado = signal('');
   errorContactoEncuestado = signal('');
+
+  // Lista de participaciones actuales
+  participacionesActuales = signal<ParticipacionEncuestado[]>([]);
   
   // Registro de nuevo encuestado
   mostrarFormularioRegistroEncuestado = signal(false);
@@ -520,14 +527,7 @@ export class EncuestaFormComponent implements OnInit {
     contacto: ''
   };
 
-  // Datos del encuestado (ya no se usa directamente)
-  datosEncuestado = signal<Partial<Encuestado>>({
-    nombres: '',
-    apepat: '',
-    cargo: ''
-  });
-
-  // (Eliminado: declaración duplicada de marcasSeleccionadas)
+  // (Los métodos de fabricante ya están definidos arriba)
 
   // (Las versiones de agregarMarcaFabricante y eliminarMarcaFabricante que usan marcasPorFila ya están definidas arriba)
 
@@ -541,8 +541,9 @@ export class EncuestaFormComponent implements OnInit {
     this.marcasSeleccionadas.set(nuevas);
   }
 
-  // Control de secciones expandidas
-  seccionExpandida = signal<string | null>(null);
+  // Control de secciones expandidas — todas abiertas por defecto, colapsables individualmente
+  private readonly SECCIONES_ENCUESTA = ['datosGenerales', 'empresa', 'encuestado', 'fabricante', 'compra', 'uso'];
+  seccionesExpandidas = signal<Set<string>>(new Set(this.SECCIONES_ENCUESTA));
 
   // Fecha máxima permitida (hoy)
   fechaMaxima = new Date().toISOString().split('T')[0];
@@ -1007,8 +1008,10 @@ export class EncuestaFormComponent implements OnInit {
     }
 
     // Si la encuesta tiene datos del encuestado, cargarlos
-    if (encuesta.encuestado) {
-      this.encuestadoSeleccionado.set(encuesta.encuestado);
+    if (Array.isArray(encuesta.participaciones)) {
+      this.participacionesActuales.set(encuesta.participaciones);
+    } else {
+      this.participacionesActuales.set([]);
     }
 
     // Limpieza: ya no se usa fabricanteId ni carga de marcas por fabricante legacy
@@ -1055,22 +1058,17 @@ export class EncuestaFormComponent implements OnInit {
     const marcasValidas = this.marcasSeleccionadas().filter(m => m.marcaFabricanteId && m.fabricanteId);
 
     // Preparar payload solo con campos que tienen valor (no undefined, no null, no strings vacíos)
-    const encuestadoData = this.datosEncuestado();
     const encuestaParaGuardar: Partial<Encuesta> = {
       encuestaId: encuestaActual.encuestaId,
       ...(encuestaActual.empresaId && { empresaId: encuestaActual.empresaId }),
       ...(encuestaActual.tipoEncuesta && { tipoEncuesta: encuestaActual.tipoEncuesta }),
       ...(encuestaActual.tipoEncuestaValor && { tipoEncuestaValor: encuestaActual.tipoEncuestaValor }),
       ...(encuestaActual.fechaEncuesta && { fechaEncuesta: encuestaActual.fechaEncuesta }),
-      // Incluir datos del encuestado si están completos
-      ...(encuestadoData.nombres && encuestadoData.apepat && {
-        encuestado: {
-          ...(encuestadoData.encuestadoId && { encuestadoId: encuestadoData.encuestadoId }),
-          nombres: encuestadoData.nombres,
-          apepat: encuestadoData.apepat,
-          cargo: encuestadoData.cargo
-        }
-      }),
+      // Incluir participaciones actuales
+      participaciones: this.participacionesActuales().map(p => ({
+        encuestadoId: p.encuestadoId,
+        empresaId: p.empresaId,
+      })),
       ...(encuestaActual.concretoPremezclado !== undefined && encuestaActual.concretoPremezclado !== null && { concretoPremezclado: encuestaActual.concretoPremezclado }),
       ...(encuestaActual.articulosConcreto !== undefined && encuestaActual.articulosConcreto !== null && { articulosConcreto: encuestaActual.articulosConcreto }),
       ...(encuestaActual.tipoLugarCompra && { tipoLugarCompra: encuestaActual.tipoLugarCompra }),
@@ -1118,19 +1116,20 @@ export class EncuestaFormComponent implements OnInit {
   }
 
   toggleSeccion(seccion: string): void {
-    if (this.seccionExpandida() === seccion) {
-      this.seccionExpandida.set(null);
+    const actual = new Set(this.seccionesExpandidas());
+    if (actual.has(seccion)) {
+      actual.delete(seccion);
     } else {
-      this.seccionExpandida.set(seccion);
-      // Si se expande la sección de fabricante, cargar fabricantes si no están cargados
+      actual.add(seccion);
       if (seccion === 'fabricante' && !this.fabricantesCargados()) {
         this.cargarFabricantes();
       }
     }
+    this.seccionesExpandidas.set(actual);
   }
 
   esSeccionExpandida(seccion: string): boolean {
-    return this.seccionExpandida() === seccion;
+    return this.seccionesExpandidas().has(seccion);
   }
 
   actualizarFechaEncuesta(event: Event): void {
@@ -1942,10 +1941,14 @@ export class EncuestaFormComponent implements OnInit {
         this.empresasEncontradas.set(response.data);
         this.buscandoEmpresa.set(false);
         
-        // Si no hay resultados, mostrar modal de confirmación
+        // Sin resultados: razón social abre formulario directo; RUC usa el modal
         if (response.data.length === 0) {
-          this.mostrarModalNoEncontrada.set(true);
-          this.mostrarResultadosEmpresa.set(false);
+          if (this.tipoBusquedaEmpresa() === 'razonSocial') {
+            this.abrirRegistroNuevaEmpresa();
+          } else {
+            this.mostrarModalNoEncontrada.set(true);
+            this.mostrarResultadosEmpresa.set(false);
+          }
         }
       },
       error: (error) => {
@@ -1988,27 +1991,50 @@ export class EncuestaFormComponent implements OnInit {
     this.mostrarResultadosEmpresa.set(false);
   }
 
+  abrirRegistroNuevaEmpresa(): void {
+    const termino = this.terminoBusqueda().trim();
+    this.mostrarResultadosEmpresa.set(false);
+    this.mostrarModalNoEncontrada.set(false);
+    this.nuevaEmpresa.set({
+      ruc: this.tipoBusquedaEmpresa() === 'ruc' ? termino : '',
+      razonSocial: this.tipoBusquedaEmpresa() === 'razonSocial' ? termino : '',
+    });
+    this.mostrarFormularioRegistro.set(true);
+    setTimeout(() => {
+      document.getElementById('form-nueva-empresa')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
   confirmarRegistroEmpresa(): void {
     this.mostrarModalNoEncontrada.set(false);
-    this.mostrarFormularioRegistro.set(true);
-    
     const termino = this.terminoBusqueda().trim();
-    
-    // Pre-llenar el campo según el tipo de búsqueda
-    if (this.tipoBusquedaEmpresa() === 'ruc') {
-      this.nuevaEmpresa.set({ ...this.nuevaEmpresa(), ruc: termino });
-    } else {
-      this.nuevaEmpresa.set({ ...this.nuevaEmpresa(), razonSocial: termino });
-    }
+    this.nuevaEmpresa.set({ ...this.nuevaEmpresa(), ruc: termino });
+    this.mostrarFormularioRegistro.set(true);
+    setTimeout(() => {
+      document.getElementById('form-nueva-empresa')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   confirmarRegistroEncuestado(): void {
     this.mostrarModalNoEncontradaEncuestado.set(false);
-    this.mostrarFormularioRegistroEncuestado.set(true);
+    this.abrirRegistroNuevoEncuestado();
+  }
 
+  abrirRegistroNuevoEncuestado(): void {
     const termino = this.terminoBusquedaEncuestado().trim();
-    // Siempre pre-llenamos con el nombre buscado
-    this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
+    this.mostrarResultadosEncuestado.set(false);
+    this.mostrarModalNoEncontradaEncuestado.set(false);
+    this.nuevoEncuestado = {
+      nombres: termino,
+      apepat: '',
+      cargo: '',
+      tipoContacto: '',
+      contacto: '',
+    };
+    this.mostrarFormularioRegistroEncuestado.set(true);
+    setTimeout(() => {
+      document.getElementById('form-nuevo-encuestado')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   cerrarModalNoEncontrada(): void {
@@ -2202,20 +2228,9 @@ export class EncuestaFormComponent implements OnInit {
         this.encuestadosEncontrados.set(response.data);
         this.buscandoEncuestado.set(false);
         
-        // Si no hay resultados, mostrar formulario de registro directamente
+        // Sin resultados: abrir formulario directamente con el término pre-llenado
         if (response.data.length === 0) {
-          console.log('No hay resultados, mostrando formulario de registro');
-          // this.mostrarFormularioRegistroEncuestado.set(true);
-          this.mostrarModalNoEncontradaEncuestado.set(true);
-          this.mostrarResultadosEncuestado.set(false);
-          
-          // Pre-llenar el campo nombres con el término buscado
-          this.nuevoEncuestado = { ...this.nuevoEncuestado, nombres: termino };
-          console.log('Estado después de setear:', {
-            mostrarFormulario: this.mostrarFormularioRegistroEncuestado(),
-            mostrarResultados: this.mostrarResultadosEncuestado(),
-            nuevoEncuestado: this.nuevoEncuestado
-          });
+          this.abrirRegistroNuevoEncuestado();
         }
       },
       error: (error) => {
@@ -2226,31 +2241,67 @@ export class EncuestaFormComponent implements OnInit {
     });
   }
 
-  seleccionarEncuestado(encuestado: Encuestado): void {
+  seleccionarEncuestado(encuestado: any): void {
     const encuestaActual = this.encuesta();
-    if (encuestaActual) {
-      // Actualizar la encuesta solo con el encuestadoId
-      this.encuestasService.guardar({
-        encuestaId: encuestaActual.encuestaId,
-        encuestadoId: encuestado.encuestadoId
-      } as Partial<Encuesta>).subscribe({
-        next: (encuestaGuardada) => {
-          this.procesarEncuesta(encuestaGuardada);
-          this.encuestadoSeleccionado.set(encuestado);
-          this.mostrarResultadosEncuestado.set(false);
-          this.terminoBusquedaEncuestado.set('');
-        },
-        error: (error) => {
-          console.error('Error al actualizar encuesta con encuestado:', error);
-          this.mensajeModal.set('Error al asignar el encuestado a la encuesta');
-          this.mostrarModalError.set(true);
-        }
-      });
+    if (!encuestaActual) return;
+
+    const empresaId = encuestaActual.empresaId;
+    if (!empresaId) {
+      this.mensajeModal.set('Debe seleccionar una empresa antes de agregar un participante');
+      this.mostrarModalError.set(true);
+      return;
     }
+
+    const participacionesActualizadas: ParticipacionEncuestado[] = [
+      { encuestadoId: encuestado.encuestadoId!, empresaId }
+    ];
+
+    this.encuestasService.guardar({
+      encuestaId: encuestaActual.encuestaId,
+      participaciones: participacionesActualizadas.map(p => ({
+        encuestadoId: p.encuestadoId,
+        empresaId: p.empresaId,
+      })),
+    } as Partial<Encuesta>).subscribe({
+      next: (encuestaGuardada) => {
+        this.procesarEncuesta(encuestaGuardada);
+        this.mostrarResultadosEncuestado.set(false);
+        this.terminoBusquedaEncuestado.set('');
+      },
+      error: (error) => {
+        console.error('Error al actualizar encuesta con encuestado:', error);
+        this.mensajeModal.set('Error al asignar el encuestado a la encuesta');
+        this.mostrarModalError.set(true);
+      }
+    });
+  }
+
+  quitarParticipacion(encuestadoId: number): void {
+    const encuestaActual = this.encuesta();
+    if (!encuestaActual) return;
+
+    const participacionesActualizadas = this.participacionesActuales()
+      .filter(p => p.encuestadoId !== encuestadoId);
+
+    this.encuestasService.guardar({
+      encuestaId: encuestaActual.encuestaId,
+      participaciones: participacionesActualizadas.map(p => ({
+        encuestadoId: p.encuestadoId,
+        empresaId: p.empresaId,
+      })),
+    } as Partial<Encuesta>).subscribe({
+      next: (encuestaGuardada) => {
+        this.procesarEncuesta(encuestaGuardada);
+      },
+      error: (error) => {
+        console.error('Error al quitar participante:', error);
+        this.mensajeModal.set('Error al quitar el participante');
+        this.mostrarModalError.set(true);
+      }
+    });
   }
 
   cambiarEncuestado(): void {
-    this.encuestadoSeleccionado.set(null);
     this.terminoBusquedaEncuestado.set('');
   }
 
@@ -2374,31 +2425,33 @@ export class EncuestaFormComponent implements OnInit {
     // Crear el encuestado
     this.encuestadosService.crear(encuestado).subscribe({
       next: (encuestadoCreado) => {
-        // Guardar la encuesta solo con el ID del encuestado creado
         const encuestaActual = this.encuesta();
         if (encuestaActual) {
+          const empresaId = encuestaActual.empresaId;
+          if (!empresaId) {
+            this.guardandoEncuestado.set(false);
+            this.mensajeModal.set('Debe seleccionar una empresa antes de agregar participantes');
+            this.mostrarModalError.set(true);
+            return;
+          }
+
+          const participacionesActualizadas: ParticipacionEncuestado[] = [
+            { encuestadoId: encuestadoCreado.encuestadoId!, empresaId }
+          ];
+
           this.encuestasService.guardar({
             encuestaId: encuestaActual.encuestaId,
-            encuestadoId: encuestadoCreado.encuestadoId
+            participaciones: participacionesActualizadas.map(p => ({
+              encuestadoId: p.encuestadoId,
+              empresaId: p.empresaId,
+            })),
           } as Partial<Encuesta>).subscribe({
             next: (encuestaGuardada) => {
               this.guardandoEncuestado.set(false);
               this.mostrarFormularioRegistroEncuestado.set(false);
-              
-              // Actualizar la encuesta y el encuestado seleccionado
               this.procesarEncuesta(encuestaGuardada);
-              this.encuestadoSeleccionado.set(encuestadoCreado);
               this.terminoBusquedaEncuestado.set('');
-              
-              // Resetear el formulario
-              this.nuevoEncuestado = {
-                nombres: '',
-                apepat: '',
-                cargo: '',
-                tipoContacto: '',
-                contacto: ''
-              };
-              
+              this.nuevoEncuestado = { nombres: '', apepat: '', cargo: '', tipoContacto: '', contacto: '' };
               this.mensajeModal.set('Encuestado registrado y asignado correctamente');
               this.mostrarModalExito.set(true);
             },
@@ -2433,7 +2486,7 @@ export class EncuestaFormComponent implements OnInit {
       case 'empresa':
         return !!this.encuesta()?.empresaId;
       case 'encuestado':
-        return !!this.encuestadoSeleccionado();
+        return this.participacionesActuales().length > 0;
       case 'productos':
         return !!(
           (this.encuesta()?.concretoPremezclado === 1 || this.encuesta()?.articulosConcreto === 1) &&
@@ -2493,7 +2546,6 @@ export class EncuestaFormComponent implements OnInit {
     const hayCambios = 
       original.fechaEncuesta !== actual.fechaEncuesta ||
       original.empresaId !== actual.empresaId ||
-      original.encuestadoId !== actual.encuestadoId ||
       original.tipoLugarCompra !== actual.tipoLugarCompra ||
       original.tipoCompra !== actual.tipoCompra ||
       original.presentacionCompra !== actual.presentacionCompra ||
@@ -2564,14 +2616,15 @@ export class EncuestaFormComponent implements OnInit {
    */
   irASeccion(seccion: string): void {
     const elementId = `seccion-${seccion}`;
-    this.seccionExpandida.set(seccion);
+    const actual = new Set(this.seccionesExpandidas());
+    actual.add(seccion);
+    this.seccionesExpandidas.set(actual);
     if (seccion === 'fabricante' && !this.fabricantesCargados()) {
       this.cargarFabricantes();
     }
     const elemento = document.getElementById(elementId);
     if (elemento) {
       elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Pequeño enfoque visual
       elemento.classList.add('enfoque-temporal');
       setTimeout(() => {
         elemento.classList.remove('enfoque-temporal');

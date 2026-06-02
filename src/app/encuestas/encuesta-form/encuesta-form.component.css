@@ -2024,3 +2024,57 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Línea secundaria de disambiguación en resultados de búsqueda de encuestado */
+.encuestado-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #858796;
+  margin-top: 0.15rem;
+  flex-wrap: wrap;
+}
+.meta-separador {
+  color: #d1d3e2;
+}
+.sin-dato {
+  color: #b0b4c4;
+  font-style: italic;
+}
+
+/* Footer "registrar nuevo encuestado" en dropdown */
+.crear-encuestado-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  border-top: 1px solid #e3e6f0;
+  background: #f8f9fc;
+  color: #4e73df;
+  font-size: 0.875rem;
+  transition: background 0.15s, color 0.15s;
+}
+.crear-encuestado-item:hover {
+  background: #eaecf4;
+  color: #2e59d9;
+}
+.crear-encuestado-icono {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Badge de campo opcional en títulos de subsección */
+.badge-opcional {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #858796;
+  background: #f0f0f5;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}

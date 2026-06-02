@@ -63,6 +63,8 @@
       </button>
     }
 
+    <!-- Sección 1: Datos Generales -->
+    <div class="seccion-card" id="seccion-datosGenerales">
       <div class="seccion-header" (click)="toggleSeccion('datosGenerales')"
         [class.expandida]="esSeccionExpandida('datosGenerales')">
         <h2>Datos Generales
@@ -229,6 +231,12 @@
                       </div>
                     </div>
                     }
+                    @if (tipoBusquedaEmpresa() === 'razonSocial') {
+                    <div class="crear-encuestado-item" (click)="abrirRegistroNuevaEmpresa()">
+                      <span class="crear-encuestado-icono">＋</span>
+                      <span>Registrar <strong>"{{ terminoBusqueda().trim() }}"</strong> como nueva empresa</span>
+                    </div>
+                    }
                   } @else {
                   <div class="search-no-results">No se encontraron empresas</div>
                   }
@@ -262,30 +270,12 @@
               }
             </div>
             }
-            @if (mostrarResultadosEmpresa()) {
-            <div class="search-results">
-              @if (buscandoEmpresa()) {
-              <div class="search-loading">Buscando...</div>
-              } @else if (empresasEncontradas().length > 0) {
-                @for (empresa of empresasEncontradas(); track empresa.empresaId) {
-                <div class="search-result-item" (click)="seleccionarEmpresa(empresa)">
-                  <div class="empresa-info">
-                    <strong>{{ empresa.razonSocial }}</strong>
-                    <span class="empresa-ruc">RUC: {{ empresa.ruc }}</span>
-                  </div>
-                </div>
-                }
-              } @else {
-              <div class="search-no-results">No se encontraron empresas</div>
-              }
-            </div>
-            }
           </div>
         </div>
 
         <!-- Formulario de registro de nueva empresa -->
         @if (mostrarFormularioRegistro()) {
-        <div class="registro-empresa-container">
+        <div class="registro-empresa-container" id="form-nueva-empresa">
           <div class="registro-empresa-header">
             <h3>Registrar Nueva Empresa</h3>
             <button class="btn-cancelar-registro" (click)="cancelarRegistroEmpresa()">Cancelar</button>
@@ -338,8 +328,12 @@
             </div>
             <div class="registro-form-group">
               <label>Departamento *</label>
-              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDepartamento" (change)="onDepartamentoChange()" required [disabled]="!direccionNuevaEmpresa.codPais">
-                <option [ngValue]="0" disabled selected>Seleccione</option>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDepartamento" (change)="onDepartamentoChange()" required [disabled]="!direccionNuevaEmpresa.codPais || isLoadingDepartamentos">
+                @if (isLoadingDepartamentos) {
+                  <option disabled selected>Cargando...</option>
+                } @else {
+                  <option [ngValue]="0" disabled selected>Seleccione</option>
+                }
                 @for (dep of departamentos; track [dep.codDepartamento, dep.codPais]) {
                   <option [ngValue]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
                 }
@@ -348,8 +342,12 @@
 
             <div class="registro-form-group">
               <label>Provincia *</label>
-              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codProvincia" (change)="onProvinciaChange()" required [disabled]="!direccionNuevaEmpresa.codDepartamento">
-                <option [ngValue]="0" disabled selected>Seleccione</option>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codProvincia" (change)="onProvinciaChange()" required [disabled]="!direccionNuevaEmpresa.codDepartamento || isLoadingProvincias">
+                @if (isLoadingProvincias) {
+                  <option disabled selected>Cargando...</option>
+                } @else {
+                  <option [ngValue]="0" disabled selected>Seleccione</option>
+                }
                 @for (prov of provincias; track prov.codProvincia) {
                   <option [ngValue]="prov.codProvincia">{{ prov.descProvincia }}</option>
                 }
@@ -357,8 +355,12 @@
             </div>
             <div class="registro-form-group">
               <label>Distrito *</label>
-              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDistrito" required [disabled]="!direccionNuevaEmpresa.codProvincia">
-                <option [ngValue]="0" disabled selected>Seleccione</option>
+              <select class="form-control" [(ngModel)]="direccionNuevaEmpresa.codDistrito" required [disabled]="!direccionNuevaEmpresa.codProvincia || isLoadingDistritos">
+                @if (isLoadingDistritos) {
+                  <option disabled selected>Cargando...</option>
+                } @else {
+                  <option [ngValue]="0" disabled selected>Seleccione</option>
+                }
                 @for (dist of distritos; track [dist.codDistrito, dist.codProvincia, dist.codDepartamento, dist.codPais]) {
                   <option [ngValue]="dist.codDistrito">{{ dist.descDistrito }}</option>
                 }
@@ -484,29 +486,45 @@
       </div>
       @if (esSeccionExpandida('encuestado')) {
       <div class="seccion-body">
-        @if (encuestadoSeleccionado()) {
-        <!-- Encuestado ya seleccionado - Solo lectura -->
-        <div class="empresa-seleccionada">
-          <div class="empresa-datos">
-            <div class="dato-empresa">
-              <label>Nombres Completos</label>
-              <span>{{ encuestadoSeleccionado()?.nombres }} {{ encuestadoSeleccionado()?.apepat }}</span>
+        <!-- Lista de participaciones existentes -->
+        @if (participacionesActuales().length > 0) {
+        <div style="margin-bottom: 1rem;">
+          @for (p of participacionesActuales(); track p.encuestadoId) {
+          <div class="empresa-seleccionada" style="margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;">
+            <div class="empresa-datos">
+              <div class="dato-empresa">
+                <label>Nombres</label>
+                <span>{{ p.nombres }} {{ p.apepat }}</span>
+              </div>
+              <div class="dato-empresa">
+                <label>Cargo</label>
+                <span>{{ p.cargo || 'N/A' }}</span>
+              </div>
+              <div class="dato-empresa">
+                <label>Contacto</label>
+                @if (p.contacto) {
+                  <span>{{ p.tipoContacto }}: {{ p.contacto }}</span>
+                } @else {
+                  <span class="sin-dato">Sin contacto registrado</span>
+                }
+              </div>
             </div>
-            <div class="dato-empresa">
-              <label>Cargo</label>
-              <span>{{ encuestadoSeleccionado()?.cargo || 'N/A' }}</span>
-            </div>
+            @if (esEditable()) {
+            <button class="btn-cambiar-empresa" (click)="quitarParticipacion(p.encuestadoId)" style="background: #e74a3b; color: white; border: none;">
+              Quitar
+            </button>
+            }
           </div>
-          <button class="btn-cambiar-empresa" (click)="cambiarEncuestado()">
-            Cambiar Encuestado
-          </button>
+          }
         </div>
-        } @else {
-        <!-- Búsqueda de encuestado -->
+        }
+
+        <!-- Búsqueda para agregar nuevo participante (solo si es editable) -->
+        @if (esEditable()) {
         <div class="empresa-search-row">
           <div style="width: 100%;">
             <label style="margin-bottom: 0.5rem; display: block;">
-              Buscar por Nombres y/o Apellidos
+              Agregar participante — Buscar por Nombres y/o Apellidos
             </label>
             <div style="display: flex; gap: 0.5rem; align-items: stretch; width: 100%;">
               <div class="input-dropdown-container" style="flex: 1 1 0; min-width: 0;">
@@ -522,18 +540,28 @@
                   <div class="search-result-item" (click)="seleccionarEncuestado(enc)">
                     <div class="empresa-info">
                       <strong>{{ enc.nombres }} {{ enc.apepat }}</strong>
+                      <span class="encuestado-meta">
+                        <span>{{ enc.cargo || 'Sin cargo' }}</span>
+                        @if (enc.tipoContacto && enc.contacto) {
+                          <span class="meta-separador">·</span>
+                          <span>{{ enc.tipoContacto }}: {{ enc.contacto }}</span>
+                        } @else {
+                          <span class="meta-separador">·</span>
+                          <span class="sin-dato">Sin contacto registrado</span>
+                        }
+                      </span>
                     </div>
                   </div>
                   }
+                  <div class="crear-encuestado-item" (click)="abrirRegistroNuevoEncuestado()">
+                    <span class="crear-encuestado-icono">＋</span>
+                    <span>Registrar <strong>"{{ terminoBusquedaEncuestado().trim() }}"</strong> como nuevo encuestado</span>
+                  </div>
                   } @else {
                   <div class="search-no-results">No se encontraron encuestados</div>
                   }
                 </div>
                 }
-              </div>
-              <div class="search-type" style="min-width: 220px; display: flex; align-items: stretch;">
-                <input type="text" value="Nombres y/o apellidos" readonly
-                  style="height: 44px; margin-bottom: 0; width: 100%; box-sizing: border-box; background-color: #e9ecef; cursor: not-allowed; padding: 0.75rem; border: 1px solid #d1d3e2; border-radius: 0.35rem; font-family: 'Nunito', sans-serif; font-size: 0.875rem; color: #5a5c69;">
               </div>
               <button class="btn-buscar-encuestado"
                 style="padding: 0.4rem 1.2rem; height: 44px; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; margin-bottom: 0; box-sizing: border-box;"
@@ -552,7 +580,7 @@
 
         <!-- Formulario de registro de nuevo encuestado -->
         @if (mostrarFormularioRegistroEncuestado()) {
-        <div class="registro-empresa-container">
+        <div class="registro-empresa-container" id="form-nuevo-encuestado">
           <div class="registro-empresa-header">
             <h3>Nuevo Encuestado</h3>
             <button class="btn-cancelar-registro" (click)="cancelarRegistroEncuestado()">Cancelar</button>
@@ -579,12 +607,12 @@
 
           <!-- Subsección: Medio de contacto -->
           <div class="subseccion-encuestado">
-            <h4 class="subseccion-titulo">Medio de contacto (opcional)</h4>
+            <h4 class="subseccion-titulo">Medio de contacto <span class="badge-opcional">opcional</span></h4>
             <div class="registro-empresa-form">
               <div class="registro-form-group">
                 <label>Tipo de Contacto</label>
                 <select [(ngModel)]="nuevoEncuestado.tipoContacto">
-                  <option value="" disabled>Seleccione un tipo</option>
+                  <option value="">Sin contacto</option>
                   @for (medio of mediosContacto(); track medio.llave) {
                   <option [value]="medio.llave">{{ medio.valor }}</option>
                   }

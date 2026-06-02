@@ -165,8 +165,12 @@
                   </div>
                   <div class="edit-field">
                     <label class="edit-label">Departamento</label>
-                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDepartamento" (change)="onDepartamentoChange()" [disabled]="!formEdicion.direccion.codPais">
-                      <option value="">Seleccione departamento</option>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDepartamento" (change)="onDepartamentoChange()" [disabled]="!formEdicion.direccion.codPais || isLoadingDepartamentos">
+                      @if (isLoadingDepartamentos) {
+                        <option disabled selected>Cargando...</option>
+                      } @else {
+                        <option value="">Seleccione departamento</option>
+                      }
                       @for (dep of departamentos; track dep.departamentoId) {
                         <option [value]="dep.codDepartamento">{{ dep.descDepartamento }}</option>
                       }
@@ -174,8 +178,12 @@
                   </div>
                   <div class="edit-field">
                     <label class="edit-label">Provincia</label>
-                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codProvincia" (change)="onProvinciaChange()" [disabled]="!formEdicion.direccion.codDepartamento">
-                      <option value="">Seleccione provincia</option>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codProvincia" (change)="onProvinciaChange()" [disabled]="!formEdicion.direccion.codDepartamento || isLoadingProvincias">
+                      @if (isLoadingProvincias) {
+                        <option disabled selected>Cargando...</option>
+                      } @else {
+                        <option value="">Seleccione provincia</option>
+                      }
                       @for (prov of provincias; track prov.provinciaId) {
                         <option [value]="prov.codProvincia">{{ prov.descProvincia }}</option>
                       }
@@ -183,8 +191,12 @@
                   </div>
                   <div class="edit-field">
                     <label class="edit-label">Distrito</label>
-                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDistrito" [disabled]="!formEdicion.direccion.codProvincia">
-                      <option value="">Seleccione distrito</option>
+                    <select class="edit-select" [(ngModel)]="formEdicion.direccion.codDistrito" [disabled]="!formEdicion.direccion.codProvincia || isLoadingDistritos">
+                      @if (isLoadingDistritos) {
+                        <option disabled selected>Cargando...</option>
+                      } @else {
+                        <option value="">Seleccione distrito</option>
+                      }
                       @for (dist of distritos; track dist.distritoId) {
                         <option [value]="dist.codDistrito">{{ dist.descDistrito }}</option>
                       }
@@ -372,7 +384,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (enc of encuestados(); track enc.encuestaId) {
+                  @for (enc of encuestados(); track $index) {
                     <tr [class.fila-resaltada]="enc.encuestaId === encuestaSeleccionada()">
                       <td>{{ enc.encuestaId }}</td>
                       <td>{{ enc.fechaCreacionEncuesta || '-' }}</td>

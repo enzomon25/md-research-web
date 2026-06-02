@@ -133,6 +133,9 @@ export class EmpresasDetailComponent implements OnInit {
   departamentos: Departamento[] = [];
   provincias: Provincia[] = [];
   distritos: Distrito[] = [];
+  isLoadingDepartamentos = false;
+  isLoadingProvincias = false;
+  isLoadingDistritos = false;
 
   ngOnInit(): void {
     this.cargarTiposEmpresa();
@@ -265,6 +268,9 @@ export class EmpresasDetailComponent implements OnInit {
     };
     this.errorEdicion.set(null);
     this.exitoEdicion.set(null);
+    this.isLoadingDepartamentos = !!(emp.direccion?.codPais);
+    this.isLoadingProvincias = !!(emp.direccion?.codDepartamento);
+    this.isLoadingDistritos = !!(emp.direccion?.codProvincia);
     this.cargarPaises();
     this.modoEdicion.set(true);
   }
@@ -379,14 +385,21 @@ export class EmpresasDetailComponent implements OnInit {
   }
 
   cargarDepartamentos(codPais: string): void {
+    this.isLoadingDepartamentos = true;
     this.ubicacionService.listarDepartamentos(codPais).subscribe({
       next: (data: Departamento[]) => {
         this.departamentos = data;
-        if (this.formEdicion.direccion.codDepartamento) {
-          this.cargarProvincias(this.formEdicion.direccion.codDepartamento, codPais);
+        this.isLoadingDepartamentos = false;
+        const codDep = this.formEdicion.direccion.codDepartamento;
+        if (codDep) {
+          // Limpiar y restaurar el valor en el siguiente tick para que Angular
+          // registre las <option> antes de llamar a writeValue con el valor real.
+          this.formEdicion.direccion.codDepartamento = '';
+          setTimeout(() => { this.formEdicion.direccion.codDepartamento = codDep; }, 0);
+          this.cargarProvincias(codDep, codPais);
         }
       },
-      error: () => { this.departamentos = []; },
+      error: () => { this.departamentos = []; this.isLoadingDepartamentos = false; },
     });
   }
 
@@ -401,18 +414,19 @@ export class EmpresasDetailComponent implements OnInit {
   }
 
   cargarProvincias(codDepartamento: string, codPais: string): void {
+    this.isLoadingProvincias = true;
     this.ubicacionService.listarProvincias(codDepartamento, codPais).subscribe({
       next: (data: Provincia[]) => {
         this.provincias = data;
-        if (this.formEdicion.direccion.codProvincia) {
-          this.cargarDistritos(
-            this.formEdicion.direccion.codProvincia,
-            codDepartamento,
-            codPais,
-          );
+        this.isLoadingProvincias = false;
+        const codProv = this.formEdicion.direccion.codProvincia;
+        if (codProv) {
+          this.formEdicion.direccion.codProvincia = '';
+          setTimeout(() => { this.formEdicion.direccion.codProvincia = codProv; }, 0);
+          this.cargarDistritos(codProv, codDepartamento, codPais);
         }
       },
-      error: () => { this.provincias = []; },
+      error: () => { this.provincias = []; this.isLoadingProvincias = false; },
     });
   }
 
@@ -426,9 +440,18 @@ export class EmpresasDetailComponent implements OnInit {
   }
 
   cargarDistritos(codProvincia: string, codDepartamento: string, codPais: string): void {
+    this.isLoadingDistritos = true;
     this.ubicacionService.listarDistritos(codProvincia, codDepartamento, codPais).subscribe({
-      next: (data: Distrito[]) => { this.distritos = data; },
-      error: () => { this.distritos = []; },
+      next: (data: Distrito[]) => {
+        this.distritos = data;
+        this.isLoadingDistritos = false;
+        const codDist = this.formEdicion.direccion.codDistrito;
+        if (codDist) {
+          this.formEdicion.direccion.codDistrito = '';
+          setTimeout(() => { this.formEdicion.direccion.codDistrito = codDist; }, 0);
+        }
+      },
+      error: () => { this.distritos = []; this.isLoadingDistritos = false; },
     });
   }
 
