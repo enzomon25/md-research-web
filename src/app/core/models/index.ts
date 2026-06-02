@@ -180,8 +180,9 @@ export interface EncuestadoEmpresa {
   cargo?: string | null;
   tipoContacto?: string | null;
   contacto?: string | null;
-  encuestaId: number;
+  encuestaId: number | null;
   fechaCreacionEncuesta?: string | null;
+  esContactoLibre: boolean;
 }
 
 export interface ObraEmpresa {

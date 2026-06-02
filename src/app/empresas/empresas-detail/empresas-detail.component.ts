@@ -9,11 +9,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 // 3. Services propios
 import { EmpresasService } from '../../core/services/empresas.service';
 import { EncuestasService } from '../../core/services/encuestas.service';
+import { EncuestadosService } from '../../core/services/encuestados.service';
+import { ParametrosService } from '../../core/services/parametros.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
 import { AuthService } from '../../core/services/auth.service';
 
 // 4. Models e Interfaces
-import { Empresa, Direccion, TipoEmpresa, Encuesta, EncuestaEmpresa, EncuestadoEmpresa, ObraEmpresa } from '../../core/models';
+import { Empresa, Direccion, TipoEmpresa, Encuesta, EncuestaEmpresa, EncuestadoEmpresa, ObraEmpresa, Encuestado, Parametro } from '../../core/models';
+import { CATEGORIAS_PARAMETROS } from '../../core/constants';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { UserMenuComponent } from '../../shared/user-menu/user-menu.component';
 import { PageHeaderComponent } from '../../shared/page-header/page-header.component';
@@ -42,6 +45,8 @@ type Distrito = { distritoId: number; descDistrito: string; codPais: string; cod
 export class EmpresasDetailComponent implements OnInit {
   private empresasService = inject(EmpresasService);
   private encuestasService = inject(EncuestasService);
+  private encuestadosService = inject(EncuestadosService);
+  private parametrosService = inject(ParametrosService);
   private ubicacionService = inject(UbicacionService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
@@ -63,6 +68,24 @@ export class EmpresasDetailComponent implements OnInit {
   obrasEmpresa = signal<ObraEmpresa[]>([]);
   obrasCargando = signal(false);
   obrasError = signal<string | null>(null);
+
+  // Gestión de contactos libres
+  mostrarBusquedaContacto = signal(false);
+  terminoBusquedaContacto = signal('');
+  contactosEncontrados = signal<Encuestado[]>([]);
+  buscandoContacto = signal(false);
+
+  // Formulario de nuevo contacto
+  mostrarFormularioNuevoContacto = signal(false);
+  guardandoNuevoContacto = signal(false);
+  mediosContacto = signal<Parametro[]>([]);
+  nuevoContacto: Partial<Encuestado> = {
+    nombres: '',
+    apepat: '',
+    cargo: '',
+    tipoContacto: '',
+    contacto: '',
+  };
 
   get esEncuestador(): boolean {
     return this.authService.getRolDescripcion() === ROLES.ENCUESTADOR;
@@ -149,6 +172,7 @@ export class EmpresasDetailComponent implements OnInit {
     this.cargarEncuestasEmpresa();
     this.cargarEncuestados();
     this.cargarObrasEmpresa();
+    this.cargarMediosContacto();
   }
 
   cargarDetalle(empresaId: number): void {
@@ -576,6 +600,120 @@ export class EmpresasDetailComponent implements OnInit {
       this.router.navigate(ruta);
     }
   }
+
+  // --- Gestión de contactos libres ---
+
+  cargarMediosContacto(): void {
+    this.parametrosService.listarPorCategoria(CATEGORIAS_PARAMETROS.MEDIO_CONTACTO).subscribe({
+      next: (medios) => { this.mediosContacto.set(medios); },
+      error: () => {},
+    });
+  }
+
+  toggleBusquedaContacto(): void {
+    this.mostrarBusquedaContacto.update(v => !v);
+    if (!this.mostrarBusquedaContacto()) {
+      this.terminoBusquedaContacto.set('');
+      this.contactosEncontrados.set([]);
+      this.mostrarFormularioNuevoContacto.set(false);
+      this.resetNuevoContacto();
+    }
+  }
+
+  buscarContactos(): void {
+    const termino = this.terminoBusquedaContacto().trim();
+    if (!termino) {
+      this.contactosEncontrados.set([]);
+      return;
+    }
+    this.buscandoContacto.set(true);
+    this.mostrarFormularioNuevoContacto.set(false);
+    this.encuestadosService.listar(1, 10, termino).subscribe({
+      next: (resp) => {
+        this.contactosEncontrados.set(resp.data);
+        this.buscandoContacto.set(false);
+      },
+      error: () => { this.buscandoContacto.set(false); },
+    });
+  }
+
+  abrirFormularioNuevoContacto(): void {
+    this.nuevoContacto = {
+      nombres: this.terminoBusquedaContacto().trim(),
+      apepat: '',
+      cargo: '',
+      tipoContacto: '',
+      contacto: '',
+    };
+    this.mostrarFormularioNuevoContacto.set(true);
+  }
+
+  cancelarFormularioNuevoContacto(): void {
+    this.mostrarFormularioNuevoContacto.set(false);
+    this.resetNuevoContacto();
+  }
+
+  private resetNuevoContacto(): void {
+    this.nuevoContacto = { nombres: '', apepat: '', cargo: '', tipoContacto: '', contacto: '' };
+  }
+
+  guardarNuevoContacto(): void {
+    if (!this.nuevoContacto.nombres?.trim() || !this.nuevoContacto.cargo?.trim()) {
+      return;
+    }
+    const empresaId = this.empresaId();
+    if (!empresaId) return;
+
+    this.guardandoNuevoContacto.set(true);
+    this.encuestadosService.crear(this.nuevoContacto).subscribe({
+      next: (encuestadoCreado) => {
+        this.empresasService.agregarContactoEmpresa(empresaId, encuestadoCreado.encuestadoId!).subscribe({
+          next: () => {
+            this.guardandoNuevoContacto.set(false);
+            this.mostrarBusquedaContacto.set(false);
+            this.mostrarFormularioNuevoContacto.set(false);
+            this.terminoBusquedaContacto.set('');
+            this.contactosEncontrados.set([]);
+            this.resetNuevoContacto();
+            this.cargarEncuestados();
+          },
+          error: (err) => {
+            console.error('Error al asociar contacto creado:', err);
+            this.guardandoNuevoContacto.set(false);
+          },
+        });
+      },
+      error: (err) => {
+        console.error('Error al crear contacto:', err);
+        this.guardandoNuevoContacto.set(false);
+      },
+    });
+  }
+
+  agregarContacto(encuestado: Encuestado): void {
+    const empresaId = this.empresaId();
+    if (!empresaId || !encuestado.encuestadoId) return;
+    this.empresasService.agregarContactoEmpresa(empresaId, encuestado.encuestadoId).subscribe({
+      next: () => {
+        this.mostrarBusquedaContacto.set(false);
+        this.terminoBusquedaContacto.set('');
+        this.contactosEncontrados.set([]);
+        this.cargarEncuestados();
+      },
+      error: (err) => { console.error('Error al agregar contacto:', err); },
+    });
+  }
+
+  quitarContacto(encuestadoId: number): void {
+    const empresaId = this.empresaId();
+    if (!empresaId) return;
+    this.empresasService.eliminarContactoEmpresa(empresaId, encuestadoId).subscribe({
+      next: () => { this.cargarEncuestados(); },
+      error: (err) => { console.error('Error al quitar contacto:', err); },
+    });
+  }
+
+  // ---
 
   obtenerLabelDireccion(tipo?: string | null): string {
     const labels: Record<string, string> = {

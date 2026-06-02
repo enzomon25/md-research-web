@@ -356,18 +356,131 @@
 
         <div class="detail-card" style="margin-top: 2rem;">
           <div class="table-header">
-            <h2 class="detail-title">Encuestados asociados</h2>
-            <span class="table-count">{{ encuestados().length }} encuestado(s)</span>
+            <h2 class="detail-title">Contactos asociados</h2>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span class="table-count">{{ encuestados().length }} contacto(s)</span>
+              <button type="button" class="btn btn-primary btn-sm" (click)="toggleBusquedaContacto()">
+                {{ mostrarBusquedaContacto() ? 'Cancelar' : 'Agregar Contacto' }}
+              </button>
+            </div>
           </div>
+
+          @if (mostrarBusquedaContacto()) {
+            <div style="margin-bottom:1rem; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; background:#f8fafc;">
+
+              @if (!mostrarFormularioNuevoContacto()) {
+                <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
+                  <input
+                    class="edit-input"
+                    type="text"
+                    placeholder="Buscar contacto por nombre..."
+                    [ngModel]="terminoBusquedaContacto()"
+                    (ngModelChange)="terminoBusquedaContacto.set($event)"
+                    (keyup.enter)="buscarContactos()"
+                    style="flex:1; max-width:340px;" />
+                  <button type="button" class="btn btn-primary btn-sm" (click)="buscarContactos()" [disabled]="buscandoContacto()">
+                    {{ buscandoContacto() ? 'Buscando...' : 'Buscar' }}
+                  </button>
+                </div>
+
+                @if (buscandoContacto()) {
+                  <p style="color:#64748b; font-size:0.875rem;">Buscando...</p>
+                } @else if (contactosEncontrados().length > 0) {
+                  <div class="table-container" style="margin-bottom:0.75rem;">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Nombres</th>
+                          <th>Apellido Paterno</th>
+                          <th>Cargo</th>
+                          <th>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (enc of contactosEncontrados(); track enc.encuestadoId) {
+                          <tr>
+                            <td>{{ enc.nombres || '-' }}</td>
+                            <td>{{ enc.apepat || '-' }}</td>
+                            <td>{{ enc.cargo || '-' }}</td>
+                            <td>
+                              <button type="button" class="btn btn-primary btn-sm" (click)="agregarContacto(enc)">
+                                Agregar
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  <button type="button" class="btn btn-outline btn-sm" (click)="abrirFormularioNuevoContacto()">
+                    + Registrar nuevo contacto
+                  </button>
+                } @else if (terminoBusquedaContacto()) {
+                  <p style="color:#64748b; font-size:0.875rem; margin-bottom:0.5rem;">No se encontraron contactos con ese término.</p>
+                  <button type="button" class="btn btn-outline btn-sm" (click)="abrirFormularioNuevoContacto()">
+                    + Registrar nuevo contacto
+                  </button>
+                }
+              }
+
+              @if (mostrarFormularioNuevoContacto()) {
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <h4 style="margin:0; font-size:1rem; font-weight:600;">Nuevo Contacto</h4>
+                    <button type="button" class="btn btn-outline btn-sm" (click)="cancelarFormularioNuevoContacto()">Cancelar</button>
+                  </div>
+                  <div class="edit-grid">
+                    <div class="edit-field">
+                      <label class="edit-label">Nombres <span style="color:#e53e3e">*</span></label>
+                      <input class="edit-input" type="text" [(ngModel)]="nuevoContacto.nombres" placeholder="Nombres" />
+                    </div>
+                    <div class="edit-field">
+                      <label class="edit-label">Apellido Paterno</label>
+                      <input class="edit-input" type="text" [(ngModel)]="nuevoContacto.apepat" placeholder="Apellido paterno" />
+                    </div>
+                    <div class="edit-field">
+                      <label class="edit-label">Cargo <span style="color:#e53e3e">*</span></label>
+                      <input class="edit-input" type="text" [(ngModel)]="nuevoContacto.cargo" placeholder="Cargo" />
+                    </div>
+                    <div class="edit-field">
+                      <label class="edit-label">Tipo de Contacto <span style="color:#94a3b8; font-size:0.75rem;">(opcional)</span></label>
+                      <select class="edit-select" [(ngModel)]="nuevoContacto.tipoContacto">
+                        <option value="">Sin contacto</option>
+                        @for (medio of mediosContacto(); track medio.llave) {
+                          <option [value]="medio.llave">{{ medio.valor }}</option>
+                        }
+                      </select>
+                    </div>
+                    @if (nuevoContacto.tipoContacto) {
+                      <div class="edit-field">
+                        <label class="edit-label">Contacto</label>
+                        <input class="edit-input" type="text" [(ngModel)]="nuevoContacto.contacto" placeholder="Número o correo" />
+                      </div>
+                    }
+                  </div>
+                  <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      (click)="guardarNuevoContacto()"
+                      [disabled]="guardandoNuevoContacto() || !nuevoContacto.nombres?.trim() || !nuevoContacto.cargo?.trim()">
+                      {{ guardandoNuevoContacto() ? 'Guardando...' : 'Guardar Contacto' }}
+                    </button>
+                  </div>
+                </div>
+              }
+
+            </div>
+          }
 
           @if (encuestadosCargando()) {
             <div class="loading-state">
               <div class="spinner"></div>
-              <p>Cargando encuestados...</p>
+              <p>Cargando contactos...</p>
             </div>
           } @else if (encuestados().length === 0) {
             <div class="empty-state">
-              <p>No hay encuestados registrados en las encuestas de esta empresa.</p>
+              <p>No hay contactos asociados a esta empresa.</p>
             </div>
           } @else {
             <div class="table-container">
@@ -381,18 +494,36 @@
                     <th>Cargo</th>
                     <th>Medio de Contacto</th>
                     <th>Contacto</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (enc of encuestados(); track $index) {
                     <tr [class.fila-resaltada]="enc.encuestaId === encuestaSeleccionada()">
-                      <td>{{ enc.encuestaId }}</td>
+                      <td>{{ enc.encuestaId ?? '-' }}</td>
                       <td>{{ enc.fechaCreacionEncuesta || '-' }}</td>
                       <td>{{ enc.nombres || '-' }}</td>
                       <td>{{ enc.apepat || '-' }}</td>
                       <td>{{ enc.cargo || '-' }}</td>
                       <td>{{ enc.tipoContacto || '-' }}</td>
                       <td>{{ enc.contacto || '-' }}</td>
+                      <td>
+                        @if (enc.esContactoLibre) {
+                          <button
+                            type="button"
+                            class="btn-accion"
+                            title="Quitar contacto"
+                            (click)="quitarContacto(enc.encuestadoId)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                              <path d="M10 11v6"></path>
+                              <path d="M14 11v6"></path>
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                            </svg>
+                          </button>
+                        }
+                      </td>
                     </tr>
                   }
                 </tbody>

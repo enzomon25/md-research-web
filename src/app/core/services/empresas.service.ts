@@ -84,4 +84,12 @@ export class EmpresasService {
   obtenerEncuestadosPorEmpresaId(id: number): Observable<EncuestadoEmpresa[]> {
     return this.http.get<EncuestadoEmpresa[]>(`${this.apiUrl}/${id}/encuestados`);
   }
+
+  agregarContactoEmpresa(empresaId: number, encuestadoId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${empresaId}/contactos`, { encuestadoId });
+  }
+
+  eliminarContactoEmpresa(empresaId: number, encuestadoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${empresaId}/contactos/${encuestadoId}`);
+  }
 }
