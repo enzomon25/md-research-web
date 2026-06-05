@@ -10,6 +10,7 @@ export const MODULOS = {
   CLIENTES: 'CLIENTES',
   CONTACTO: 'CONTACTO',
   REPORTES: 'REPORTES',
+  PRODUCTOS: 'PRODUCTOS',
 } as const;
 
 /**
@@ -24,6 +25,7 @@ export const RUTAS_MODULOS: Record<string, string> = {
   [MODULOS.CLIENTES]: '/clientes',
   [MODULOS.CONTACTO]: '/contacto',
   [MODULOS.REPORTES]: '/reportes',
+  [MODULOS.PRODUCTOS]: '/productos',
 };
 
 /**

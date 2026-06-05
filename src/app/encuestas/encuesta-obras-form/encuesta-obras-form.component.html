@@ -63,6 +63,19 @@
       </button>
     }
 
+    <!-- Barra de herramientas del formulario -->
+    <div class="form-toolbar">
+      <button type="button" class="btn-toggle-secciones" (click)="toggleTodasSecciones()" [title]="todasColapsadas() ? 'Desplegar todas las secciones' : 'Colapsar todas las secciones'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          [class.rotado]="todasColapsadas()">
+          <polyline points="7 13 12 18 17 13"></polyline>
+          <polyline points="7 6 12 11 17 6"></polyline>
+        </svg>
+        {{ todasColapsadas() ? 'Desplegar todo' : 'Colapsar todo' }}
+      </button>
+    </div>
+
     <!-- Sección 1: Datos Generales -->
     <div class="seccion-card" id="seccion-datos_encuesta">
       <div class="seccion-header" (click)="toggleSeccion('datosGenerales')"
@@ -1395,6 +1408,288 @@
         </div>
         }
       </div>
+    </div>
+
+    <!-- Sección: Productos Complementarios (opcional) -->
+    <div id="seccion-productosComplementarios" class="seccion-card">
+      <div class="seccion-header" (click)="toggleSeccion('productosComplementarios')" [class.expandida]="esSeccionExpandida('productosComplementarios')">
+        <h2>Productos Complementarios
+          <span class="seccion-tag"
+            [ngStyle]="{ 'background': '#858796', 'color': '#fff', 'border-radius': '12px', 'padding': '2px 10px', 'font-size': '0.64em', 'margin-left': '10px', 'vertical-align': 'middle' }">
+            Opcional
+          </span>
+        </h2>
+        <span class="toggle-icon">{{ esSeccionExpandida('productosComplementarios') ? '−' : '+' }}</span>
+      </div>
+      @if (esSeccionExpandida('productosComplementarios')) {
+      <div class="seccion-body">
+
+        <!-- Filtro por tipo -->
+        <div class="pc-filtro-bar">
+          <label class="pc-filtro-label">Ver productos por tipo:</label>
+          <div class="pc-tipos">
+            <button type="button" class="pc-tipo-btn"
+              [class.pc-tipo-btn--activo]="tipoFiltroPC() === ''"
+              (click)="tipoFiltroPC.set(''); resetearPaginaPC()">
+              Todos
+            </button>
+            <button type="button" class="pc-tipo-btn pc-tipo-btn--mezcla"
+              [class.pc-tipo-btn--activo]="tipoFiltroPC() === 'MEZCLA_LISTA'"
+              (click)="tipoFiltroPC.set('MEZCLA_LISTA'); resetearPaginaPC()">
+              Mezcla Lista
+            </button>
+            <button type="button" class="pc-tipo-btn pc-tipo-btn--bloque"
+              [class.pc-tipo-btn--activo]="tipoFiltroPC() === 'BLOQUE_CONCRETO'"
+              (click)="tipoFiltroPC.set('BLOQUE_CONCRETO'); resetearPaginaPC()">
+              Bloque de Concreto
+            </button>
+          </div>
+        </div>
+
+        <!-- Buscador de catálogo -->
+        <div class="pc-buscador">
+          <svg class="pc-buscador-icono" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="pc-buscador-input"
+            placeholder="Buscar por marca, nombre, descripción..."
+            [ngModel]="buscadorPC()"
+            (ngModelChange)="buscadorPC.set($event); resetearPaginaPC()" />
+          @if (buscadorPC()) {
+            <button type="button" class="pc-buscador-clear" (click)="buscadorPC.set(''); resetearPaginaPC()">×</button>
+          }
+        </div>
+
+        <!-- Catálogo de productos disponibles -->
+        @if (catalogoPorTipo().length > 0) {
+        <div class="pc-catalogo">
+          <div class="pc-catalogo-header">
+            <p class="pc-catalogo-titulo">
+              Seleccione productos para agregar
+              <span class="pc-catalogo-paginacion-info">
+                ({{ paginaPC() + 1 }} / {{ totalPaginasPC() }})
+              </span>
+            </p>
+          </div>
+          <div class="pc-catalogo-carrusel">
+            <button type="button" class="pc-carrusel-btn pc-carrusel-btn--prev"
+              [disabled]="paginaPC() === 0"
+              (click)="paginaAnteriorPC()" title="Anterior">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="pc-catalogo-grid">
+              @for (prod of catalogoPaginado(); track prod.productoId) {
+              <div class="pc-catalogo-card"
+                [class.pc-catalogo-card--agregado]="estaProductoAgregado(prod.productoId)">
+                <div class="pc-catalogo-tipo">
+                  <span class="pc-badge-tipo"
+                    [class.pc-badge-mezcla]="prod.tipoProducto === 'MEZCLA_LISTA'"
+                    [class.pc-badge-bloque]="prod.tipoProducto === 'BLOQUE_CONCRETO'">
+                    {{ labelTipoProducto(prod.tipoProducto) }}
+                  </span>
+                </div>
+                <div class="pc-catalogo-info">
+                  <span class="pc-catalogo-marca">{{ prod.marca }}</span>
+                  <span class="pc-catalogo-cat">{{ labelTipoProducto(prod.categoria) }}</span>
+                  <div class="pc-catalogo-detalles">
+                    @if (prod.tipoProducto === 'MEZCLA_LISTA') {
+                      @if (prod.nombreBolsa) {
+                        <span class="pc-catalogo-det"><span class="pc-det-label">Nombre bolsa</span>{{ prod.nombreBolsa }}</span>
+                      }
+                      @if (prod.proporcion) {
+                        <span class="pc-catalogo-det"><span class="pc-det-label">Proporción</span>{{ prod.proporcion }}</span>
+                      }
+                      @if (prod.resistencia) {
+                        <span class="pc-catalogo-det"><span class="pc-det-label">Resistencia</span>{{ prod.resistencia }}</span>
+                      }
+                    } @else {
+                      @if (prod.dimensiones) {
+                        <span class="pc-catalogo-det"><span class="pc-det-label">Dimensiones</span>{{ prod.dimensiones }}</span>
+                      }
+                    }
+                    @if (prod.descripcion) {
+                      <span class="pc-catalogo-det pc-catalogo-det--full"><span class="pc-det-label">Descripción</span>{{ prod.descripcion }}</span>
+                    }
+                  </div>
+                </div>
+                <button type="button" class="pc-btn-agregar"
+                  [disabled]="estaProductoAgregado(prod.productoId) || camposDeshabilitados()"
+                  (click)="agregarProductoComplementario(prod)">
+                  {{ estaProductoAgregado(prod.productoId) ? '✓ Agregado' : '+ Agregar' }}
+                </button>
+              </div>
+              }
+            </div>
+            <button type="button" class="pc-carrusel-btn pc-carrusel-btn--next"
+              [disabled]="paginaPC() >= totalPaginasPC() - 1"
+              (click)="paginaSiguientePC()" title="Siguiente">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+        } @else {
+        <p class="pc-sin-productos">
+          @if (buscadorPC() || tipoFiltroPC()) {
+            Sin coincidencias. Intenta con otro término o tipo.
+          } @else {
+            No hay productos registrados en el catálogo.
+          }
+        </p>
+        }
+
+        <!-- Productos seleccionados (acordeón) -->
+        @if (productosSeleccionados().length > 0) {
+        <div class="pc-acordeon">
+          <p class="pc-seleccionados-titulo">Productos agregados a esta obra ({{ productosSeleccionados().length }}):</p>
+          @for (ep of productosSeleccionados(); track ep.encuestaProductoId) {
+          <div class="pc-acordeon-item" [class.expandido]="esProductoExpandido(ep.encuestaProductoId)">
+            <div class="pc-acordeon-header" (click)="toggleProductoExpandido(ep.encuestaProductoId)">
+              <div class="pc-acordeon-titulo">
+                <span class="pc-badge-tipo"
+                  [class.pc-badge-mezcla]="ep.tipoProducto === 'MEZCLA_LISTA'"
+                  [class.pc-badge-bloque]="ep.tipoProducto === 'BLOQUE_CONCRETO'">
+                  {{ labelTipoProducto(ep.tipoProducto) }}
+                </span>
+                <strong>{{ ep.marca }}</strong>
+                <span class="pc-acordeon-cat">{{ labelTipoProducto(ep.categoria) }}</span>
+                @if (ep.nombreBolsa) { <span class="pc-item-det">{{ ep.nombreBolsa }}</span> }
+              </div>
+              <div class="pc-acordeon-acciones">
+                @if (!camposDeshabilitados()) {
+                <button type="button" class="pc-btn-quitar"
+                  [disabled]="guardandoProductoPC()[ep.encuestaProductoId]"
+                  (click)="$event.stopPropagation(); quitarProductoComplementario(ep)">
+                  {{ guardandoProductoPC()[ep.encuestaProductoId] ? '...' : '✕' }}
+                </button>
+                }
+                <svg class="pc-acordeon-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+            @if (esProductoExpandido(ep.encuestaProductoId)) {
+            <div class="pc-acordeon-body">
+              @if (ep.proporcion) { <span class="pc-item-det">Proporción: {{ ep.proporcion }}</span> }
+              @if (ep.resistencia) { <span class="pc-item-det">Resistencia: {{ ep.resistencia }}</span> }
+              @if (ep.dimensiones) { <span class="pc-item-det">Dimensiones: {{ ep.dimensiones }}</span> }
+              <div class="pc-item-campos">
+                <div class="pc-item-campo">
+                  <label class="pc-item-label">
+                    {{ ep.tipoProducto === 'MEZCLA_LISTA' ? 'N° de bolsas' : 'N° de bloques' }}
+                  </label>
+                  <input type="text" class="pc-item-input"
+                    [(ngModel)]="ep.detalleCompraProducto"
+                    maxlength="150"
+                    [placeholder]="ep.tipoProducto === 'MEZCLA_LISTA' ? 'Ej: 50 bolsas de 25 kg' : 'Ej: 200 bloques 9x19x39'"
+                    [disabled]="camposDeshabilitados()"
+                    (blur)="guardarDetalleProducto(ep)" />
+                </div>
+                <div class="pc-item-campo">
+                  <label class="pc-item-label">Instalador (opcional)</label>
+                  <input type="text" class="pc-item-input"
+                    [(ngModel)]="ep.instalador"
+                    maxlength="100"
+                    placeholder="Nombre del instalador o empresa"
+                    [disabled]="camposDeshabilitados()"
+                    (blur)="guardarDetalleProducto(ep)" />
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+
+          <!-- Observación del Validador (edición) -->
+          @if (puedeEditarObservaciones()) {
+          <div class="observacion-container" [class.observacion-guardando]="estaGuardandoObservacion('productos_complementarios')">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Productos Complementarios</label>
+              <div class="observacion-header-actions">
+                @if (obtenerObservacionTexto('productos_complementarios').trim()) {
+                <button type="button" class="btn-eliminar-observacion" (click)="abrirModalDesestimar('productos_complementarios')"
+                  title="Desestimar observación">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Desestimar
+                </button>
+                }
+              </div>
+            </div>
+            <textarea [value]="obtenerObservacionTexto('productos_complementarios')"
+              (input)="actualizarObservacionTexto('productos_complementarios', $any($event.target).value)"
+              placeholder="Agregar observaciones sobre esta sección..." rows="3"></textarea>
+            <div class="observacion-actions">
+              <button type="button" class="btn-guardar-observacion" (click)="abrirModalGuardarObservacion('productos_complementarios')"
+                [disabled]="estaGuardandoObservacion('productos_complementarios') || !obtenerObservacionTexto('productos_complementarios').trim()">
+                Guardar
+              </button>
+              @if (estaGuardandoObservacion('productos_complementarios')) {
+                <span class="guardando-observacion">Guardando...</span>
+              }
+            </div>
+          </div>
+          }
+          @if (puedeVerObservaciones() && tieneObservacionVisible('productos_complementarios')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>Observaciones de Validación - Productos Complementarios</label>
+              <span class="badge-readonly">Solo lectura</span>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('productos_complementarios')" readonly rows="3"></textarea>
+          </div>
+          }
+          @if (encuestadorPuedeVerObservaciones() && tieneObservacionVisible('productos_complementarios')) {
+          <div class="observacion-container observacion-readonly">
+            <div class="observacion-header">
+              <label>⚠️ Observaciones del Validador - Productos Complementarios</label>
+            </div>
+            <textarea [value]="obtenerObservacionVisibleTexto('productos_complementarios')" readonly rows="3"></textarea>
+          </div>
+          }
+
+          <!-- Historial de Observaciones -->
+          @if (tieneHistorial('productos_complementarios')) {
+          <div class="historial-observaciones-container">
+            <div class="historial-header" (click)="toggleHistorialSeccion('productos_complementarios')"
+              [class.expandido]="esHistorialExpandido('productos_complementarios')">
+              <span class="historial-icono">📜</span>
+              <label>Historial de Observaciones Anteriores</label>
+              <span class="historial-toggle">{{ esHistorialExpandido('productos_complementarios') ? '−' : '+' }}</span>
+            </div>
+            @if (esHistorialExpandido('productos_complementarios')) {
+            <div class="historial-body">
+              @for (item of obtenerHistorialSeccion('productos_complementarios'); track item.historialId) {
+              <div class="historial-item">
+                <div class="historial-meta">
+                  <span class="historial-ciclo">Ciclo {{ item.cicloRevision }}</span>
+                  <span class="historial-usuario">{{ item.usuarioValidador }}</span>
+                  <span class="historial-fecha">{{ item.fechaArchivado | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+                <div class="historial-texto">{{ item.texto }}</div>
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+
+      </div>
+      }
     </div>
 
       <!-- Panel de Resumen de Revisión (visible para todos los usuarios) -->

@@ -7,12 +7,14 @@ import { EmpresasService } from '../../core/services/empresas.service';
 import { ParametrosService } from '../../core/services/parametros.service';
 import { UbicacionService } from '../../core/services/ubicacion.service';
 import { FabricantesService } from '../../core/services/fabricantes.service';
-import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, ParticipacionEncuestado, EncuestaObservacion, EncuestaObservacionHistorial, Direccion } from '../../core/models';
+import { Encuesta, Empresa, TipoEmpresa, Parametro, Encuestado, ParticipacionEncuestado, EncuestaObservacion, EncuestaObservacionHistorial, Direccion, EncuestaProducto } from '../../core/models';
 import { EncuestadosService } from '../../core/services/encuestados.service';
 import { AuthService } from '../../core/services/auth.service';
 import { EncuestaObservacionService } from '../../core/services/encuesta-observacion.service';
 import { EncuestaObservacionHistorialService } from '../../core/services/encuesta-observacion-historial.service';
 import { ObraEncuestaService } from '../../core/services/obra-encuesta.service';
+import { ProductosService } from '../../core/services/productos.service';
+import { Producto } from '../../core/models';
 import { ESTADOS_ENCUESTA } from '../../core/constants/estados-encuesta.constants';
 import { ROLES } from '../../core/constants/roles.constants';
 import { CATEGORIAS_PARAMETROS, TIPO_REFERENCIA } from '../../core/constants';
@@ -509,7 +511,7 @@ export class EncuestaObrasFormComponent implements OnInit {
   }
 
   // Control de secciones expandidas — todas abiertas por defecto, colapsables individualmente
-  private readonly SECCIONES_ENCUESTA = ['datosGenerales', 'datosObra', 'empresa', 'encuestado', 'fabricante', 'compra', 'uso'];
+  private readonly SECCIONES_ENCUESTA = ['datosGenerales', 'datosObra', 'empresa', 'encuestado', 'fabricante', 'compra', 'uso', 'productosComplementarios'];
   seccionesExpandidas = signal<Set<string>>(new Set(this.SECCIONES_ENCUESTA));
 
   // Fecha máxima permitida (hoy)
@@ -545,6 +547,16 @@ export class EncuestaObrasFormComponent implements OnInit {
       mediosContacto = signal<Parametro[]>([]);
       fabricantes = signal<any[]>([]);
       fabricantesCargados = signal(false);
+
+      // Productos complementarios (sección opcional)
+      productosSeleccionados = signal<EncuestaProducto[]>([]);
+      catalogoProductos = signal<Producto[]>([]);
+      tipoFiltroPC = signal<string>('');
+      buscadorPC = signal<string>('');
+      guardandoProductoPC = signal<{ [id: number]: boolean }>({});
+      paginaPC = signal<number>(0);
+      readonly PC_POR_PAGINA = 4;
+      productosExpandidos = signal<Set<number>>(new Set());
       marcasFabricante = signal<any[]>([]);
       marcasCargadasPorFabricante = signal<{[key: number]: boolean}>({});
       marcasUnicas = signal<string[]>([]);
@@ -605,6 +617,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     fabricante: 'Fabricante, Marca y Tipo de Cemento comprado',
     compra: 'Información de Compra',
     uso: 'Comentario Cualitativo',
+    productos_complementarios: 'Productos Complementarios',
   };
 
   constructor(
@@ -620,6 +633,7 @@ export class EncuestaObrasFormComponent implements OnInit {
     private observacionService: EncuestaObservacionService,
     private historialObservacionService: EncuestaObservacionHistorialService,
     private obraEncuestaService: ObraEncuestaService,
+    private productosService: ProductosService,
   ) {}
 
   ngOnInit(): void {
@@ -657,6 +671,9 @@ export class EncuestaObrasFormComponent implements OnInit {
 
     // Cargar ubicaciones para la dirección de la obra
     this.cargarPaises();
+
+    // Cargar catálogo de productos para sección complementarios
+    this.cargarCatalogoProductos();
   }
 
   cargarTiposEmpresa(): void {
@@ -1145,6 +1162,13 @@ export class EncuestaObrasFormComponent implements OnInit {
       this.marcasPorFila = [[]];
     }
 
+    // Inicializar productos complementarios
+    if (Array.isArray(encuesta.productos) && encuesta.productos.length > 0) {
+      this.productosSeleccionados.set(encuesta.productos);
+    } else {
+      this.productosSeleccionados.set([]);
+    }
+
     // Establecer si la encuesta es editable
     // Para VALIDADOR, los formularios siempre están deshabilitados
     const rolUsuario = this.authService.getRolDescripcion();
@@ -1399,6 +1423,18 @@ export class EncuestaObrasFormComponent implements OnInit {
 
   esSeccionExpandida(seccion: string): boolean {
     return this.seccionesExpandidas().has(seccion);
+  }
+
+  todasColapsadas(): boolean {
+    return this.seccionesExpandidas().size === 0;
+  }
+
+  toggleTodasSecciones(): void {
+    if (this.todasColapsadas()) {
+      this.seccionesExpandidas.set(new Set(this.SECCIONES_ENCUESTA));
+    } else {
+      this.seccionesExpandidas.set(new Set());
+    }
   }
 
   actualizarFechaEncuesta(event: Event): void {
@@ -2759,6 +2795,149 @@ export class EncuestaObrasFormComponent implements OnInit {
   }
 
   // Determina si una sección está completa
+  // ===== MÉTODOS PRODUCTOS COMPLEMENTARIOS =====
+
+  cargarCatalogoProductos(): void {
+    this.productosService.listar().subscribe({
+      next: (lista) => this.catalogoProductos.set(lista),
+      error: () => this.catalogoProductos.set([]),
+    });
+  }
+
+  catalogoPorTipo(): Producto[] {
+    const tipo = this.tipoFiltroPC();
+    const texto = this.buscadorPC().toLowerCase().trim();
+    return this.catalogoProductos().filter(p => {
+      if (tipo && p.tipoProducto !== tipo) return false;
+      if (!texto) return true;
+      return (
+        p.marca.toLowerCase().includes(texto) ||
+        (p.nombreBolsa ?? '').toLowerCase().includes(texto) ||
+        (p.descripcion ?? '').toLowerCase().includes(texto) ||
+        (p.categoria ?? '').toLowerCase().includes(texto) ||
+        (p.proporcion ?? '').toLowerCase().includes(texto) ||
+        (p.dimensiones ?? '').toLowerCase().includes(texto)
+      );
+    });
+  }
+
+  catalogoPaginado(): Producto[] {
+    const inicio = this.paginaPC() * this.PC_POR_PAGINA;
+    return this.catalogoPorTipo().slice(inicio, inicio + this.PC_POR_PAGINA);
+  }
+
+  totalPaginasPC(): number {
+    return Math.ceil(this.catalogoPorTipo().length / this.PC_POR_PAGINA);
+  }
+
+  paginaAnteriorPC(): void {
+    if (this.paginaPC() > 0) this.paginaPC.update(p => p - 1);
+  }
+
+  paginaSiguientePC(): void {
+    if (this.paginaPC() < this.totalPaginasPC() - 1) this.paginaPC.update(p => p + 1);
+  }
+
+  resetearPaginaPC(): void {
+    this.paginaPC.set(0);
+  }
+
+  estaProductoAgregado(productoId: number): boolean {
+    return this.productosSeleccionados().some(p => p.productoId === productoId);
+  }
+
+  esProductoExpandido(encuestaProductoId: number): boolean {
+    return this.productosExpandidos().has(encuestaProductoId);
+  }
+
+  toggleProductoExpandido(encuestaProductoId: number): void {
+    const actual = new Set(this.productosExpandidos());
+    if (actual.has(encuestaProductoId)) {
+      actual.delete(encuestaProductoId);
+    } else {
+      actual.add(encuestaProductoId);
+    }
+    this.productosExpandidos.set(actual);
+  }
+
+  labelTipoProducto(llave: string): string {
+    const labels: Record<string, string> = {
+      MEZCLA_LISTA: 'Mezcla Lista',
+      BLOQUE_CONCRETO: 'Bloque de Concreto',
+      CONCRETO_LISTO: 'Concreto Listo',
+      MORTERO_LISTO: 'Mortero Listo',
+      TARRAJEO_LISTO: 'Tarrajeo Listo',
+      KINGBLOCK: 'Kingblock',
+      KINGCONCRETO: 'Kingconcreto',
+    };
+    return labels[llave] ?? llave;
+  }
+
+  agregarProductoComplementario(producto: Producto): void {
+    const encuestaId = this.encuestaId();
+    if (!encuestaId || this.estaProductoAgregado(producto.productoId)) return;
+
+    this.encuestasService.agregarProducto(encuestaId, { productoId: producto.productoId }).subscribe({
+      next: (ep) => {
+        this.productosSeleccionados.set([...this.productosSeleccionados(), ep]);
+      },
+      error: () => {},
+    });
+  }
+
+  quitarProductoComplementario(ep: EncuestaProducto): void {
+    const encuestaId = this.encuestaId();
+    if (!encuestaId) return;
+
+    this.guardandoProductoPC.set({ ...this.guardandoProductoPC(), [ep.encuestaProductoId]: true });
+    this.encuestasService.eliminarProducto(encuestaId, ep.encuestaProductoId).subscribe({
+      next: () => {
+        this.productosSeleccionados.set(
+          this.productosSeleccionados().filter(p => p.encuestaProductoId !== ep.encuestaProductoId),
+        );
+        const estado = { ...this.guardandoProductoPC() };
+        delete estado[ep.encuestaProductoId];
+        this.guardandoProductoPC.set(estado);
+        const expandidos = new Set(this.productosExpandidos());
+        expandidos.delete(ep.encuestaProductoId);
+        this.productosExpandidos.set(expandidos);
+      },
+      error: () => {
+        const estado = { ...this.guardandoProductoPC() };
+        delete estado[ep.encuestaProductoId];
+        this.guardandoProductoPC.set(estado);
+      },
+    });
+  }
+
+  guardarDetalleProducto(ep: EncuestaProducto): void {
+    const encuestaId = this.encuestaId();
+    if (!encuestaId) return;
+
+    this.guardandoProductoPC.set({ ...this.guardandoProductoPC(), [ep.encuestaProductoId]: true });
+    this.encuestasService
+      .actualizarProducto(encuestaId, ep.encuestaProductoId, {
+        detalleCompraProducto: ep.detalleCompraProducto ?? null,
+        instalador: ep.instalador ?? null,
+      })
+      .subscribe({
+        next: (actualizado) => {
+          const lista = this.productosSeleccionados().map(p =>
+            p.encuestaProductoId === actualizado.encuestaProductoId ? { ...p, ...actualizado } : p,
+          );
+          this.productosSeleccionados.set(lista);
+          const estado = { ...this.guardandoProductoPC() };
+          delete estado[ep.encuestaProductoId];
+          this.guardandoProductoPC.set(estado);
+        },
+        error: () => {
+          const estado = { ...this.guardandoProductoPC() };
+          delete estado[ep.encuestaProductoId];
+          this.guardandoProductoPC.set(estado);
+        },
+      });
+  }
+
   seccionCompleta(seccion: string): boolean {
     switch (seccion) {
       case 'datosGenerales':
@@ -2793,6 +2972,8 @@ export class EncuestaObrasFormComponent implements OnInit {
         return true;
       case 'uso':
         return !!(this.encuesta()?.comentarioCuantitativo?.trim());
+      case 'productosComplementarios':
+        return true; // Sección opcional, nunca bloquea
       default:
         return false;
     }

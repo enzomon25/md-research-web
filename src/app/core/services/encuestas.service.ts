@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Encuesta, PaginacionRespuesta } from '../models';
+import { Encuesta, EncuestaProducto, PaginacionRespuesta } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -82,6 +82,30 @@ export class EncuestasService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  agregarProducto(
+    encuestaId: number,
+    dto: { productoId: number; detalleCompraProducto?: string | null; instalador?: string | null },
+  ): Observable<EncuestaProducto> {
+    return this.http.post<EncuestaProducto>(`${this.apiUrl}/${encuestaId}/productos`, dto);
+  }
+
+  actualizarProducto(
+    encuestaId: number,
+    encuestaProductoId: number,
+    dto: { detalleCompraProducto?: string | null; instalador?: string | null },
+  ): Observable<EncuestaProducto> {
+    return this.http.patch<EncuestaProducto>(
+      `${this.apiUrl}/${encuestaId}/productos/${encuestaProductoId}`,
+      dto,
+    );
+  }
+
+  eliminarProducto(encuestaId: number, encuestaProductoId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/${encuestaId}/productos/${encuestaProductoId}`,
+    );
   }
 
   exportar(filtros: any): Observable<Blob> {

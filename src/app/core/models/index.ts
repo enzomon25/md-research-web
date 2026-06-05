@@ -108,6 +108,7 @@ export interface Encuesta {
   }>;
   marcas?: Array<{ marcaFabricanteId: number; fabricanteId: number }>;
   participaciones?: ParticipacionEncuestado[];
+  productos?: EncuestaProducto[];
   editable?: boolean;
 }
 
@@ -143,6 +144,22 @@ export interface ObraEncuesta {
   fechaModificacion?: string;
   usuarioModificacion?: string;
   indActivo?: number;
+}
+
+export interface EncuestaProducto {
+  encuestaProductoId: number;
+  encuestaId?: number;
+  productoId: number;
+  tipoProducto: string;
+  marca: string;
+  categoria: string;
+  nombreBolsa?: string | null;
+  proporcion?: string | null;
+  resistencia?: string | null;
+  descripcion?: string | null;
+  dimensiones?: string | null;
+  detalleCompraProducto?: string | null;
+  instalador?: string | null;
 }
 
 export interface Empresa {
@@ -205,6 +222,23 @@ export interface ObraEmpresa {
   descProvincia?: string | null;
   descDistrito?: string | null;
   fechaCreacionEncuesta?: string | null;
+}
+
+export interface Producto {
+  productoId: number;
+  tipoProducto: string;
+  marca: string;
+  categoria: string;
+  nombreBolsa?: string | null;
+  proporcion?: string | null;
+  resistencia?: string | null;
+  descripcion?: string | null;
+  dimensiones?: string | null;
+  indActivo: number;
+  fechaCreacion?: string;
+  usuarioCreacion?: string;
+  fechaModificacion?: string;
+  usuarioModificacion?: string;
 }
 
 export interface TipoEmpresa {

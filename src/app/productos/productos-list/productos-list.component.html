@@ -1,0 +1,250 @@
+<div class="layout-container">
+  <app-sidebar />
+
+  <main class="main-content">
+    <div class="productos-page">
+      <app-page-header
+        title="Mantenimiento de Productos"
+        subtitle="Gestiona el catálogo de mezclas listas y bloques de concreto">
+        <button class="btn-nuevo" (click)="abrirModalCrear()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nuevo Producto
+        </button>
+        <app-user-menu />
+      </app-page-header>
+
+      <!-- Filtro tipo -->
+      <div class="filtros-bar">
+        <div class="filtro-grupo">
+          <label class="filtro-label">Filtrar por tipo</label>
+          <select class="filtro-select" [ngModel]="filtroTipo()" (ngModelChange)="filtroTipo.set($event)">
+            <option value="">Todos</option>
+            @for (tipo of tiposProducto; track tipo.llave) {
+              <option [value]="tipo.llave">{{ tipo.label }}</option>
+            }
+          </select>
+        </div>
+        <span class="filtro-count">{{ productosFiltrados().length }} producto(s)</span>
+      </div>
+
+      @if (cargando()) {
+        <div class="loading-state">
+          <div class="spinner-large"></div>
+          <p>Cargando productos...</p>
+        </div>
+      } @else if (error()) {
+        <div class="error-state">
+          <p>{{ error() }}</p>
+          <button class="btn-reintentar" (click)="cargarProductos()">Reintentar</button>
+        </div>
+      } @else {
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Marca</th>
+                <th>Categoría</th>
+                <th>Nombre Bolsa</th>
+                <th>Proporción / Dimensiones</th>
+                <th>Resistencia</th>
+                <th>Estado</th>
+                <th>Creado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (prod of productosFiltrados(); track prod.productoId) {
+                <tr class="table-row" [class.row-inactivo]="!esActivo(prod)">
+                  <td>
+                    <span class="badge-tipo" [class.badge-mezcla]="prod.tipoProducto === 'MEZCLA_LISTA'" [class.badge-bloque]="prod.tipoProducto === 'BLOQUE_CONCRETO'">
+                      {{ labelTipo(prod.tipoProducto) }}
+                    </span>
+                  </td>
+                  <td class="td-marca">{{ prod.marca }}</td>
+                  <td>{{ labelCategoria(prod.categoria) }}</td>
+                  <td>{{ prod.nombreBolsa || '-' }}</td>
+                  <td>
+                    @if (prod.tipoProducto === 'MEZCLA_LISTA') {
+                      {{ prod.proporcion || '-' }}
+                    } @else {
+                      {{ prod.dimensiones || '-' }}
+                    }
+                  </td>
+                  <td>{{ prod.resistencia || '-' }}</td>
+                  <td>
+                    <span class="badge" [class.badge-activo]="esActivo(prod)" [class.badge-inactivo]="!esActivo(prod)">
+                      {{ esActivo(prod) ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>{{ formatearFecha(prod.fechaCreacion) }}</td>
+                  <td class="td-acciones">
+                    <button class="btn-editar" (click)="abrirModalEditar(prod, $event)" title="Editar producto">
+                      Editar
+                    </button>
+                    <button
+                      class="btn-toggle"
+                      [class.btn-desactivar]="esActivo(prod)"
+                      [class.btn-activar]="!esActivo(prod)"
+                      (click)="solicitarToggle(prod, $event)"
+                      [title]="esActivo(prod) ? 'Desactivar' : 'Activar'">
+                      {{ esActivo(prod) ? 'Desactivar' : 'Activar' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr>
+                  <td colspan="9" class="empty-cell">No hay productos registrados.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Crear / Editar Producto -->
+@if (mostrarModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal-content modal-grande" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ modoEdicion() ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (errorModal()) {
+          <div class="alert-error">{{ errorModal() }}</div>
+        }
+
+        <!-- Tipo y Marca (siempre visibles) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Producto <span class="required">*</span></label>
+            <select class="form-control" [(ngModel)]="form.tipoProducto" (ngModelChange)="onTipoChange()" [disabled]="guardando()">
+              <option value="">Seleccione tipo</option>
+              @for (tipo of tiposProducto; track tipo.llave) {
+                <option [value]="tipo.llave">{{ tipo.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Marca <span class="required">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.marca" placeholder="Ej: TX, UNICON" [disabled]="guardando()" />
+          </div>
+        </div>
+
+        <!-- Categoría (depende del tipo) -->
+        @if (form.tipoProducto) {
+          <div class="form-row">
+            <div class="form-group">
+              <label>Categoría <span class="required">*</span></label>
+              <select class="form-control" [(ngModel)]="form.categoria" [disabled]="guardando()">
+                <option value="">Seleccione categoría</option>
+                @for (cat of categoriasActuales(); track cat.llave) {
+                  <option [value]="cat.llave">{{ cat.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Descripción</label>
+              <input type="text" class="form-control" [(ngModel)]="form.descripcion" maxlength="100" placeholder="Descripción opcional" [disabled]="guardando()" />
+            </div>
+          </div>
+        }
+
+        <!-- Campos MEZCLA_LISTA -->
+        @if (esMezclaLista()) {
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre Bolsa</label>
+              <input type="text" class="form-control" [(ngModel)]="form.nombreBolsa" maxlength="300" placeholder="Ej: SUPERMORTERO 1:4" [disabled]="guardando()" />
+            </div>
+            <div class="form-group">
+              <label>Proporción</label>
+              <input type="text" class="form-control" [(ngModel)]="form.proporcion" maxlength="15" placeholder="Ej: 1:4" [disabled]="guardando()" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Resistencia</label>
+              <input type="text" class="form-control" [(ngModel)]="form.resistencia" maxlength="50" placeholder="Ej: 210 kg/cm2" [disabled]="guardando()" />
+            </div>
+          </div>
+        }
+
+        <!-- Campos BLOQUE_CONCRETO -->
+        @if (esBloqueConcreto()) {
+          <div class="form-row">
+            <div class="form-group">
+              <label>Dimensiones</label>
+              <input type="text" class="form-control" [(ngModel)]="form.dimensiones" maxlength="30" placeholder="Ej: 9x19x39" [disabled]="guardando()" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModal()" [disabled]="guardando()">Cancelar</button>
+        <button class="btn-guardar" (click)="guardar()" [disabled]="guardando()">
+          @if (guardando()) {
+            <span class="spinner"></span> Guardando...
+          } @else {
+            {{ modoEdicion() ? 'Actualizar' : 'Guardar' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Confirmar Toggle Estado -->
+@if (mostrarModalToggle()) {
+  <div class="modal-overlay" (click)="cerrarModalToggle()">
+    <div class="modal-content modal-advertencia" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>
+          {{ esActivo(productoToggle()!) ? 'Desactivar Producto' : 'Activar Producto' }}
+        </h2>
+        <button class="btn-close" (click)="cerrarModalToggle()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (esActivo(productoToggle()!)) {
+          <div class="advertencia-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+        }
+        <p class="advertencia-texto">
+          ¿Está seguro de que desea
+          <strong>{{ esActivo(productoToggle()!) ? 'desactivar' : 'activar' }}</strong>
+          el producto <strong>{{ productoToggle()?.marca }} — {{ labelCategoria(productoToggle()?.categoria ?? '') }}</strong>?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModalToggle()" [disabled]="procesandoToggle()">Cancelar</button>
+        <button
+          class="btn-confirmar"
+          [class.btn-confirmar-danger]="esActivo(productoToggle()!)"
+          [class.btn-confirmar-success]="!esActivo(productoToggle()!)"
+          (click)="confirmarToggle()"
+          [disabled]="procesandoToggle()">
+          @if (procesandoToggle()) {
+            <span class="spinner"></span> Procesando...
+          } @else {
+            {{ esActivo(productoToggle()!) ? 'Desactivar' : 'Activar' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

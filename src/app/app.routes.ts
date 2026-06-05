@@ -59,5 +59,11 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./usuarios/usuarios-list/usuarios-list.component').then(m => m.UsuariosListComponent)
     // TODO: Crear componente de detalle cuando sea necesario
+  },
+  // Productos (Solo ADMINISTRADOR)
+  {
+    path: 'productos',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./productos/productos-list/productos-list.component').then(m => m.ProductosListComponent)
   }
 ];
