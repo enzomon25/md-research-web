@@ -63,6 +63,19 @@
       </button>
     }
 
+    <!-- Barra de herramientas del formulario -->
+    <div class="form-toolbar">
+      <button type="button" class="btn-toggle-secciones" (click)="toggleTodasSecciones()" [title]="todasColapsadas() ? 'Desplegar todas las secciones' : 'Colapsar todas las secciones'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          [class.rotado]="todasColapsadas()">
+          <polyline points="7 13 12 18 17 13"></polyline>
+          <polyline points="7 6 12 11 17 6"></polyline>
+        </svg>
+        {{ todasColapsadas() ? 'Desplegar todo' : 'Colapsar todo' }}
+      </button>
+    </div>
+
     <!-- Sección 1: Datos Generales -->
     <div class="seccion-card" id="seccion-datosGenerales">
       <div class="seccion-header" (click)="toggleSeccion('datosGenerales')"

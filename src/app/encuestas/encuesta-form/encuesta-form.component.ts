@@ -1132,6 +1132,18 @@ export class EncuestaFormComponent implements OnInit {
     return this.seccionesExpandidas().has(seccion);
   }
 
+  todasColapsadas(): boolean {
+    return this.seccionesExpandidas().size === 0;
+  }
+
+  toggleTodasSecciones(): void {
+    if (this.todasColapsadas()) {
+      this.seccionesExpandidas.set(new Set(this.SECCIONES_ENCUESTA));
+    } else {
+      this.seccionesExpandidas.set(new Set());
+    }
+  }
+
   actualizarFechaEncuesta(event: Event): void {
     const input = event.target as HTMLInputElement;
     const fechaSeleccionada = input.value;

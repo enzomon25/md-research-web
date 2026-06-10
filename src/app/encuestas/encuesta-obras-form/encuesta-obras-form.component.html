@@ -1584,9 +1584,7 @@
               @if (ep.dimensiones) { <span class="pc-item-det">Dimensiones: {{ ep.dimensiones }}</span> }
               <div class="pc-item-campos">
                 <div class="pc-item-campo">
-                  <label class="pc-item-label">
-                    {{ ep.tipoProducto === 'MEZCLA_LISTA' ? 'N° de bolsas' : 'N° de bloques' }}
-                  </label>
+                  <label class="pc-item-label">Detalle de la compra</label>
                   <input type="text" class="pc-item-input"
                     [(ngModel)]="ep.detalleCompraProducto"
                     maxlength="150"
