@@ -2593,10 +2593,17 @@ export class EncuestaObrasFormComponent implements OnInit {
         this.terminoBusquedaEncuestado.set('');
         return;
       }
-      const empresaId = encuestaActual.empresaId ?? encuestaActual.empresa?.empresaId;
+      const empresaId = encuestaActual.empresaId
+        ?? encuestaActual.empresa?.empresaId
+        ?? this.empresaSeleccionada()?.empresaId;
+      if (!empresaId) {
+        this.mensajeModal.set('Selecciona una empresa antes de agregar un encuestado');
+        this.mostrarModalError.set(true);
+        return;
+      }
       const nuevaParticipacion: ParticipacionEncuestado = {
         encuestadoId: encuestado.encuestadoId!,
-        empresaId: empresaId!,
+        empresaId,
       };
       this.encuestasService.guardar({
         encuestaId: encuestaActual.encuestaId,
