@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
+import { adminOrValidadorGuard } from './core/guards/admin-or-validador.guard';
 
 export const routes: Routes = [
   {
@@ -60,10 +61,10 @@ export const routes: Routes = [
     loadComponent: () => import('./usuarios/usuarios-list/usuarios-list.component').then(m => m.UsuariosListComponent)
     // TODO: Crear componente de detalle cuando sea necesario
   },
-  // Productos (Solo ADMINISTRADOR)
+  // Productos (ADMINISTRADOR y VALIDADOR)
   {
     path: 'productos',
-    canActivate: [adminGuard],
+    canActivate: [adminOrValidadorGuard],
     loadComponent: () => import('./productos/productos-list/productos-list.component').then(m => m.ProductosListComponent)
   }
 ];
